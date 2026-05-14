@@ -603,6 +603,23 @@ canvas { display: block; touch-action: none; }
 .shop-wide-card .swc-body   { flex: 1; }
 .shop-wide-card .swc-title  { font-size: 16px; font-weight: bold; color: #fff; }
 .shop-wide-card .swc-desc   { font-size: 12px; color: #f9a8d4; margin-top: 2px; }
+/* CC75: activity hub tiles */
+.act-tile {
+  background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.1);
+  border-radius: 18px; padding: 18px 12px; display: flex; flex-direction: column;
+  align-items: center; gap: 8px; cursor: pointer; position: relative;
+  transition: transform .15s, border-color .2s;
+}
+.act-tile:active { transform: scale(.95); }
+.act-tile.claim  { border-color: #4ade80; box-shadow: 0 0 14px rgba(74,222,128,.3); animation: nearMissPulse .9s ease-in-out infinite alternate; }
+.act-tile.inactive { opacity: .45; cursor: default; }
+.act-tile-icon { font-size: 40px; line-height: 1; }
+.act-tile-title { font-size: 13px; font-weight: 800; color: #e2e8f0; text-align: center; }
+.act-tile-sub   { font-size: 11px; color: #64748b; text-align: center; }
+.act-tile-badge { position: absolute; top: 8px; right: 10px; min-width: 18px; height: 18px;
+  background: #ef4444; color: #fff; font-size: 10px; font-weight: 900;
+  border-radius: 9px; line-height: 18px; text-align: center; padding: 0 4px;
+  border: 2px solid #1e0828; box-sizing: content-box; }
 /* CC74: timed offers */
 .timed-offer-card {
   background: linear-gradient(135deg,rgba(245,158,11,.18),rgba(239,68,68,.18));
@@ -938,6 +955,10 @@ canvas { display: block; touch-action: none; }
       </button>
       <button class="btn btn-blue" onclick="showScreen('achievements')">🏅 Достижения</button>
     </div>
+    <button class="btn btn-blue" style="position:relative;" onclick="showScreen('activity')">
+      🎯 Активности
+      <span id="activity-badge" style="display:none;position:absolute;top:-8px;right:-8px;min-width:20px;height:20px;background:#ef4444;color:#fff;font-size:11px;font-weight:800;border-radius:10px;border:2px solid #1e0828;line-height:16px;text-align:center;padding:0 4px;box-sizing:content-box;"></span>
+    </button>
     <button class="btn btn-gray" onclick="showScreen('settings')" data-i18n="settings_btn">⚙️ Настройки</button>
   </div>
 </div>
@@ -958,6 +979,16 @@ canvas { display: block; touch-action: none; }
     <div id="quests-weekly-full"></div>
     <div id="quests-timer" style="text-align:center;padding:16px 0 4px;color:#64748b;font-size:13px;"></div>
   </div>
+</div>
+
+<!-- ══ АКТИВИТИ ХАБ (CC75) ══ -->
+<div id="screen-activity" class="screen hidden" style="justify-content:flex-start;">
+  <div class="top-bar">
+    <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
+    <div style="font-size:16px;font-weight:900;color:#ffe066;flex:1;text-align:center;">🎯 Активности</div>
+    <div class="cur-pill">🪙 <span id="act-coins">0</span></div>
+  </div>
+  <div id="activity-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;width:100%;max-width:420px;box-sizing:border-box;"></div>
 </div>
 
 <!-- ══ ДОСТИЖЕНИЯ ══ -->
@@ -3186,6 +3217,7 @@ function showScreen(name) {
   if (name === 'menu')       { refreshMenu();       if (!state.noAds) SDK.showBanner(); }
   if (name === 'quests')       renderQuestsFull();
   if (name === 'achievements') renderAchievements();
+  if (name === 'activity') renderActivityHub();
   if (name === 'levels')     refreshLevelsCurrency();
   if (name === 'shop')       refreshShop();
   if (name === 'settings')   refreshSettings();
@@ -3225,6 +3257,13 @@ function refreshMenu() {
     } else {
       evtTimer.style.display = 'none';
     }
+  }
+  // CC75: activity hub badge on main menu button
+  const actBadge = document.getElementById('activity-badge');
+  if (actBadge) {
+    const n = _activityBadgeCount();
+    actBadge.textContent = n;
+    actBadge.style.display = n > 0 ? '' : 'none';
   }
   // CC73: show last earned trophy on main menu
   const ltEl = document.getElementById('m-last-trophy');
@@ -10175,6 +10214,75 @@ function unlockAchievement(id) {
   const def = ACHIEVEMENT_LIST.find(a => a.id === id);
   if (def) showAchievementToast(def.icon, def.title);
   updateQuestProgress('achievements', 1);
+}
+
+// CC75: Activity Hub
+function _activityBadgeCount() {
+  let n = 0;
+  if (shouldShowDailyReward()) n++;
+  const activeOffers = SHOP_OFFERS.filter(o => (state.shopOfferExpiry?.[o.id] || 0) > Date.now());
+  if (activeOffers.length) n += activeOffers.length;
+  return n;
+}
+
+function renderActivityHub() {
+  const grid = document.getElementById('activity-grid');
+  const coinsEl = document.getElementById('act-coins');
+  if (coinsEl) coinsEl.textContent = state.coins;
+  if (!grid) return;
+
+  const dailyAvail = shouldShowDailyReward();
+  const activeOffers = SHOP_OFFERS.filter(o => (state.shopOfferExpiry?.[o.id] || 0) > Date.now());
+  const earnedTrophies = (state.trophies || []).length;
+  const newTrophies = TROPHIES.filter(t => !state.trophies?.includes(t.id) && t.condition(state)).length;
+
+  const tiles = [
+    {
+      icon: '🎁', title: 'Ежедневная', sub: dailyAvail ? 'Доступно!' : 'Забрано',
+      cls: dailyAvail ? 'claim' : '',
+      badge: dailyAvail ? '1' : '',
+      action: "showScreen('menu'); setTimeout(()=>openDailyReward(),200);"
+    },
+    {
+      icon: '🏆', title: 'Трофеи', sub: `${earnedTrophies} / ${TROPHIES.length}`,
+      cls: newTrophies > 0 ? 'claim' : '',
+      badge: newTrophies > 0 ? String(newTrophies) : '',
+      action: "showScreen('achievements');"
+    },
+    {
+      icon: '🛒', title: 'Магазин', sub: activeOffers.length ? `${activeOffers.length} предложений` : 'Открыт',
+      cls: activeOffers.length ? 'claim' : '',
+      badge: activeOffers.length ? String(activeOffers.length) : '',
+      action: "showScreen('shop');"
+    },
+    {
+      icon: '🏅', title: 'Достижения', sub: `${(state.achievements||[]).length} разблокировано`,
+      cls: '',
+      badge: '',
+      action: "showScreen('achievements');"
+    },
+    {
+      icon: '📋', title: 'Задания', sub: 'Ежедневные цели',
+      cls: '',
+      badge: document.getElementById('quest-notif-badge')?.textContent || '',
+      action: "showScreen('quests');"
+    },
+    {
+      icon: '🏆', title: 'Турнир', sub: 'Лидерборд',
+      cls: '',
+      badge: '',
+      action: "showScreen('tournament');"
+    },
+  ];
+
+  grid.innerHTML = tiles.map(t => `
+    <div class="act-tile${t.cls?' '+t.cls:''}" onclick="${t.action}">
+      ${t.badge ? `<div class="act-tile-badge">${t.badge}</div>` : ''}
+      <div class="act-tile-icon">${t.icon}</div>
+      <div class="act-tile-title">${t.title}</div>
+      <div class="act-tile-sub">${t.sub}</div>
+    </div>
+  `).join('');
 }
 
 function renderAchievements() {

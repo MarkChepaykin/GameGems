@@ -276,6 +276,12 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC71 — Экран 0 жизней
 `#lose-lives-row` "❤️ Осталось: X/5" на lose-экране. `simulateAd(onComplete)` — 5s прогресс-бар → callback. `askFriendsForLife()` — 3 рандомных имени + "отправлено". `#no-lives-ad-bar`/`#no-lives-friends` в no-lives попапе. Таймер уже был.
 
+### CC74 — Shop offer с таймером
+`SHOP_OFFERS[]` 3 предложения с `duration`. `state.shopOfferExpiry[id]`. `.timed-offer-card` золотой градиент + `barShine`. `.toc-badge` скидка. `.toc-timer.last-chance` (красный+пульс при <1ч). `_renderTimedOffers()` каждые 10с. `buyTimedOffer(id)` → удаляет expiry.
+
+### CC75 — Activity Hub
+`screen-activity` с 2×N сеткой `.act-tile`. Плитки: Daily/Trophies/Shop/Achievements/Quests/Tournament. `.claim` = зелёный glow+пульс. Badge = нотификации. `renderActivityHub()` при открытии. `_activityBadgeCount()` для кнопки на главном. Кнопка "🎯 Активности" в меню с badge.
+
 ---
 
 ## 🔵 ОЖИДАЮТ РЕАЛИЗАЦИИ
@@ -383,21 +389,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ---
 
 
-### TASK-CC74 · Shop offer с таймером
-**Приоритет: низкий | ~3 часа**
-
-`SHOP_OFFERS` с `expires`. `state.shopOfferExpiry[id]`. Зачёркнутая цена + скидка-бейдж + таймер. При <1ч → "ПОСЛЕДНИЙ ШАНС!" красным, пульсирует. Золотистый градиент. По истечении → убирается.
-
-**AC:** Таймер обновляется. При истечении — убирается.
-
----
-
-### TASK-CC75 · Activity Hub
-**Приоритет: низкий | ~4 часа**
-
-Экран с 2×N плитками: Daily Reward(CC70), Трофеи(CC73), Shop(CC74), Leaderboard. Badge = нотификации. `claim` → зелёный border+пульс. `inactive` → серая. Кнопка "Activity" на главном.
-
-**AC:** Hub показывает все системы. Badge = ожидающие. Переход к фиче работает.
 
 ---
 
