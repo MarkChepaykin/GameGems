@@ -1427,13 +1427,17 @@ canvas { display: block; touch-action: none; }
     <div style="font-size:16px;font-weight:900;color:#ffe066;flex:1;text-align:center;" data-i18n="settings_title">⚙️ Настройки</div>
   </div>
   <div class="settings-wrap">
-    <div class="setting-row">
-      <span data-i18n="sound">🔊 Звук</span>
-      <button class="toggle on" id="toggle-sound" onclick="toggleSetting('sound')">ВКЛ</button>
+    <div class="setting-row" style="gap:8px;">
+      <label style="flex:0 0 80px;color:#e2e8f0;font-size:14px;">🎵 Музыка</label>
+      <input type="range" min="0" max="100" value="80" id="set-slider-music"
+             oninput="setPauseVol('music',this.value)" style="flex:1;accent-color:#a855f7;">
+      <span id="set-slider-music-val" style="color:#ffe066;font-size:12px;width:34px;text-align:right;">80%</span>
     </div>
-    <div class="setting-row">
-      <span>🎵 Музыка</span>
-      <button class="toggle on" id="toggle-music" onclick="toggleSetting('music')">ВКЛ</button>
+    <div class="setting-row" style="gap:8px;">
+      <label style="flex:0 0 80px;color:#e2e8f0;font-size:14px;">🔊 Звук</label>
+      <input type="range" min="0" max="100" value="80" id="set-slider-sfx"
+             oninput="setPauseVol('sfx',this.value)" style="flex:1;accent-color:#a855f7;">
+      <span id="set-slider-sfx-val" style="color:#ffe066;font-size:12px;width:34px;text-align:right;">80%</span>
     </div>
     <div class="setting-row">
       <span data-i18n="lang_lbl">🌐 Язык</span>
@@ -1736,25 +1740,17 @@ function getBgmAC(){
 }
 // ── MP3-плеер для BGM (factory) ──────────────────────────────────
 function _makeMp3Bgm(src) {
-  let _el = null, _srcNode = null, _gain = null;
+  let _el = null;
   function _init() {
     if (_el) return;
     _el = new Audio(src);
     _el.loop = true;
     _el.preload = 'auto';
-    try {
-      const ac = getBgmAC();
-      _srcNode = ac.createMediaElementSource(_el);
-      _gain = ac.createGain();
-      _gain.gain.value = 1;
-      _srcNode.connect(_gain);
-      _gain.connect(ac.destination);
-    } catch(e) {}
+    _el.volume = (state && state.musicVol != null) ? state.musicVol / 100 : 0.8;
   }
   return {
     start() {
       _init();
-      if (_bgmAC && _bgmAC.state === 'suspended') _bgmAC.resume();
       _el.play().catch(() => {});
     },
     stop() {
@@ -1764,13 +1760,7 @@ function _makeMp3Bgm(src) {
     },
     set(on) { on ? this.start() : this.stop(); },
     isPlaying() { return !!_el && !_el.paused; },
-    _setVol(v) {
-      if (_gain) {
-        const ac = getBgmAC();
-        _gain.gain.cancelScheduledValues(ac.currentTime);
-        _gain.gain.setValueAtTime(v, ac.currentTime);
-      }
-    }
+    _setVol(v) { if (_el) _el.volume = Math.max(0, Math.min(1, v)); }
   };
 }
 
@@ -3181,16 +3171,18 @@ function refreshShop() {
 }
 
 function refreshSettings() {
-  const ts = document.getElementById('toggle-sound');
-  ts.textContent = state.soundOn ? t('on') : t('off');
-  ts.className   = 'toggle '+(state.soundOn?'on':'off');
-  const tm = document.getElementById('toggle-music');
-  if (tm) { tm.textContent = state.musicOn ? t('on') : t('off'); tm.className='toggle '+(state.musicOn?'on':'off'); }
   const tl = document.getElementById('toggle-lang');
-  tl.textContent = state.lang.toUpperCase();
+  if (tl) tl.textContent = state.lang.toUpperCase();
   const tv = document.getElementById('toggle-vibro');
-  tv.textContent = state.vibroOn ? t('on') : t('off');
-  tv.className   = 'toggle '+(state.vibroOn?'on':'off');
+  if (tv) { tv.textContent = state.vibroOn ? t('on') : t('off'); tv.className = 'toggle '+(state.vibroOn?'on':'off'); }
+  const sm = document.getElementById('set-slider-music');
+  const smv = document.getElementById('set-slider-music-val');
+  const ss = document.getElementById('set-slider-sfx');
+  const ssv = document.getElementById('set-slider-sfx-val');
+  if (sm) sm.value = state.musicVol;
+  if (smv) smv.textContent = state.musicVol + '%';
+  if (ss) ss.value = state.sfxVol;
+  if (ssv) ssv.textContent = state.sfxVol + '%';
   renderSkinSelector();
 }
 
@@ -7999,17 +7991,20 @@ function refreshPauseSliders() {
 
 function setPauseVol(type, val) {
   const n = parseInt(val);
-  const label = document.getElementById('slider-'+type+'-val');
-  if (label) label.textContent = n + '%';
+  // Sync both pause overlay and settings screen labels/sliders
+  const pauseLabel = document.getElementById('slider-'+type+'-val');
+  if (pauseLabel) pauseLabel.textContent = n + '%';
+  const pauseSlider = document.getElementById('slider-'+type);
+  if (pauseSlider) pauseSlider.value = n;
+  const setLabel = document.getElementById('set-slider-'+type+'-val');
+  if (setLabel) setLabel.textContent = n + '%';
+  const setSlider = document.getElementById('set-slider-'+type);
+  if (setSlider) setSlider.value = n;
   if (type === 'music') {
     state.musicVol = n;
     state.musicOn = n > 0;
-    // Применяем громкость к GainNode обеих музыкалных треков
-    const gainVal = n / 100;
-    try { if (_bgmAC) {
-      BGM._setVol && BGM._setVol(gainVal);
-      MENU_BGM._setVol && MENU_BGM._setVol(gainVal);
-    } } catch(e) {}
+    BGM._setVol && BGM._setVol(n / 100);
+    MENU_BGM._setVol && MENU_BGM._setVol(n / 100);
   } else {
     state.sfxVol = n;
     state.soundOn = n > 0;
