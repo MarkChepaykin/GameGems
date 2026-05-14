@@ -3,4 +3,4 @@ test-screenshots/
 *.mjs
 package.json
 package-lock.json
-TASKS.md
+.claude/
