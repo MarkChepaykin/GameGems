@@ -258,6 +258,9 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC29 — Мёд/Медведи (Honey Layers)
 `cell.honey=N` (1-3). `canSwap/_simCanSwap` блокируют. Матч рядом → `honey--`; при 0 → `freeBear(r,c)` → `bearsFreed++`. BOMB/STRIPE/MEGA → `honey=0`. `applyGravity()` фиксирует. Рендер: жёлтый градиент + капли + 🐻 + счётчик слоёв. `type:'bears'`, `level.bearsTarget`. `updateGoalProgress/calcStars/isCloseToWin` — bears case. `initBoard()` расставляет из `lvl.honeyCount`. `generateLevel()` difficulty>45. L65/L67 хардкод.
 
+### CC62 — EOC gate
+`showLevels()` — после постройки сетки: если `maxUnlocked > LEVELS.length`, вставляет `.level-btn.eoc-gate` с 🔒 + "Скоро..." через `insertBefore(gate, grid.firstChild)`. Нажатие → `showToast('🔒 Больше уровней уже скоро!')`. CSS `@keyframes eocPulse` + gradient фон.
+
 ---
 
 ## 🔵 ОЖИДАЮТ РЕАЛИЗАЦИИ
@@ -361,15 +364,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 `SEASONS` по `getMonth()`. CSS-переменные `--season-bg-top/bottom/particle`. Spring: зел+розов; Summer: жёлт+голуб; Autumn: оранж+бордов; Winter: синий+белый. Партиклы по сезону (CC40). Fade 2s при смене месяца.
 
 **AC:** Хаб выглядит по-разному зимой и летом.
-
----
-
-### TASK-CC62 · EOC gate
-**Приоритет: низкий | ~2 часа**
-
-После последнего уровня — `EOC-gate` кнопка: 🔒 + "Скоро..." + пульсация. При нажатии → тост (CC51). `maxLevelUnlocked === LEVELS.length` → показывать.
-
-**AC:** Красивая заблокированная дверь. Нажатие даёт фидбек.
 
 ---
 
