@@ -2311,25 +2311,25 @@ const LEVELS = [
   { level:102, type:'jelly',   target:0,     moves:16, gems:[],      iceCount:6,  stoneCount:0,  jellyCount:24, gemTypes:5,
     holes:[[0,0],[0,7],[7,0],[7,7]] },
   { level:103, type:'stone',   target:16,    moves:16, gems:[],      iceCount:0,  stoneCount:16, jellyCount:0,  gemTypes:5,
-    holes:[[0,0],[0,7],[7,0],[7,7]] },
+    holes:[[0,0],[0,7],[7,0],[7,7]], portals:[[2,2,6,5]] },
   { level:104, type:'ice',     target:24,    moves:18, gems:[],      iceCount:24, stoneCount:0,  jellyCount:0,  gemTypes:6,
     holes:[[0,4],[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,4],[4,5],[4,6],[4,7]] }, // Г-форма
   { level:105, type:'collect', target:65,    moves:15, gems:[0,2,4], iceCount:10, stoneCount:0,  jellyCount:12, gemTypes:6,
     holes:[[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3],[3,0],[3,1],[3,2],[3,3],[4,0],[4,1],[4,2],[4,3]] }, // Обратная Г
   { level:106, type:'score',   target:15000, moves:16, gems:[],      iceCount:12, stoneCount:0,  jellyCount:0,  gemTypes:6,
-    holes:[[2,3],[2,4],[3,3],[3,4],[4,3],[4,4],[5,3],[5,4]] },
+    holes:[[2,3],[2,4],[3,3],[3,4],[4,3],[4,4],[5,3],[5,4]], portals:[[1,1,7,6]] },
   { level:107, type:'ingredients',target:8,  moves:20, gems:[],      iceCount:14, stoneCount:0,  jellyCount:0,  gemTypes:6, ingredientCount:8,
     holes:[[0,4],[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,4],[4,5],[4,6],[4,7]] }, // Г-форма
   { level:108, type:'jelly',   target:0,     moves:15, gems:[],      iceCount:12, stoneCount:6,  jellyCount:26, gemTypes:6,
     holes:[[0,3],[0,4],[1,3],[1,4],[2,3],[2,4],[5,3],[5,4],[6,3],[6,4],[7,3],[7,4]] }, // Н-форма
   { level:109, type:'stone',   target:18,    moves:15, gems:[],      iceCount:12, stoneCount:18, jellyCount:0,  gemTypes:6,
-    holes:[[0,0],[0,1],[0,6],[0,7],[7,0],[7,1],[7,6],[7,7]] },
+    holes:[[0,0],[0,1],[0,6],[0,7],[7,0],[7,1],[7,6],[7,7]], portals:[[2,3,5,4]] },
   { level:110, type:'ice',     target:28,    moves:16, gems:[],      iceCount:28, stoneCount:0,  jellyCount:0,  gemTypes:6,
     holes:[[3,0],[3,1],[3,6],[3,7],[4,0],[4,1],[4,6],[4,7],[5,0],[5,1],[5,6],[5,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,6],[7,7]] }, // Т-форма
   { level:111, type:'collect', target:75,    moves:15, gems:[0,1,2,3,4,5], iceCount:14, stoneCount:10, jellyCount:0, gemTypes:6,
     holes:[[0,0],[0,1],[0,6],[0,7],[1,0],[1,7],[6,0],[6,7],[7,0],[7,1],[7,6],[7,7]] },
   { level:112, type:'score',   target:22000, moves:18, gems:[],      iceCount:10, stoneCount:10, jellyCount:0,  gemTypes:6,
-    holes:[[0,0],[0,1],[0,2],[0,5],[0,6],[0,7],[1,0],[1,1],[1,6],[1,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,2],[7,5],[7,6],[7,7]] },
+    holes:[[0,0],[0,1],[0,2],[0,5],[0,6],[0,7],[1,0],[1,1],[1,6],[1,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,2],[7,5],[7,6],[7,7]], portals:[[3,1,6,6]] },
 ];
 
 // ── Миграция 8×8 → 8×10 ──────────────────────────────────────
@@ -2604,6 +2604,7 @@ function generateLevel(levelNumber) {
   const mysteryCount   = (difficulty>55 && rng()>0.70) ? Math.round(1 + rng()*2) : 0;
   const ingredientCount= (type==='ingredients') ? Math.round(2 + difficulty*0.04) : 0;
   const bottleCount    = (type==='soda')        ? Math.round(2 + difficulty*0.04) : 0;
+  const portalCount    = (difficulty > 70 && rng() > 0.6) ? (rng() > 0.5 ? 2 : 1) : 0;
 
   const obs = Math.round(iceCount*0.7 + stoneCount*0.5);
   const typ = Math.round(Math.max(0, gemTypes-3)*1.5);
@@ -2653,9 +2654,23 @@ function generateLevel(levelNumber) {
   }
   moves = Math.min(moves, 45);
 
+  // Генерируем позиции порталов детерминированно через seeded rng
+  const _portalPairs = [];
+  if (portalCount > 0) {
+    const _holeKeys = new Set(holesArr.map(([r,c])=>`${r},${c}`));
+    const _validCells = [];
+    for (let r=1;r<ROWS-1;r++) for (let c=1;c<COLS-1;c++) if (!_holeKeys.has(`${r},${c}`)) _validCells.push([r,c]);
+    for (let i=_validCells.length-1;i>0;i--) { const j=Math.floor(rng()*(i+1)); [_validCells[i],_validCells[j]]=[_validCells[j],_validCells[i]]; }
+    for (let i=0;i<portalCount&&i*2+1<_validCells.length;i++) {
+      const [r1,c1]=_validCells[i*2], [r2,c2]=_validCells[i*2+1];
+      if (Math.abs(r1-r2)+Math.abs(c1-c2)>=4) _portalPairs.push([r1,c1,r2,c2]);
+    }
+  }
+
   return { level:levelNumber, type, target, moves, gems, gemTypes,
     iceCount, stoneCount, jellyCount, holes:holesArr,
-    chocolateCount, marmaladeCount, lockCount, mysteryCount, ingredientCount, bottleCount };
+    chocolateCount, marmaladeCount, lockCount, mysteryCount, ingredientCount, bottleCount,
+    portals: _portalPairs.length > 0 ? _portalPairs : undefined };
 }
 
 function generateCampaign(from, to) {
@@ -3975,6 +3990,7 @@ function initBoard(lvl) {
   state.carpetGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
   state.carpetTotal = 0;
   state.iceGrid    = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
+  state.portalGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(null));
 
   const board = [];
   for (let r = 0; r < ROWS; r++) {
@@ -4051,6 +4067,17 @@ function initBoard(lvl) {
     }));
     bottlePool.slice(0, lvl.bottleCount).forEach(([r,c]) => {
       board[r][c].bottle = true; board[r][c].special = SPECIAL.NONE;
+    });
+  }
+  // Порталы — overlay на клетке, соединяет пары позиций
+  if (Array.isArray(lvl.portals) && lvl.portals.length > 0) {
+    const _portalColors = ['#00d4ff','#ff7700','#bb44ff','#44ff88'];
+    lvl.portals.forEach(([r1,c1,r2,c2], idx) => {
+      if (r1<0||r1>=ROWS||c1<0||c1>=COLS||r2<0||r2>=ROWS||c2<0||c2>=COLS) return;
+      if (holeSet.has(`${r1},${c1}`) || holeSet.has(`${r2},${c2}`)) return;
+      const col = _portalColors[idx % _portalColors.length];
+      state.portalGrid[r1][c1] = {id: idx, exitR: r2, exitC: c2, color: col};
+      state.portalGrid[r2][c2] = {id: idx, exitR: r1, exitC: c1, color: col};
     });
   }
   // Валидация: если уровень требует камни/лёд но их нет на доске — автофикс
@@ -4295,6 +4322,40 @@ function drawBoard() {
     ctx.font=`${cs*.44}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('❄',bx+cs/2,by+cs/2);
     ctx.restore();
+  }
+
+  // 4.3 Порталы — цветные кольца с анимацией
+  if (state.portalGrid) {
+    const _t = Date.now();
+    const _drawnPairs = new Set();
+    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+      const p = state.portalGrid[r]?.[c]; if (!p) continue;
+      const pKey = Math.min(r*COLS+c, p.exitR*COLS+p.exitC)+','+Math.max(r*COLS+c, p.exitR*COLS+p.exitC);
+      if (_drawnPairs.has(pKey)) continue; _drawnPairs.add(pKey);
+      const x1=boardOffX+c*cs+cs/2, y1=boardOffY+r*cs+cs/2;
+      const x2=boardOffX+p.exitC*cs+cs/2, y2=boardOffY+p.exitR*cs+cs/2;
+      const cpx=(x1+x2)/2-(y2-y1)*0.3, cpy=(y1+y2)/2+(x2-x1)*0.3;
+      ctx.save();
+      ctx.strokeStyle=p.color+'66'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo(cpx,cpy,x2,y2); ctx.stroke();
+      ctx.setLineDash([]); ctx.restore();
+    }
+    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+      const p = state.portalGrid[r]?.[c]; if (!p) continue;
+      const px=boardOffX+c*cs+cs/2, py=boardOffY+r*cs+cs/2;
+      const pulse=0.88+0.12*Math.sin(_t/500+p.id*Math.PI);
+      const ringR=cs*0.44*pulse;
+      ctx.save();
+      ctx.shadowColor=p.color; ctx.shadowBlur=10;
+      ctx.strokeStyle=p.color; ctx.lineWidth=3; ctx.globalAlpha=0.85;
+      ctx.beginPath(); ctx.arc(px,py,ringR,0,Math.PI*2); ctx.stroke();
+      ctx.globalAlpha=0.18; ctx.fillStyle=p.color;
+      ctx.beginPath(); ctx.arc(px,py,ringR,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=0.75; ctx.shadowBlur=0;
+      ctx.font=`${cs*0.32}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillStyle='#ffffff'; ctx.fillText('🌀',px,py);
+      ctx.restore();
+    }
   }
 
   // 4.5 Сода-зона оверлей (синеватый градиент снизу)
@@ -4898,6 +4959,20 @@ async function processMatches(hintR, hintC) {
     }
 
     const cellsArr=[...matched].map(k=>{ const [r,c]=k.split(',').map(Number); return {r,c}; });
+    // Portal propagation: если в матч попал вход портала → добавить выход к уничтожению
+    if (state.portalGrid) {
+      const _portalExtras=[];
+      for (const {r,c} of cellsArr) {
+        const _p=state.portalGrid[r]?.[c]; if (!_p) continue;
+        const {exitR,exitC}=_p;
+        const _ec=state.board[exitR]?.[exitC];
+        if (!_ec||_ec.stone||_ec.chocolate||_ec.ingredient) continue;
+        if (cellsArr.some(x=>x.r===exitR&&x.c===exitC)) continue;
+        _portalExtras.push({r:exitR,c:exitC});
+        spawnParticles(exitR,exitC,_p.color,5);
+      }
+      cellsArr.push(..._portalExtras);
+    }
     // Floating score + множитель
     { const c0=cellsArr[Math.floor(cellsArr.length/2)];
       if(c0) {
@@ -5824,6 +5899,22 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
   if (special===SPECIAL.STRIPE_V) for (let rr=0;rr<ROWS;rr++) td.push([rr,c]);
   if (special===SPECIAL.BOMB)     for (let dr=-1;dr<=1;dr++) for (let dc=-1;dc<=1;dc++) { const nr=r+dr,nc=c+dc; if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS) td.push([nr,nc]); }
   if (special===SPECIAL.MEGA)     for (let dr=-2;dr<=2;dr++) for (let dc=-2;dc<=2;dc++) { const nr=r+dr,nc=c+dc; if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS) td.push([nr,nc]); }
+  // Порталы: стрипы продолжают весь ряд/столбец у выхода; BOMB/MEGA — добавляют exit-клетку
+  if (state.portalGrid && td.length > 0) {
+    const _tdKeys=new Set(td.map(([tr,tc])=>`${tr},${tc}`));
+    const _ext=[];
+    for (const [tr,tc] of td) {
+      const _p=state.portalGrid[tr]?.[tc]; if (!_p) continue;
+      if (special===SPECIAL.STRIPE_H) {
+        for (let ec=0;ec<COLS;ec++) { const k=`${_p.exitR},${ec}`; if(!_tdKeys.has(k)){_tdKeys.add(k);_ext.push([_p.exitR,ec]);} }
+      } else if (special===SPECIAL.STRIPE_V) {
+        for (let er=0;er<ROWS;er++) { const k=`${er},${_p.exitC}`; if(!_tdKeys.has(k)){_tdKeys.add(k);_ext.push([er,_p.exitC]);} }
+      } else {
+        const k=`${_p.exitR},${_p.exitC}`; if(!_tdKeys.has(k)){_tdKeys.add(k);_ext.push([_p.exitR,_p.exitC]);}
+      }
+    }
+    td.push(..._ext);
+  }
   if (!td.length) return;
   // Специфические анимации для каждого типа
   if (special===SPECIAL.BOMB) {
@@ -8924,6 +9015,7 @@ function _simInitBoard(lvl) {
   }
   return {
     board, holes: holeSet, iceGrid, jellyGrid, carpetGrid,
+    portalGrid: null,
     score: 0, moves: lvl.moves, comboCount: 0,
     collectedGems: {}, iceBroken: 0, stonesBroken: 0,
     ingredientsDelivered: 0, chocolateInitial: lvl.chocolateCount || 0,
