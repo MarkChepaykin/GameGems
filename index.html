@@ -6993,10 +6993,14 @@ function updateHUD() {
   ['hammer','colorbomb','shuffle','extramoves','striped'].forEach(id => {
     const cnt = document.getElementById(`hbst-${id}-cnt`);
     const btn = document.getElementById(`hbst-${id}`);
-    if (cnt) cnt.textContent = b[id] || 0;
+    const unlockLvl = BOOSTER_UNLOCK_LEVELS[id] || 0;
+    const isLocked = unlockLvl > 0 && (state.maxUnlocked||1) < unlockLvl;
+    if (cnt) cnt.textContent = isLocked ? '🔒' : (b[id] || 0);
     if (btn) {
-      btn.classList.toggle('active-booster', state.activeIngameBooster === id);
-      btn.style.opacity = (b[id]||0) > 0 ? '1' : '0.4';
+      btn.classList.toggle('active-booster', !isLocked && state.activeIngameBooster === id);
+      btn.style.opacity = isLocked ? '0.35' : (b[id]||0) > 0 ? '1' : '0.4';
+      btn.title = isLocked ? `Откроется на L${unlockLvl}` : (BOOSTER_META[id]?.name || id);
+      btn.disabled = isLocked;
     }
   });
 }
@@ -7008,6 +7012,20 @@ const BOOSTER_META = {
   extramoves: { icon:'⏱️', name:'+5 ходов',   desc:'Добавляет 5 ходов прямо сейчас', price:80 },
   striped:    { icon:'⚡', name:'Молния',     desc:'Ставит молнию на случайную клетку', price:40 },
 };
+
+// CC30: уровни разблокировки бустеров
+const BOOSTER_UNLOCK_LEVELS = { hammer:5, striped:10, colorbomb:16 };
+
+function checkBoosterUnlocks(prevMax, newMax) {
+  Object.entries(BOOSTER_UNLOCK_LEVELS).forEach(([id, lvl]) => {
+    if (lvl > prevMax && lvl <= newMax) {
+      const meta = BOOSTER_META[id];
+      if (!state.ingameBoosters) state.ingameBoosters = {};
+      state.ingameBoosters[id] = (state.ingameBoosters[id]||0) + 1;
+      setTimeout(() => showToast(`🔓 ${meta?.icon||'🎁'} ${meta?.name||id} разблокирован! +1 бесплатно`), 1500);
+    }
+  });
+}
 let _pendingBoosterType = null;
 
 // ── CC82: Buff Buddies ─────────────────────────────────────────────────────────
@@ -7132,6 +7150,10 @@ function tickSupersonic(r, c) {
 
 function activateInGameBooster(type) {
   if (state.busy || state.paused) return;
+  const _unlockLvl = BOOSTER_UNLOCK_LEVELS[type] || 0;
+  if (_unlockLvl > 0 && (state.maxUnlocked||1) < _unlockLvl) {
+    showToast(`🔒 Откроется на L${_unlockLvl}`); return;
+  }
   const b = state.ingameBoosters;
   if ((b[type]||0) > 0) {
     // Уже есть — активируем/отменяем без покупки
@@ -7668,7 +7690,9 @@ function _doShowWin() {
   }
   const prev=state.levelStars[state.currentLevel]||0;
   state.levelStars[state.currentLevel]=Math.max(prev,stars);
+  const _prevMax = state.maxUnlocked || 1;
   if (state.currentLevel>=state.maxUnlocked) state.maxUnlocked=state.currentLevel+1;
+  checkBoosterUnlocks(_prevMax, state.maxUnlocked);
   // Сбрасываем счётчик попыток при победе
   delete state.levelAttempts[state.currentLevel];
   // Бонус за первую попытку

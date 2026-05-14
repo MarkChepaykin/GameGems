@@ -234,6 +234,9 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC56 — Responsive layout
 `resizeCanvas()` portrait_narrow/portrait_square/landscape detection. `boardOffX/Y` как % viewport. HUD относительно board bounds. Landscape — board максимум высоты. `orientationchange` listener.
 
+### CC30 — Замки бустеров
+`BOOSTER_UNLOCK_LEVELS={hammer:5,striped:10,colorbomb:16}`. `updateHUD()` показывает 🔒/cnt, `disabled=true`, tooltip "Откроется на LN". `activateInGameBooster()` блокирует с тостом. `checkBoosterUnlocks(prevMax,newMax)` при победе: toast + +1 free если разблокировался.
+
 ### CC31 — Адаптивная музыка (тональность)
 `_musicState='calm'|'tense'|'critical'` внутри BGM_LAYERS. moves>10→calm, ≤10→tense (playbackRate→1.15 за 2s), ≤5→critical (+percGain kick/snare паттерн за 2s). `_smoothRate(target,ms)` через rAF. `getMusicState()` для dev-панели. `_makeMp3Bgm.getEl()` добавлен.
 
@@ -297,15 +300,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 Экран `capsule` раз в 5 побед. Бесплатно раз в 24ч. 🎁 трясётся 1.5с → лопается. Награды: 60%+15💎, 20% бустер, 15%+1жизнь, 5% скин. "Открыть" за 10💎 или "Пропустить".
 
 **AC:** Каждые 5 побед. Анимация видна. Бесплатно раз в сутки.
-
----
-
-### TASK-CC30 · Замки бустеров
-**Приоритет: низкий | ~1-2 часа**
-
-`BOOSTER_UNLOCK_LEVELS={hammer:5, lightning:10, rainbow:16, fish:25}`. Заблокировано если `maxLevel < unlockLevel`. В UI: 🔒 + "Откроется на L{N}". При разблокировании: тост + 1 бесплатный.
-
-**AC:** Молоток недоступен до L5. Разблокировка → уведомление.
 
 ---
 
