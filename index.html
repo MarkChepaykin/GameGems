@@ -2926,7 +2926,7 @@ function buildSaveObj() {
 
 const SAVE_FIELDS = ['coins','crystals','lives','livesTimestamp','lives24hUntil',
   'noAds','starterShown','maxUnlocked','levelStars','streakDays','lastLoginDate',
-  'streakLost','dailyDayClaimed','dailyLastClaim','lang','soundOn','vibroOn','musicVol','sfxVol',
+  'streakLost','dailyDayClaimed','dailyLastClaim','dailyLastClaimTs','lang','soundOn','vibroOn','musicVol','sfxVol',
   'rainbowStreak','lossStreak','totalLosses',
   'seasonStart','seasonXP','seasonPremium','seasonFreeClaimedMask','seasonPremClaimedMask',
   'tournWeekStart','tournScore','tournEndChecked',
@@ -3581,7 +3581,10 @@ function getCurrentDailyReward() {
 }
 
 function shouldShowDailyReward() {
-  return state.dailyLastClaim !== todayStr();
+  if (state.dailyLastClaim === todayStr()) return false;
+  // CC70: показывать если прошло >20ч с последнего получения
+  const ms = state.dailyLastClaimTs ? Date.now() - state.dailyLastClaimTs : Infinity;
+  return ms > 20 * 3600 * 1000;
 }
 
 function claimDailyReward() {
@@ -3593,8 +3596,9 @@ function claimDailyReward() {
     if (!state.ingameBoosters) state.ingameBoosters = { hammer:0, colorbomb:0 };
     state.ingameBoosters[reward.booster] = (state.ingameBoosters[reward.booster] || 0) + 1;
   }
-  state.dailyDayClaimed = day;
-  state.dailyLastClaim  = todayStr();
+  state.dailyDayClaimed   = day;
+  state.dailyLastClaim    = todayStr();
+  state.dailyLastClaimTs  = Date.now();
   saveGame();
   // Анимация числа вверх
   _flyRewardAnim(reward.text);

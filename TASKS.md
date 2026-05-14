@@ -234,6 +234,9 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC56 — Responsive layout
 `resizeCanvas()` portrait_narrow/portrait_square/landscape detection. `boardOffX/Y` как % viewport. HUD относительно board bounds. Landscape — board максимум высоты. `orientationchange` listener.
 
+### CC70 — Login Calendar
+`dailyDayClaimed/dailyLastClaim/dailyLastClaimTs` в state. `shouldShowDailyReward()` — 20ч + calendar day check. 7-day grid в `popup-daily`: `past/claimed/today/rarity-*` классы. `claimDailyReward()` → coins/crystals/lives/booster + `_flyRewardAnim()`. День 7 = legendary reward. Цикл: `dailyDayClaimed%7+1`.
+
 ### CC77 — Stars fly-to-HUD
 `flyStarsToCounter(numStars)`: JS bezier quadratic path per star, fixed-position overlay ⭐ elements. Задержки 0/400/800ms. При прилёте: `counterEl` текст +1, `@keyframes winStarBounce` bounce-анимация, `SFX._tone` 440/523/659 Hz. `#win-total-stars` div показывается в win-экране.
 
@@ -391,14 +394,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC70 · Login Calendar
-**Приоритет: средний | ~4 часа**
-
-`state.loginCalendar={lastClaim,day}`. При открытии (>20ч) → попап. 7-дневная сетка. День 7 → сундук (CC44). После 7 → 3-дневный цикл. "Получить" → анимация подарок падает 0.5s. Пропуск → серая ячейка.
-
-**AC:** Попап раз в день. День 7 → сундук. Пропуски — серые.
-
----
 
 ### TASK-CC71 · Экран 0 жизней
 **Приоритет: низкий | ~3 часа**
