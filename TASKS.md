@@ -261,6 +261,12 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC62 — EOC gate
 `showLevels()` — после постройки сетки: если `maxUnlocked > LEVELS.length`, вставляет `.level-btn.eoc-gate` с 🔒 + "Скоро..." через `insertBefore(gate, grid.firstChild)`. Нажатие → `showToast('🔒 Больше уровней уже скоро!')`. CSS `@keyframes eocPulse` + gradient фон.
 
+### CC80 — Lose-screen swipe-to-minimize
+`_setupLoseSwipe()` в `showLose()`. Handle bar (`#lose-drag-handle`) + drag вниз >30% → `.minimized` class (`translateY(calc(100%-60px))`). Snap-back при коротком свайпе. Tap на свёрнутый → разворачивает. Touch + Mouse events.
+
+### CC27 — Вероятности гемов на уровень
+`weightedRandom(weights)` хелпер. `_currentColorWeights`/`_currentSpecialWeights` из `lvl.colorWeights`/`lvl.specialSpawnWeights`. `randGem()` использует colorWeights если есть. DD-бонус спешлов в `fillFromTop()` использует specialSpawnWeights. Dev-панель: `CW:[...]` и `SW:{...}`. Демо: L2 `colorWeights:[3,1,1]`, L5 `[1,3,1,1]`, L8 `[1,1,2,2]`.
+
 ---
 
 ## 🔵 ОЖИДАЮТ РЕАЛИЗАЦИИ
@@ -300,15 +306,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 `state.sidekick={id,charge,maxCharge}`. Разблокируется L25. `SIDEKICKS`: 🐢(ломает 3 льда), 🐦(создаёт STRIPE), 🐻(+3 хода). Заряд: +1 матч, +3 спешл, +5 каскад 3+. Шкала в HUD. `activateSidekick()` автоматически.
 
 **AC:** Шкала растёт. При заполнении — активация. Разные компаньоны делают разное.
-
----
-
-### TASK-CC27 · Вероятности гемов на уровень
-**Приоритет: низкий | ~2 часа**
-
-`colorWeights:[1,1,1,1,1,1]` и `specialSpawnWeights:{...}` — опциональные поля уровня. `fillFromTop()` использует `weightedRandom`. `analyzeMatch()` использует specialSpawnWeights как bias. Dev-панель показывает текущие веса.
-
-**AC:** `colorWeights:[3,1,1,1,1,1]` заметно чаще спавнит гем 0. Без полей — равномерно.
 
 ---
 
@@ -423,9 +420,3 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ---
 
 
-### TASK-CC80 · Lose-screen swipe-to-minimize
-**Приоритет: низкий | ~2 часа**
-
-Handle bar сверху lose-экрана. Drag вниз >30% → collapse (остаётся 60px). Иначе snap back. Tap → expand. `translateY` `EASE.outCubic` 0.3s. В свёрнутом — видно замороженное поле.
-
-**AC:** Сворачивается свайпом. Разворачивается тапом. Snap-back при коротком свайпе.

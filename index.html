@@ -2131,13 +2131,13 @@ function getSkinColor(gemType) {
 const LEVELS = [
   // ── Эпизод 1: Начало (уровни 1-16) ───────────────────────────────────────
   { level:1,  type:'score',   target:4000,  moves:20, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:3, holes:[] },
-  { level:2,  type:'collect', target:24,    moves:20, gems:[0],     iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:3, holes:[] },
+  { level:2,  type:'collect', target:24,    moves:20, gems:[0],     iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:3, holes:[], colorWeights:[3,1,1] },
   { level:3,  type:'score',   target:5500,  moves:18, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
   { level:4,  type:'ice',     target:6,     moves:20, gems:[],      iceCount:6,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
-  { level:5,  type:'collect', target:28,    moves:20, gems:[1],     iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
+  { level:5,  type:'collect', target:28,    moves:20, gems:[1],     iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[], colorWeights:[1,3,1,1] },
   { level:6,  type:'score',   target:7000,  moves:18, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
   { level:7,  type:'stone',   target:4,     moves:20, gems:[],      iceCount:0,  stoneCount:4,  jellyCount:0,  gemTypes:4, holes:[] },
-  { level:8,  type:'collect', target:32,    moves:20, gems:[2,3],   iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
+  { level:8,  type:'collect', target:32,    moves:20, gems:[2,3],   iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[], colorWeights:[1,1,2,2] },
   { level:9,  type:'ice',     target:10,    moves:20, gems:[],      iceCount:10, stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
   { level:10, type:'score',   target:9000,  moves:20, gems:[],      iceCount:4,  stoneCount:4,  jellyCount:0,  gemTypes:5, holes:[] },
   { level:11, type:'jelly',   target:0,     moves:22, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:8,  gemTypes:4, holes:[] },
@@ -3998,7 +3998,26 @@ function createIngredient() {
   return { type: -2, special: SPECIAL.NONE, ice:false, stone:false, chocolate:false, marmalade:false, ingredient:true, icon: icons[Math.floor(Math.random()*icons.length)], anim:{} };
 }
 let _activeGemTypes = GEM_TYPES;
-function randGem() { return Math.floor(Math.random() * _activeGemTypes); }
+let _currentColorWeights = null;   // CC27: per-level gem color weights
+let _currentSpecialWeights = null; // CC27: per-level special spawn weights
+
+// CC27: pick index proportional to weights array
+function weightedRandom(weights) {
+  let sum = 0;
+  for (const w of weights) sum += w;
+  let r = Math.random() * sum;
+  for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r < 0) return i; }
+  return weights.length - 1;
+}
+
+function randGem() {
+  if (_currentColorWeights) {
+    const w = _currentColorWeights.slice(0, _activeGemTypes);
+    while (w.length < _activeGemTypes) w.push(1);
+    return weightedRandom(w);
+  }
+  return Math.floor(Math.random() * _activeGemTypes);
+}
 
 function initBoard(lvl) {
   // Валидация win-conditions
@@ -4008,6 +4027,9 @@ function initBoard(lvl) {
   if (lvl.type==='ingredients' && (lvl.ingredientCount||0)===0) console.warn(`Level ${lvl.level}: type=ingredients but ingredientCount=0`);
   // Устанавливаем количество типов фишек для уровня
   _activeGemTypes = lvl.gemTypes || GEM_TYPES;
+  // CC27: load per-level gem/special weights
+  _currentColorWeights = lvl.colorWeights || null;
+  _currentSpecialWeights = lvl.specialSpawnWeights || null;
   // CC45: Dynamic difficulty — fewer colors when player is struggling
   _currentDynDiff = getDynamicDifficulty();
   if (_currentDynDiff < 1.0) _activeGemTypes = Math.max(3, _activeGemTypes - 1);
@@ -5392,7 +5414,17 @@ function fillFromTop() {
         // CC43: Rainbow Round — 30% chance to spawn RAINBOW gem
         if (state.rainbowRound?.active && Math.random()<0.30) { g.special=SPECIAL.RAINBOW; g.type=-1; }
         // CC45: Dynamic difficulty — bonus specials when player is struggling
-        else if (_currentDynDiff < 1.0 && Math.random() < 0.08) { g.special = Math.random()<0.6 ? SPECIAL.STRIPE_H : SPECIAL.BOMB; }
+        else if (_currentDynDiff < 1.0 && Math.random() < 0.08) {
+          if (_currentSpecialWeights) {
+            const sw = _currentSpecialWeights;
+            const keys = ['stripe','bomb','rainbow','fish','wrapped'];
+            const vals = keys.map(k => sw[k] ?? 0);
+            const pick = keys[weightedRandom(vals)];
+            g.special = {stripe:SPECIAL.STRIPE_H,bomb:SPECIAL.BOMB,rainbow:SPECIAL.RAINBOW,fish:SPECIAL.FISH,wrapped:SPECIAL.WRAPPED}[pick] ?? SPECIAL.STRIPE_H;
+          } else {
+            g.special = Math.random()<0.6 ? SPECIAL.STRIPE_H : SPECIAL.BOMB;
+          }
+        }
         state.board[r][c]=g;
         newGemPositions.push({r,c});
       }
@@ -9752,7 +9784,10 @@ function devUpdateInfo() {
   const el = document.getElementById('dev-info'); if (!el) return;
   const lvl = getLevel(state.currentLevel);
   const chocRem = countChocolateRemaining();
-  el.textContent = `L${state.currentLevel} | ${lvl?.type||'?'} | ход:${state.moves} | 🏆${state.score} | 🍫${chocRem} | r${lvl?.revision||0} | 🎵${BGM_LAYERS.getMusicState()} | DD:${_currentDynDiff.toFixed(2)}`;
+  const cwStr = _currentColorWeights ? `CW:[${_currentColorWeights.join(',')}]` : '';
+  const swStr = _currentSpecialWeights ? `SW:{${Object.entries(_currentSpecialWeights).map(([k,v])=>k[0]+v).join(',')}}` : '';
+  const weightsStr = [cwStr, swStr].filter(Boolean).join(' ');
+  el.textContent = `L${state.currentLevel} | ${lvl?.type||'?'} | ход:${state.moves} | 🏆${state.score} | 🍫${chocRem} | r${lvl?.revision||0} | 🎵${BGM_LAYERS.getMusicState()} | DD:${_currentDynDiff.toFixed(2)}${weightsStr?' | '+weightsStr:''}`;
 }
 function devCmd(cmd) {
   switch(cmd) {
