@@ -270,6 +270,9 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC73 — Коллекция трофеев
 `TROPHIES[]` 6 штук (rookie/veteran/legend/streak/hard/ultra) + `checkTrophies()` при победе + раздел в `renderAchievements()`. `#m-last-trophy` на главном — последний полученный трофей. Клик → переход к достижениям.
 
+### CC54 — HUD objective counter
+`level.objective={type,gem,count}` — опциональная вторичная цель. `#hud-obj-row` + `#hud-obj-text` в HUD. `updateGoalProgress()` рендерит `💎/⭐/🧊 X/Y ✅`. При выполнении: `@keyframes objPop` + SFX 880 Hz. `checkWin()` проверяет objective после основной цели. Демо: L22 `objective:{type:'score',count:8000}`.
+
 ---
 
 ## 🔵 ОЖИДАЮТ РЕАЛИЗАЦИИ
@@ -339,15 +342,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-
-### TASK-CC54 · HUD objective counter
-**Приоритет: средний | ~3 часа**
-
-`level.objective={type,gem,count}`. В HUD: `[emoji] X/Y`. Emoji: 💎 collect, ⭐ score, 🧊 ice. При выполнении: ✅ + sound + scale-поп. `checkWin()` проверяет цель.
-
-**AC:** Цель видна. Прогресс обновляется. При выполнении — анимированная галочка.
-
----
 
 ### TASK-CC59 · Scrolling Board
 **Приоритет: низкий | ~5 часов**

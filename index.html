@@ -322,6 +322,8 @@ canvas { display: block; touch-action: none; }
   transition: color .3s;
 }
 #goal-text.completed { color: #4ade80; }
+@keyframes objPop { 0%{transform:scale(1)} 40%{transform:scale(1.5)} 70%{transform:scale(0.92)} 100%{transform:scale(1)} }
+#hud-obj-text.completed { color: #4ade80; animation: objPop .45s ease-out; }
 .hud-score-inline {
   font-size: 13px; font-weight: 800; color: #f9a8d4; white-space: nowrap; flex-shrink: 0;
 }
@@ -1038,6 +1040,10 @@ canvas { display: block; touch-action: none; }
       <div id="star-bar-wrap"><div id="star-bar" style="width:0%"></div></div>
       <div id="goal-text"></div>
       <div class="hud-score-inline" id="hud-score">0</div>
+    </div>
+    <!-- CC54: secondary objective counter -->
+    <div id="hud-obj-row" style="display:none;justify-content:center;align-items:center;gap:6px;padding:0 12px 3px;font-size:12px;font-weight:700;color:#f9a8d4;">
+      <span id="hud-obj-text"></span>
     </div>
     <!-- Buff Buddies bar (CC82) -->
     <div id="buff-bar-row" style="display:none;align-items:center;gap:6px;padding:2px 12px 4px;">
@@ -2155,7 +2161,7 @@ const LEVELS = [
   { level:19, type:'ice',     target:12,    moves:20, gems:[],      iceCount:12, stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
   { level:20, type:'carpet',  target:0,     moves:22, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
   { level:21, type:'score',   target:12000, moves:20, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[] },
-  { level:22, type:'collect', target:45,    moves:20, gems:[0,2,4], iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[] },
+  { level:22, type:'collect', target:45,    moves:20, gems:[0,2,4], iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[], objective:{type:'score',count:8000} },
   { level:23, type:'stone',   target:8,     moves:20, gems:[],      iceCount:0,  stoneCount:8,  jellyCount:0,  gemTypes:5, holes:[] },
   { level:24, type:'score',   target:13000, moves:20, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[] },
   { level:25, type:'ice',     target:14,    moves:20, gems:[],      iceCount:14, stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[[0,0],[0,7]] },
@@ -7542,23 +7548,55 @@ function updateGoalProgress() {
     if(s3) { s3.textContent=prog>=1.0?'⭐':'☆';  s3.classList.toggle('lit',prog>=1.0); }
   }
   if(goalEl) { goalEl.innerHTML=html; goalEl.classList.toggle('completed', prog>=1); }
+
+  // CC54: secondary objective counter
+  const objRow = document.getElementById('hud-obj-row');
+  const objTxt = document.getElementById('hud-obj-text');
+  if (objRow && objTxt && lvl.objective) {
+    const obj = lvl.objective;
+    let cur = 0, icon = '🎯';
+    if (obj.type === 'collect') { cur = state.collectedGems?.[obj.gem] || 0; icon = '💎'; }
+    else if (obj.type === 'score') { cur = state.score; icon = '⭐'; }
+    else if (obj.type === 'ice')   { cur = state.iceBroken || 0; icon = '🧊'; }
+    const done = cur >= obj.count;
+    const prevDone = objTxt.classList.contains('completed');
+    objRow.style.display = 'flex';
+    objTxt.innerHTML = `${icon} ${Math.min(cur, obj.count)} / ${obj.count}${done ? ' ✅' : ''}`;
+    if (done && !prevDone) {
+      objTxt.classList.add('completed');
+      SFX._tone && SFX._tone(880, 'sine', 0.18, 0.25);
+    }
+    objTxt.classList.toggle('completed', done);
+  } else if (objRow) {
+    objRow.style.display = 'none';
+  }
 }
 
 function checkWin() {
   const lvl=getLevel(state.currentLevel);
+  let mainWin = false;
   switch(lvl.type) {
-    case 'score':   return false; // score levels play out all moves; win checked at moves===0
-    case 'collect': { let t=0; lvl.gems.forEach(g=>t+=(state.collectedGems[g]||0)); return t>=lvl.target; }
-    case 'ice':     return state.iceBroken>=lvl.target;
-    case 'stone':   return state.stonesBroken>=lvl.target;
-    case 'jelly':        return countJellyRemaining()===0;
-    case 'ingredients':  return state.ingredientsDelivered>=lvl.target;
-    case 'chocolate':    return countChocolateRemaining()===0;
-    case 'soda':         return state.bottlesBroken>=lvl.target;
-    case 'carpet':       return countCarpetRemaining()===0;
-    case 'bears':        return (state.bearsFreed||0) >= (lvl.bearsTarget||lvl.honeyCount||1);
+    case 'score':   mainWin = false; break; // score levels play out all moves; win checked at moves===0
+    case 'collect': { let t=0; lvl.gems.forEach(g=>t+=(state.collectedGems[g]||0)); mainWin = t>=lvl.target; break; }
+    case 'ice':     mainWin = state.iceBroken>=lvl.target; break;
+    case 'stone':   mainWin = state.stonesBroken>=lvl.target; break;
+    case 'jelly':        mainWin = countJellyRemaining()===0; break;
+    case 'ingredients':  mainWin = state.ingredientsDelivered>=lvl.target; break;
+    case 'chocolate':    mainWin = countChocolateRemaining()===0; break;
+    case 'soda':         mainWin = state.bottlesBroken>=lvl.target; break;
+    case 'carpet':       mainWin = countCarpetRemaining()===0; break;
+    case 'bears':        mainWin = (state.bearsFreed||0) >= (lvl.bearsTarget||lvl.honeyCount||1); break;
   }
-  return false;
+  // CC54: secondary objective must also be met
+  if (mainWin && lvl.objective) {
+    const obj = lvl.objective;
+    let cur = 0;
+    if (obj.type === 'collect') cur = state.collectedGems?.[obj.gem] || 0;
+    else if (obj.type === 'score') cur = state.score;
+    else if (obj.type === 'ice') cur = state.iceBroken || 0;
+    mainWin = cur >= obj.count;
+  }
+  return mainWin;
 }
 
 function calcStars() {
