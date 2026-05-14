@@ -204,6 +204,9 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC82 — Buff Buddies нюк
 `state.buffPieces/buffNukeReady`. `BUFF_PIECES_TARGET=10`. `addBuffPiece()` при матче 5+. `fireBuffNuke(r,c)` каскадный 3×3.
 
+### CC43 — Rainbow Round
+`state.rainbowRound={active,movesLeft}`. Раз в 20 побед → 3 хода. `fillFromTop()` 30% шанс RAINBOW gem. `#game-canvas.rainbow-round` CSS `hue-rotate` анимация. `showRainbowRoundBanner()` поп-баннер + SFX. `updateRainbowRoundHUD()` синхронизирует класс. Сброс при retry.
+
 ### CC17 — Лакрица-слои (Licorice)
 `cell.licorice=N` (1-3). `canSwap()` блокирует. Матч рядом → `licorice--`. BOMB/STRIPE/MEGA → `licorice=0`. `applyGravity()` блокирует падение. `spawnLicorice()` автоспавн в `spendMove()` по `licoriceSpawnRate`. Рендер: N концентрических эллипсов + 🍬. L56/58/62 хардкод, generateLevel difficulty>50.
 
@@ -321,15 +324,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 Экран 'menu' → "живой" хаб: остров (правый угол), события (левый), маскот (центр). 5 состояний: `hub_idle` (float), `hub_level_unlocked` (pop), `hub_reward_ready` (пульс), `hub_no_lives` (разбитое сердце), `hub_event_active` (баннер). CSS classes + JS state machine.
 
 **AC:** 3 анимированных зоны. При награде — пульс. При 0 жизней — сломанное сердце.
-
----
-
-### TASK-CC43 · Rainbow Round
-**Приоритет: средний | ~3 часа**
-
-`state.rainbowRound={active,movesLeft}`. Триггер: раз в 20 побед, 3 хода. `fillFromTop()` → RAINBOW с 30%. Фон: hue-rotate CSS. HUD баннер "🌈 Rainbow Round! × ходов". Звук-фанфара.
-
-**AC:** Активация видна. Rainbow гемы чаще. Ровно N ходов.
 
 ---
 

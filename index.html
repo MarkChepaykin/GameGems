@@ -49,6 +49,9 @@ html, body {
   overflow: hidden;
 }
 canvas { display: block; touch-action: none; }
+/* CC43: Rainbow Round canvas animation */
+@keyframes rainbowHue { 0%{filter:hue-rotate(0deg) saturate(1.4)} 100%{filter:hue-rotate(360deg) saturate(1.4)} }
+#game-canvas.rainbow-round { animation: rainbowHue 2.5s linear infinite; }
 
 .screen {
   position: absolute; inset: 0;
@@ -1027,6 +1030,7 @@ canvas { display: block; touch-action: none; }
   <div id="on-fire-beam"></div>
   <div id="combo-display"></div>
   <div id="candy-comment"></div>
+  <div id="rainbow-round-banner" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:35;background:linear-gradient(135deg,rgba(200,0,255,0.92),rgba(0,100,255,0.92));color:#fff;font-size:18px;font-weight:900;padding:10px 22px;border-radius:16px;border:2.5px solid rgba(255,255,255,0.5);box-shadow:0 0 24px rgba(200,0,255,0.7);text-align:center;pointer-events:none;white-space:nowrap;"></div>
   <canvas id="particle-canvas"></canvas>
   <div id="onboarding-tip" class="hidden">
     <span class="ob-hand">👆</span>
@@ -2710,6 +2714,7 @@ const state = {
   sodaLevel: 0,             // сколько строк снизу залито содой
   licoriceSpawnRate: 0,
   licoriceMax: 0,
+  rainbowRound: { active: false, movesLeft: 0 },
   bottlesBroken: 0,         // сколько бутылок лопнуло
   lastSwap: null,           // {r1,c1,r2,c2,board,score,moves} — для undo
   undoUsedThisLevel: false, // первый undo бесплатный
@@ -5228,6 +5233,8 @@ function fillFromTop() {
       if (existing===null) {
         emptyCount++;
         const g=createGem(); g.anim={oy:-emptyCount*cellSize,alpha:1};
+        // CC43: Rainbow Round — 30% chance to spawn RAINBOW gem
+        if (state.rainbowRound?.active && Math.random()<0.30) { g.special=SPECIAL.RAINBOW; g.type=-1; }
         state.board[r][c]=g;
         newGemPositions.push({r,c});
       }
@@ -6562,12 +6569,48 @@ function spendMove() {
   updateHUD();
   updateQuestProgress('moves', 1);
   resetHintTimer();
+  // CC43: Rainbow Round moves countdown
+  if (state.rainbowRound?.active) {
+    state.rainbowRound.movesLeft--;
+    updateRainbowRoundHUD();
+    if (state.rainbowRound.movesLeft <= 0) {
+      state.rainbowRound.active = false;
+      state.rainbowRound.movesLeft = 0;
+      updateRainbowRoundHUD();
+    }
+  }
   // CC17: Licorice auto-spawn
   if (state.licoriceSpawnRate > 0 && state.moves > 0) {
     const lvl = getLevel(state.currentLevel);
     const spent = (lvl?.moves || 20) - state.moves;
     if (spent > 0 && spent % state.licoriceSpawnRate === 0) spawnLicorice();
   }
+}
+
+// CC43: Rainbow Round — banner + HUD sync
+function showRainbowRoundBanner() {
+  if (!state.rainbowRound?.active) return;
+  SFX.match(7); SFX.match(8);
+  updateRainbowRoundHUD();
+  const el = document.getElementById('rainbow-round-banner');
+  if (!el) return;
+  el.textContent = `🌈 РАДУЖНЫЙ РАУНД! × ${state.rainbowRound.movesLeft} ходов`;
+  el.style.display = 'block';
+  el.style.transition = 'transform 0.35s cubic-bezier(.34,1.56,.64,1)';
+  el.style.transform = 'translate(-50%,-50%) scale(1)';
+  setTimeout(() => {
+    el.style.transition = 'transform 0.25s ease-in, opacity 0.25s';
+    el.style.transform = 'translate(-50%,-50%) scale(0)';
+    el.style.opacity = '0';
+    setTimeout(() => { el.style.display='none'; el.style.opacity='1'; }, 280);
+  }, 2200);
+}
+
+function updateRainbowRoundHUD() {
+  const c = document.getElementById('game-canvas');
+  if (!c) return;
+  if (state.rainbowRound?.active) c.classList.add('rainbow-round');
+  else c.classList.remove('rainbow-round');
 }
 
 function spawnLicorice() {
@@ -7529,6 +7572,13 @@ function _doShowWin() {
   state.totalStonesBroken = (state.totalStonesBroken || 0) + (state.stonesBroken || 0);
   // Достижения
   state.totalWins = (state.totalWins || 0) + 1;
+  // CC43: Rainbow Round — activate once every 20 wins, lasts 3 moves
+  if (state.totalWins > 0 && state.totalWins % 20 === 0) {
+    if (!state.rainbowRound) state.rainbowRound = {};
+    state.rainbowRound.active = true;
+    state.rainbowRound.movesLeft = 3;
+    setTimeout(() => showRainbowRoundBanner(), 3800);
+  }
   unlockAchievement('first_win');
   if (state.currentLevel >= 10) unlockAchievement('level_10');
   if (state.currentLevel >= 25) unlockAchievement('level_25');
@@ -8022,9 +8072,11 @@ function playLevel(n, fresh) {
     state.collectedGems={}; state.iceBroken=0; state.stonesBroken=0;
     state.comboCount=0; state.adMovesUsed=false; state.extraMovesUsed=false; state.ingredientsDelivered=0;
     state.chocolateInitial=0; state.sodaLevel=0; state.bottlesBroken=0; state._winShowing=false;
+    if (state.rainbowRound) { state.rainbowRound.active=false; state.rainbowRound.movesLeft=0; }
     state.lastSwap=null; state.undoUsedThisLevel=false; hideGestureHint();
     state.buffPieces=0; state.buffNukeReady=false; state.buffNukeActive=false;
     state.supersonicActive=false; state.supersonicMovesLeft=0;
+    setTimeout(updateRainbowRoundHUD, 50);
     setTimeout(updateBuffBar, 100);
     setTimeout(() => {
       _updateSupersonicHUD();
