@@ -1180,6 +1180,8 @@ canvas { display: block; touch-action: none; }
 <div id="screen-lose" class="screen result-screen hidden">
   <!-- CC80: drag handle для bottom-sheet свайпа -->
   <div id="lose-drag-handle" style="width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.3);margin:0 auto 12px;cursor:grab;touch-action:none;"></div>
+  <!-- CC71: lives remaining -->
+  <div id="lose-lives-row" style="font-size:13px;color:#f9a8d4;font-weight:700;margin-bottom:4px;"></div>
   <div id="lose-heart" class="result-title" style="font-size:64px;line-height:1;">💔</div>
   <div class="result-title" id="lose-title" style="font-size:28px;margin-top:4px;">Почти!</div>
   <div class="result-sub" id="lose-sub">Ходы закончились</div>
@@ -1530,7 +1532,10 @@ canvas { display: block; touch-action: none; }
     <div class="popup-title">Нет жизней!</div>
     <div class="popup-sub">Следующая жизнь через:</div>
     <div class="no-lives-timer" id="no-lives-timer">30:00</div>
-    <button class="btn btn-green" onclick="watchAdLife()">📺 Реклама → +1 жизнь</button>
+    <button class="btn btn-green" onclick="simulateAd(()=>{ state.lives=Math.min(MAX_LIVES,state.lives+1); saveGame(); closeNoLivesPopup(); refreshMenu(); showToast('📺 +1 жизнь!'); })">📺 Реклама → +1 жизнь (5с)</button>
+    <div id="no-lives-ad-bar" style="display:none;width:200px;height:6px;background:rgba(255,255,255,.1);border-radius:3px;margin:4px auto;overflow:hidden;"><div id="no-lives-ad-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#4ade80,#22c55e);border-radius:3px;transition:width .1s linear;"></div></div>
+    <button class="btn btn-blue btn-sm" onclick="askFriendsForLife()">👥 Попросить помощь</button>
+    <div id="no-lives-friends" style="display:none;font-size:12px;color:#94a3b8;margin:4px 0;text-align:center;"></div>
     <button class="btn btn-primary" onclick="buyLifeCoins()">50 🪙 → +1 жизнь</button>
     <button class="btn btn-gray btn-sm" onclick="closeNoLivesPopup()">Подождать</button>
   </div>
@@ -3541,6 +3546,34 @@ function updateNoLivesTimer() {
   const el = document.getElementById('no-lives-timer');
   if (!el) return;
   el.textContent = formatMs(nextLifeMs());
+}
+
+// CC71: 5-second fake ad progress, then fires onComplete
+function simulateAd(onComplete) {
+  const bar = document.getElementById('no-lives-ad-bar');
+  const fill = document.getElementById('no-lives-ad-fill');
+  if (!bar || !fill) { onComplete(); return; }
+  bar.style.display = 'block'; fill.style.width = '0%';
+  let elapsed = 0;
+  const iv = setInterval(() => {
+    elapsed += 100;
+    fill.style.width = Math.min(elapsed / 5000 * 100, 100) + '%';
+    if (elapsed >= 5000) {
+      clearInterval(iv);
+      bar.style.display = 'none';
+      onComplete();
+    }
+  }, 100);
+}
+
+const _FAKE_FRIENDS = ['Алёна К.','Дима С.','Маша П.','Серёжа Б.','Оля Л.','Женя Т.','Коля В.','Катя Р.'];
+function askFriendsForLife() {
+  const el = document.getElementById('no-lives-friends');
+  if (!el) return;
+  const picks = [..._FAKE_FRIENDS].sort(() => Math.random()-0.5).slice(0,3);
+  el.style.display = '';
+  el.innerHTML = picks.map(n => `<div>👤 ${n} — <span style="color:#4ade80;">отправлено!</span></div>`).join('');
+  showToast('👥 Запрос отправлен друзьям!');
 }
 
 function watchAdLife() {
@@ -8211,6 +8244,18 @@ function showLose() {
 
   const nearMiss = getNearMissProgress();
   const close = isCloseToWin();
+
+  // CC71: lives remaining row
+  const livesRow = document.getElementById('lose-lives-row');
+  if (livesRow) {
+    if (!hasInfiniteLives()) {
+      const lv = state.lives || 0;
+      livesRow.textContent = `❤️ Осталось: ${lv} / ${MAX_LIVES}`;
+      livesRow.style.display = '';
+    } else {
+      livesRow.style.display = 'none';
+    }
+  }
 
   // Заголовок и подзаголовок
   document.getElementById('lose-title').textContent = nearMiss >= 0.80 ? '🔥 Почти!' : '💔 Провал';

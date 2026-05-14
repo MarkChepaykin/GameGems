@@ -273,6 +273,9 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC54 — HUD objective counter
 `level.objective={type,gem,count}` — опциональная вторичная цель. `#hud-obj-row` + `#hud-obj-text` в HUD. `updateGoalProgress()` рендерит `💎/⭐/🧊 X/Y ✅`. При выполнении: `@keyframes objPop` + SFX 880 Hz. `checkWin()` проверяет objective после основной цели. Демо: L22 `objective:{type:'score',count:8000}`.
 
+### CC71 — Экран 0 жизней
+`#lose-lives-row` "❤️ Осталось: X/5" на lose-экране. `simulateAd(onComplete)` — 5s прогресс-бар → callback. `askFriendsForLife()` — 3 рандомных имени + "отправлено". `#no-lives-ad-bar`/`#no-lives-friends` в no-lives попапе. Таймер уже был.
+
 ---
 
 ## 🔵 ОЖИДАЮТ РЕАЛИЗАЦИИ
@@ -379,15 +382,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-
-### TASK-CC71 · Экран 0 жизней
-**Приоритет: низкий | ~3 часа**
-
-При `lives===0` — полноценный экран. "Попросить помощь" (3 случайных "друга"). "Смотреть рекламу" → `simulateAd()` → +1 жизнь (5s). Таймер в HUD. "Осталось: X/5" на lose-экране.
-
-**AC:** 0 жизней → экран с опциями. Таймер видим.
-
----
 
 ### TASK-CC74 · Shop offer с таймером
 **Приоритет: низкий | ~3 часа**
