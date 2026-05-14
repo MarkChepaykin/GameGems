@@ -231,6 +231,12 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### TASK-MP3 — Интеграция MP3 треков
 `_makeMp3Bgm(src)` — HTML5 Audio wrapper. `MENU_BGM=_makeMp3Bgm('audio/menu.mp3')`, `BGM=_makeMp3Bgm('audio/bgm.mp3')`. `state.musicVol` (0-100) + слайдер в настройках. `state.musicOn` тоггл. `BGM_LAYERS` Web Audio поверх mp3. audio/menu.mp3 и audio/bgm.mp3 в репозитории.
 
+### CC56 — Responsive layout
+`resizeCanvas()` portrait_narrow/portrait_square/landscape detection. `boardOffX/Y` как % viewport. HUD относительно board bounds. Landscape — board максимум высоты. `orientationchange` listener.
+
+### CC31 — Адаптивная музыка (тональность)
+`_musicState='calm'|'tense'|'critical'` внутри BGM_LAYERS. moves>10→calm, ≤10→tense (playbackRate→1.15 за 2s), ≤5→critical (+percGain kick/snare паттерн за 2s). `_smoothRate(target,ms)` через rAF. `getMusicState()` для dev-панели. `_makeMp3Bgm.getEl()` добавлен.
+
 ### CC29 — Мёд/Медведи (Honey Layers)
 `cell.honey=N` (1-3). `canSwap/_simCanSwap` блокируют. Матч рядом → `honey--`; при 0 → `freeBear(r,c)` → `bearsFreed++`. BOMB/STRIPE/MEGA → `honey=0`. `applyGravity()` фиксирует. Рендер: жёлтый градиент + капли + 🐻 + счётчик слоёв. `type:'bears'`, `level.bearsTarget`. `updateGoalProgress/calcStars/isCloseToWin` — bears case. `initBoard()` расставляет из `lvl.honeyCount`. `generateLevel()` difficulty>45. L65/L67 хардкод.
 
@@ -303,15 +309,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC31 · Адаптивная музыка (тональность)
-**Приоритет: средний | ~3-4 часа**
-
-`musicState='calm'|'tense'|'critical'`. moves>10 → calm. moves≤10 → tense (BPM +15%). moves≤5 → critical (перкуссионный слой). Переходы через `linearRampToValueAtTime` за 2с.
-
-**AC:** При последних 5 ходах музыка заметно меняется. Плавный переход.
-
----
-
 ### TASK-CC36 · Диорама — анимированный хаб
 **Приоритет: низкий | ~8-10 часов**
 
@@ -345,15 +342,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 `level.objective={type,gem,count}`. В HUD: `[emoji] X/Y`. Emoji: 💎 collect, ⭐ score, 🧊 ice. При выполнении: ✅ + sound + scale-поп. `checkWin()` проверяет цель.
 
 **AC:** Цель видна. Прогресс обновляется. При выполнении — анимированная галочка.
-
----
-
-### TASK-CC56 · Responsive layout
-**Приоритет: высокий | ~3 часа**
-
-`resizeCanvas()` определяет ratio → `portrait_narrow`(<0.6), `portrait_square`(0.6-0.8), `landscape`(>1.2). `boardOffX/Y` как % viewport. HUD относительно board bounds. Тест: 375×667, 430×932, 768×1024, 1920×1080.
-
-**AC:** Board центрирован на всех. HUD не вылезает. Landscape — board максимум высоты.
 
 ---
 

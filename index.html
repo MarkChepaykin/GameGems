@@ -1770,7 +1770,8 @@ function _makeMp3Bgm(src) {
     },
     set(on) { on ? this.start() : this.stop(); },
     isPlaying() { return !!_el && !_el.paused; },
-    _setVol(v) { if (_el) _el.volume = Math.max(0, Math.min(1, v)); }
+    _setVol(v) { if (_el) _el.volume = Math.max(0, Math.min(1, v)); },
+    getEl() { _init(); return _el; },
   };
 }
 
@@ -1780,9 +1781,11 @@ const MENU_BGM = _makeMp3Bgm('audio/menu.mp3');
 // ── Музыка для уровней ────────────────────────────────────────────
 const BGM = _makeMp3Bgm('audio/bgm.mp3');
 
-// ── CC64: 3-слойная адаптивная музыка (HighIntensity + EGP layers) ──────────────
+// ── CC64+CC31: 3-слойная адаптивная музыка + тональные переходы ──────────────
 const BGM_LAYERS = (() => {
-  let hiGain = null, egpGain = null, _egpTimer = null;
+  let hiGain = null, egpGain = null, percGain = null;
+  let _egpTimer = null, _percTimer = null, _rateRAF = null;
+  let _musicState = 'calm'; // 'calm' | 'tense' | 'critical'
 
   function getAC() { return getBgmAC(); }
 
@@ -1790,7 +1793,6 @@ const BGM_LAYERS = (() => {
     const ac = getAC();
     if (!hiGain) {
       hiGain = ac.createGain(); hiGain.gain.value = 0; hiGain.connect(ac.destination);
-      // HighIntensity layer: driving 8th-note pulse at 93 BPM (E4 A4 pattern)
       (function scheduleHi() {
         if (!hiGain) return;
         const t0 = Math.max(ac.currentTime + 0.05, ac.currentTime);
@@ -1810,7 +1812,6 @@ const BGM_LAYERS = (() => {
     }
     if (!egpGain) {
       egpGain = ac.createGain(); egpGain.gain.value = 0; egpGain.connect(ac.destination);
-      // EGP layer: staccato high-energy chord bursts (C5 E5 G5)
       (function scheduleEGP() {
         if (!egpGain) return;
         const t0 = ac.currentTime;
@@ -1830,21 +1831,75 @@ const BGM_LAYERS = (() => {
         setTimeout(scheduleEGP, (8 * B - 0.1) * 1000);
       })();
     }
+    if (!percGain) {
+      percGain = ac.createGain(); percGain.gain.value = 0; percGain.connect(ac.destination);
+      (function schedulePerc() {
+        if (!percGain) return;
+        const t0 = Math.max(ac.currentTime + 0.02, ac.currentTime);
+        const BPM = 124, B = 60 / BPM;
+        // Kick on beats 0, 2
+        [0, B * 2].forEach(dt => {
+          const o = ac.createOscillator(), g = ac.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(90, t0 + dt);
+          o.frequency.exponentialRampToValueAtTime(35, t0 + dt + 0.12);
+          g.gain.setValueAtTime(0, t0 + dt);
+          g.gain.linearRampToValueAtTime(0.5, t0 + dt + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.001, t0 + dt + 0.18);
+          o.connect(g); g.connect(percGain);
+          o.start(t0 + dt); o.stop(t0 + dt + 0.2);
+        });
+        // Snare on beats 1, 3
+        [B, B * 3].forEach(dt => {
+          const sr = ac.sampleRate;
+          const buf = ac.createBuffer(1, Math.round(sr * 0.12), sr);
+          const data = buf.getChannelData(0);
+          for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (data.length * 0.4));
+          const src = ac.createBufferSource();
+          const filt = ac.createBiquadFilter(); filt.type = 'bandpass'; filt.frequency.value = 2500; filt.Q.value = 0.5;
+          const g = ac.createGain(); g.gain.setValueAtTime(0.3, t0 + dt);
+          src.buffer = buf; src.connect(filt); filt.connect(g); g.connect(percGain);
+          src.start(t0 + dt);
+        });
+        _percTimer = setTimeout(schedulePerc, (4 * B - 0.05) * 1000);
+      })();
+    }
+  }
+
+  function _smoothRate(target, ms) {
+    cancelAnimationFrame(_rateRAF);
+    const el = BGM.getEl(); if (!el) return;
+    const start = el.playbackRate, t0 = performance.now();
+    (function step(t) {
+      const frac = Math.min((t - t0) / ms, 1);
+      el.playbackRate = start + (target - start) * frac;
+      if (frac < 1) _rateRAF = requestAnimationFrame(step);
+    })(performance.now());
   }
 
   return {
     onMovesChange(movesLeft) {
       if (!state.musicOn) return;
+      const newState = movesLeft <= 5 ? 'critical' : movesLeft <= 10 ? 'tense' : 'calm';
+      if (newState === _musicState) return;
+      _musicState = newState;
       try {
         ensureLayers();
-        const ac = getAC();
-        const now = ac.currentTime;
-        hiGain.gain.cancelScheduledValues(now);
-        hiGain.gain.setValueAtTime(hiGain.gain.value, now);
-        if (movesLeft < 5) {
-          hiGain.gain.linearRampToValueAtTime(1.0, now + 0.05);
+        const ac = getAC(), now = ac.currentTime;
+        hiGain.gain.cancelScheduledValues(now);  hiGain.gain.setValueAtTime(hiGain.gain.value, now);
+        percGain.gain.cancelScheduledValues(now); percGain.gain.setValueAtTime(percGain.gain.value, now);
+        if (newState === 'critical') {
+          hiGain.gain.linearRampToValueAtTime(1.0, now + 2);
+          percGain.gain.linearRampToValueAtTime(1.0, now + 2);
+          _smoothRate(1.15, 2000);
+        } else if (newState === 'tense') {
+          hiGain.gain.linearRampToValueAtTime(0.35, now + 2);
+          percGain.gain.linearRampToValueAtTime(0, now + 2);
+          _smoothRate(1.15, 2000);
         } else {
-          hiGain.gain.linearRampToValueAtTime(0, now + 4.0);
+          hiGain.gain.linearRampToValueAtTime(0, now + 2);
+          percGain.gain.linearRampToValueAtTime(0, now + 2);
+          _smoothRate(1.0, 2000);
         }
       } catch(e) {}
     },
@@ -1870,17 +1925,23 @@ const BGM_LAYERS = (() => {
     },
     fadeOut(dur = 2.3) {
       try {
-        if (hiGain) { const n = getAC().currentTime; hiGain.gain.cancelScheduledValues(n); hiGain.gain.linearRampToValueAtTime(0, n + dur); }
+        if (hiGain)  { const n = getAC().currentTime; hiGain.gain.cancelScheduledValues(n);  hiGain.gain.linearRampToValueAtTime(0, n + dur); }
         if (egpGain) { const n = getAC().currentTime; egpGain.gain.cancelScheduledValues(n); egpGain.gain.linearRampToValueAtTime(0, n + dur); }
+        if (percGain){ const n = getAC().currentTime; percGain.gain.cancelScheduledValues(n);percGain.gain.linearRampToValueAtTime(0, n + dur); }
+        _smoothRate(1.0, dur * 1000);
       } catch(e) {}
     },
     reset() {
       try {
-        if (hiGain) { hiGain.gain.cancelScheduledValues(0); hiGain.gain.value = 0; }
+        if (hiGain)  { hiGain.gain.cancelScheduledValues(0);  hiGain.gain.value = 0; }
         if (egpGain) { egpGain.gain.cancelScheduledValues(0); egpGain.gain.value = 0; }
-        clearTimeout(_egpTimer);
+        if (percGain){ percGain.gain.cancelScheduledValues(0);percGain.gain.value = 0; }
+        clearTimeout(_egpTimer); clearTimeout(_percTimer);
+        cancelAnimationFrame(_rateRAF); _musicState = 'calm';
+        const el = BGM.getEl(); if (el) el.playbackRate = 1.0;
       } catch(e) {}
     },
+    getMusicState() { return _musicState; },
   };
 })();
 
@@ -9550,7 +9611,7 @@ function devUpdateInfo() {
   const el = document.getElementById('dev-info'); if (!el) return;
   const lvl = getLevel(state.currentLevel);
   const chocRem = countChocolateRemaining();
-  el.textContent = `L${state.currentLevel} | ${lvl?.type||'?'} | ход:${state.moves} | 🏆${state.score} | 🍫${chocRem} | r${lvl?.revision||0}`;
+  el.textContent = `L${state.currentLevel} | ${lvl?.type||'?'} | ход:${state.moves} | 🏆${state.score} | 🍫${chocRem} | r${lvl?.revision||0} | 🎵${BGM_LAYERS.getMusicState()}`;
 }
 function devCmd(cmd) {
   switch(cmd) {
