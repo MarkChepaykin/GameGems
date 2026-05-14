@@ -1734,147 +1734,51 @@ function getBgmAC(){
   if(!_bgmAC)_bgmAC=new(window.AudioContext||window.webkitAudioContext)();
   return _bgmAC;
 }
-function bgmNote(freq,t,dur,vol,wave){
-  try{
-    const ac=getBgmAC();
-    const o=ac.createOscillator(),g=ac.createGain();
-    o.connect(g);g.connect(ac.destination);
-    o.type=wave||'triangle';o.frequency.value=freq;
-    g.gain.setValueAtTime(0,t);
-    g.gain.linearRampToValueAtTime(vol,t+0.02);
-    g.gain.setValueAtTime(vol,t+dur*0.65);
-    g.gain.linearRampToValueAtTime(0,t+dur);
-    o.start(t);o.stop(t+dur+0.05);
-  }catch(e){}
+// ── MP3-плеер для BGM (factory) ──────────────────────────────────
+function _makeMp3Bgm(src) {
+  let _el = null, _srcNode = null, _gain = null;
+  function _init() {
+    if (_el) return;
+    _el = new Audio(src);
+    _el.loop = true;
+    _el.preload = 'auto';
+    try {
+      const ac = getBgmAC();
+      _srcNode = ac.createMediaElementSource(_el);
+      _gain = ac.createGain();
+      _gain.gain.value = 1;
+      _srcNode.connect(_gain);
+      _gain.connect(ac.destination);
+    } catch(e) {}
+  }
+  return {
+    start() {
+      _init();
+      if (_bgmAC && _bgmAC.state === 'suspended') _bgmAC.resume();
+      _el.play().catch(() => {});
+    },
+    stop() {
+      if (!_el) return;
+      _el.pause();
+      _el.currentTime = 0;
+    },
+    set(on) { on ? this.start() : this.stop(); },
+    isPlaying() { return !!_el && !_el.paused; },
+    _setVol(v) {
+      if (_gain) {
+        const ac = getBgmAC();
+        _gain.gain.cancelScheduledValues(ac.currentTime);
+        _gain.gain.setValueAtTime(v, ac.currentTime);
+      }
+    }
+  };
 }
 
-// ── Музыка для меню (D minor pentatonic — новая мелодия) ─────────
-const MENU_BGM = (() => {
-  let playing=false,nextT=0,timer=null,phrase=0,_mg=null;
-  // D4 F4 G4 A4 C5 D5 F5
-  const P=[293.66,349.23,392,440,523.25,587.33,698.46];
-  const PHRASEA=[4,3,2,3, 4,2,3,4, 1,3,2,4, 3,1,0,-1,
-                 5,4,3,4, 2,4,3,5, 4,3,2,3, 4,2,1,-1];
-  const PHRASEB=[0,2,3,4, 3,1,2,3, 5,4,3,4, 2,3,1,-1,
-                 4,5,4,3, 2,3,4,2, 1,3,4,3, 5,2,0,-1];
-  const PHRASEC=[3,4,5,4, 3,2,4,3, 5,3,4,2, 3,4,5,-1,
-                 4,2,3,5, 4,3,2,4, 1,2,3,4, 3,2,0,-1];
-  const PHRASES=[PHRASEA,PHRASEB,PHRASEC];
-  const BPM=144,B=60/BPM,VOL=0.028;
-  function mg(){
-    if(!_mg){const ac=getBgmAC();_mg=ac.createGain();_mg.gain.value=1;_mg.connect(ac.destination);}
-    return _mg;
-  }
-  function note(freq,t,dur,vol,wave){
-    try{
-      const ac=getBgmAC(),o=ac.createOscillator(),g=ac.createGain();
-      o.connect(g);g.connect(mg());
-      o.type=wave||'square';o.frequency.value=freq;
-      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.015);
-      g.gain.setValueAtTime(vol,t+dur*0.55);g.gain.linearRampToValueAtTime(0,t+dur);
-      o.start(t);o.stop(t+dur+0.05);
-    }catch(e){}
-  }
-  function schedule(){
-    if(!playing)return;
-    const ac=getBgmAC(),t0=Math.max(ac.currentTime+0.06,nextT);
-    const MEL=PHRASES[phrase%3]; phrase++;
-    MEL.forEach((idx,i)=>{ if(idx>=0) note(P[idx],t0+i*B,B*0.5,VOL); });
-    // Бас D3/A3/F3/C3
-    [146.83,146.83,220,174.61, 146.83,130.81,174.61,146.83].forEach((f,i)=>
-      note(f,t0+i*2*B,B*0.75,VOL*0.65,'triangle'));
-    // Контрмелодия — на 3й и 7й долях
-    [440,349.23,392,523.25].forEach((f,i)=>
-      note(f,t0+(i*4+2)*B,B*0.4,VOL*0.22,'sine'));
-    nextT=t0+MEL.length*B;
-    timer=setTimeout(schedule,Math.max(0,(nextT-ac.currentTime-0.15)*1000));
-  }
-  return {
-    start(){
-      if(playing)return; playing=true; phrase=0; nextT=0;
-      const m=mg(),ac=getBgmAC();
-      m.gain.cancelScheduledValues(ac.currentTime); m.gain.value=1;
-      schedule();
-    },
-    stop(){
-      playing=false; clearTimeout(timer); nextT=0;
-      if(_mg){
-        const ac=getBgmAC(),now=ac.currentTime;
-        _mg.gain.cancelScheduledValues(now);
-        _mg.gain.setValueAtTime(_mg.gain.value,now);
-        _mg.gain.linearRampToValueAtTime(0,now+0.07);
-      }
-    },
-    set(on){ on?this.start():this.stop(); },
-    isPlaying(){ return playing; },
-    _setVol(v){ if(_mg){ const ac=getBgmAC(); _mg.gain.cancelScheduledValues(ac.currentTime); _mg.gain.setValueAtTime(v,ac.currentTime); } }
-  };
-})();
+// ── Музыка для меню ───────────────────────────────────────────────
+const MENU_BGM = _makeMp3Bgm('audio/menu.mp3');
 
-// ── Музыка для уровней (E minor — новая энергичная мелодия) ──────
-const BGM = (() => {
-  let playing=false,nextT=0,timer=null,phrase=0,_mg=null;
-  // E4 G4 A4 B4 D5 E5 G5
-  const P=[329.63,392,440,493.88,587.33,659.26,783.99];
-  const PHRASEA=[2,3,4,3, 2,1,3,2, 4,3,2,4, 3,1,0,-1,
-                 3,4,5,4, 3,2,4,3, 1,3,4,3, 2,4,0,-1];
-  const PHRASEB=[4,3,2,3, 1,2,3,4, 3,2,1,3, 4,3,2,-1,
-                 2,3,4,2, 3,1,2,3, 4,3,2,4, 3,1,0,-1];
-  const PHRASEC=[1,2,3,4, 5,4,3,2, 3,4,3,2, 4,5,3,-1,
-                 4,2,3,4, 2,3,4,3, 1,3,2,4, 3,2,0,-1];
-  const PHRASES=[PHRASEA,PHRASEB,PHRASEC];
-  const BPM=132,B=60/BPM,VOL=0.032;
-  function mg(){
-    if(!_mg){const ac=getBgmAC();_mg=ac.createGain();_mg.gain.value=1;_mg.connect(ac.destination);}
-    return _mg;
-  }
-  function note(freq,t,dur,vol,wave){
-    try{
-      const ac=getBgmAC(),o=ac.createOscillator(),g=ac.createGain();
-      o.connect(g);g.connect(mg());
-      o.type=wave||'triangle';o.frequency.value=freq;
-      g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.018);
-      g.gain.setValueAtTime(vol,t+dur*0.60);g.gain.linearRampToValueAtTime(0,t+dur);
-      o.start(t);o.stop(t+dur+0.05);
-    }catch(e){}
-  }
-  function schedule(){
-    if(!playing)return;
-    const ac=getBgmAC(),t0=Math.max(ac.currentTime+0.06,nextT);
-    const MEL=PHRASES[phrase%3]; phrase++;
-    MEL.forEach((idx,i)=>{ if(idx>=0) note(P[idx],t0+i*B,B*0.58,VOL); });
-    // Бас E3/B2/G3/D3
-    [164.81,164.81,123.47,146.83, 164.81,196,123.47,164.81].forEach((f,i)=>
-      note(f,t0+i*2*B,B*0.82,VOL*0.58,'sine'));
-    // Гармонические педали (аккорды через каждые 4 бита)
-    [[329.63,493.88],[392,587.33],[293.66,440],[246.94,392]].forEach(([f1,f2],i)=>{
-      note(f1,t0+i*4*B,B*1.8,VOL*0.16,'sine');
-      note(f2,t0+i*4*B,B*1.8,VOL*0.12,'sine');
-    });
-    nextT=t0+MEL.length*B;
-    timer=setTimeout(schedule,Math.max(0,(nextT-ac.currentTime-0.15)*1000));
-  }
-  return {
-    start(){
-      if(playing)return; playing=true; phrase=0; nextT=0;
-      const m=mg(),ac=getBgmAC();
-      m.gain.cancelScheduledValues(ac.currentTime); m.gain.value=1;
-      schedule();
-    },
-    stop(){
-      playing=false; clearTimeout(timer); nextT=0;
-      if(_mg){
-        const ac=getBgmAC(),now=ac.currentTime;
-        _mg.gain.cancelScheduledValues(now);
-        _mg.gain.setValueAtTime(_mg.gain.value,now);
-        _mg.gain.linearRampToValueAtTime(0,now+0.07);
-      }
-    },
-    set(on){ on?this.start():this.stop(); },
-    isPlaying(){ return playing; },
-    _setVol(v){ if(_mg){ const ac=getBgmAC(); _mg.gain.cancelScheduledValues(ac.currentTime); _mg.gain.setValueAtTime(v,ac.currentTime); } }
-  };
-})();
+// ── Музыка для уровней ────────────────────────────────────────────
+const BGM = _makeMp3Bgm('audio/bgm.mp3');
 
 // ── CC64: 3-слойная адаптивная музыка (HighIntensity + EGP layers) ──────────────
 const BGM_LAYERS = (() => {
