@@ -234,6 +234,9 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC56 — Responsive layout
 `resizeCanvas()` portrait_narrow/portrait_square/landscape detection. `boardOffX/Y` как % viewport. HUD относительно board bounds. Landscape — board максимум высоты. `orientationchange` listener.
 
+### CC45 — Динамическая сложность
+`state.recentResults[]` последние 5. `getDynamicDifficulty()` → 0.75/1.0/1.15. 3+ потерь → 0.75: `_activeGemTypes-1` + 8% шанс STRIPE/BOMB в `fillFromTop()`. 3 победы подряд → 1.15 (норм). `_currentDynDiff` отображается в dev-панели. Результаты пишутся в `showWin/showLose`, сохраняются в `SAVE_FIELDS`.
+
 ### CC30 — Замки бустеров
 `BOOSTER_UNLOCK_LEVELS={hammer:5,striped:10,colorbomb:16}`. `updateHUD()` показывает 🔒/cnt, `disabled=true`, tooltip "Откроется на LN". `activateInGameBooster()` блокирует с тостом. `checkBoosterUnlocks(prevMax,newMax)` при победе: toast + +1 free если разблокировался.
 
@@ -321,14 +324,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC45 · Динамическая сложность
-**Приоритет: средний | ~5-6 часов**
-
-`state.recentResults[]` (последние 5). `getDynamicDifficulty(n)` → 0.7-1.3. 3+ проигрыша → 0.75 (меньше цветов, чаще спешлы). 0 проигрышей последние 3 → 1.15. Игроку не показывать. Dev → показывать коэффициент.
-
-**AC:** После 3 проигрышей игра реально легче. Коэффициент в dev-панели.
-
----
 
 ### TASK-CC54 · HUD objective counter
 **Приоритет: средний | ~3 часа**

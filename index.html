@@ -2446,6 +2446,19 @@ function getDifficultyTier(lvl) {
   return 0;              // normal
 }
 
+// CC45: Динамическая сложность
+let _currentDynDiff = 1.0;
+function getDynamicDifficulty() {
+  const r = state.recentResults || [];
+  const last5 = r.slice(-5);
+  const last3 = r.slice(-3);
+  const losses5 = last5.filter(x => x === 'lose').length;
+  const wins3   = last3.filter(x => x === 'win').length;
+  if (losses5 >= 3) return 0.75;
+  if (wins3 === 3)  return 1.15;
+  return 1.0;
+}
+
 // ══════════════════════════════════════════
 //  ПРОЦЕДУРНЫЙ ГЕНЕРАТОР УРОВНЕЙ (TASK-02)
 // ══════════════════════════════════════════
@@ -2833,6 +2846,9 @@ const state = {
   specialOfferShown: {},   // {levelNum: timestamp}
   lastPlayedAt: 0,         // timestamp последней игровой сессии
 
+  // CC45: Динамическая сложность
+  recentResults: [],       // последние 5 результатов: 'win'|'lose'
+
   // Скины
   activeSkin: 'classic',
   unlockedSkins: ['classic','candy','animals','fruits','fire','ice_pal','space'],  // все бесплатные скины открыты сразу
@@ -2892,6 +2908,7 @@ function buildSaveObj() {
     totalStonesBroken:state.totalStonesBroken,
     activeSkin:       state.activeSkin,
     unlockedSkins:    state.unlockedSkins,
+    recentResults:    state.recentResults,
     ts:               Date.now(),
   };
 }
@@ -2905,7 +2922,7 @@ const SAVE_FIELDS = ['coins','crystals','lives','livesTimestamp','lives24hUntil'
   'quests','questsDate','weeklyQuestDate','achievements','piggyFill',
   'levelAttempts','firstAttemptWins','tutorialDone','tutorialSeen','specialOfferShown','lastPlayedAt','totalSpecials',
   'totalIceBroken','totalStonesBroken',
-  'activeSkin','unlockedSkins','trophies','totalWins','shopOfferExpiry'];
+  'activeSkin','unlockedSkins','trophies','totalWins','shopOfferExpiry','recentResults'];
 
 function applySaveObj(s) {
   SAVE_FIELDS.forEach(k => { if (s[k] !== undefined) state[k] = s[k]; });
@@ -3957,6 +3974,9 @@ function initBoard(lvl) {
   if (lvl.type==='ingredients' && (lvl.ingredientCount||0)===0) console.warn(`Level ${lvl.level}: type=ingredients but ingredientCount=0`);
   // Устанавливаем количество типов фишек для уровня
   _activeGemTypes = lvl.gemTypes || GEM_TYPES;
+  // CC45: Dynamic difficulty — fewer colors when player is struggling
+  _currentDynDiff = getDynamicDifficulty();
+  if (_currentDynDiff < 1.0) _activeGemTypes = Math.max(3, _activeGemTypes - 1);
   // Инициализируем дыры
   const holeSet = new Set((lvl.holes || []).map(([r,c]) => `${r},${c}`));
   state.holes = holeSet;
@@ -5337,6 +5357,8 @@ function fillFromTop() {
         const g=createGem(); g.anim={oy:-emptyCount*cellSize,alpha:1};
         // CC43: Rainbow Round — 30% chance to spawn RAINBOW gem
         if (state.rainbowRound?.active && Math.random()<0.30) { g.special=SPECIAL.RAINBOW; g.type=-1; }
+        // CC45: Dynamic difficulty — bonus specials when player is struggling
+        else if (_currentDynDiff < 1.0 && Math.random() < 0.08) { g.special = Math.random()<0.6 ? SPECIAL.STRIPE_H : SPECIAL.BOMB; }
         state.board[r][c]=g;
         newGemPositions.push({r,c});
       }
@@ -7664,6 +7686,7 @@ async function bonusMovesExplosion() {
 }
 
 function showWin() {
+  state.recentResults = [...(state.recentResults||[]), 'win'].slice(-5);
   state.movesAtWin = state.moves;
   if (state.moves === 0) showExclamation('closecall'); // победа на последнем ходу
   if (state.moves > 0) {
@@ -8003,6 +8026,7 @@ function _setupLoseSwipe() {
 }
 
 function showLose() {
+  state.recentResults = [...(state.recentResults||[]), 'lose'].slice(-5);
   spendLife();
   state.lossStreak++;
   state.totalLosses++;
@@ -9635,7 +9659,7 @@ function devUpdateInfo() {
   const el = document.getElementById('dev-info'); if (!el) return;
   const lvl = getLevel(state.currentLevel);
   const chocRem = countChocolateRemaining();
-  el.textContent = `L${state.currentLevel} | ${lvl?.type||'?'} | ход:${state.moves} | 🏆${state.score} | 🍫${chocRem} | r${lvl?.revision||0} | 🎵${BGM_LAYERS.getMusicState()}`;
+  el.textContent = `L${state.currentLevel} | ${lvl?.type||'?'} | ход:${state.moves} | 🏆${state.score} | 🍫${chocRem} | r${lvl?.revision||0} | 🎵${BGM_LAYERS.getMusicState()} | DD:${_currentDynDiff.toFixed(2)}`;
 }
 function devCmd(cmd) {
   switch(cmd) {
