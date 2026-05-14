@@ -231,6 +231,9 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### TASK-MP3 — Интеграция MP3 треков
 `_makeMp3Bgm(src)` — HTML5 Audio wrapper. `MENU_BGM=_makeMp3Bgm('audio/menu.mp3')`, `BGM=_makeMp3Bgm('audio/bgm.mp3')`. `state.musicVol` (0-100) + слайдер в настройках. `state.musicOn` тоггл. `BGM_LAYERS` Web Audio поверх mp3. audio/menu.mp3 и audio/bgm.mp3 в репозитории.
 
+### CC29 — Мёд/Медведи (Honey Layers)
+`cell.honey=N` (1-3). `canSwap/_simCanSwap` блокируют. Матч рядом → `honey--`; при 0 → `freeBear(r,c)` → `bearsFreed++`. BOMB/STRIPE/MEGA → `honey=0`. `applyGravity()` фиксирует. Рендер: жёлтый градиент + капли + 🐻 + счётчик слоёв. `type:'bears'`, `level.bearsTarget`. `updateGoalProgress/calcStars/isCloseToWin` — bears case. `initBoard()` расставляет из `lvl.honeyCount`. `generateLevel()` difficulty>45. L65/L67 хардкод.
+
 ---
 
 ## 🔵 ОЖИДАЮТ РЕАЛИЗАЦИИ
@@ -288,15 +291,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 Экран `capsule` раз в 5 побед. Бесплатно раз в 24ч. 🎁 трясётся 1.5с → лопается. Награды: 60%+15💎, 20% бустер, 15%+1жизнь, 5% скин. "Открыть" за 10💎 или "Пропустить".
 
 **AC:** Каждые 5 побед. Анимация видна. Бесплатно раз в сутки.
-
----
-
-### TASK-CC29 · Мёд/Медведи (Honey Layers)
-**Приоритет: средний | ~4-5 часов**
-
-`cell.honey=N` (0-3), `cell.bearHidden=true`. Матч рядом → `honey--`. При 0 → `bearsFreed++`. `type:'bears'`, `level.bearsTarget`. Жёлтая заливка + капли. При honey=0 — 🐻. BOMB снимает все слои. Генератор: difficulty>45.
-
-**AC:** 3 слоя → 3 удара. При 0 — засчитывается. BOMB → все слои.
 
 ---
 
