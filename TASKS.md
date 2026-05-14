@@ -267,6 +267,9 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC27 — Вероятности гемов на уровень
 `weightedRandom(weights)` хелпер. `_currentColorWeights`/`_currentSpecialWeights` из `lvl.colorWeights`/`lvl.specialSpawnWeights`. `randGem()` использует colorWeights если есть. DD-бонус спешлов в `fillFromTop()` использует specialSpawnWeights. Dev-панель: `CW:[...]` и `SW:{...}`. Демо: L2 `colorWeights:[3,1,1]`, L5 `[1,3,1,1]`, L8 `[1,1,2,2]`.
 
+### CC73 — Коллекция трофеев
+`TROPHIES[]` 6 штук (rookie/veteran/legend/streak/hard/ultra) + `checkTrophies()` при победе + раздел в `renderAchievements()`. `#m-last-trophy` на главном — последний полученный трофей. Клик → переход к достижениям.
+
 ---
 
 ## 🔵 ОЖИДАЮТ РЕАЛИЗАЦИИ
@@ -389,15 +392,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 При `lives===0` — полноценный экран. "Попросить помощь" (3 случайных "друга"). "Смотреть рекламу" → `simulateAd()` → +1 жизнь (5s). Таймер в HUD. "Осталось: X/5" на lose-экране.
 
 **AC:** 0 жизней → экран с опциями. Таймер видим.
-
----
-
-### TASK-CC73 · Коллекция трофеев
-**Приоритет: низкий | ~3 часа**
-
-`TROPHIES` с условиями: win5/25/100, streak5, hardCleared, ultrahard. `state.trophies[]`. Экран "Достижения". При получении: toast + bounce. На главном — последний трофей.
-
-**AC:** 6+ трофеев. Новый → анимация. Экран коллекции.
 
 ---
 
