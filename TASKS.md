@@ -204,8 +204,26 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC82 — Buff Buddies нюк
 `state.buffPieces/buffNukeReady`. `BUFF_PIECES_TARGET=10`. `addBuffPiece()` при матче 5+. `fireBuffNuke(r,c)` каскадный 3×3.
 
+### CC17 — Лакрица-слои (Licorice)
+`cell.licorice=N` (1-3). `canSwap()` блокирует. Матч рядом → `licorice--`. BOMB/STRIPE/MEGA → `licorice=0`. `applyGravity()` блокирует падение. `spawnLicorice()` автоспавн в `spendMove()` по `licoriceSpawnRate`. Рендер: N концентрических эллипсов + 🍬. L56/58/62 хардкод, generateLevel difficulty>50.
+
 ### CC16 — Порталы на поле
 `state.portalGrid[r][c]={id,exitR,exitC,color}`. `initBoard()` читает `lvl.portals[[r1,c1,r2,c2]]`. Матч у входа → exit-клетка добавляется в `cellsArr`. STRIPE_H/V продолжает всю exit-строку/колонку. BOMB/MEGA добавляют exit в множество. Визуал: пульсирующие кольца + дуга-безье + 🌀. L103/106/109/112 хардкод, generateLevel difficulty>70 детерминировано.
+
+### CC07 — Экран пре-уровневых бустеров
+`screen-pregame` между levels и game. `PRE_BOOSTERS[]` (💎-бустеры). `BOOSTERS[]` (🪙-бустеры). `togglePreBooster/toggleBooster`. С L10+: кристалл-бустеры. `buildBoostersUI()`. Кнопка "▶ Начать!".
+
+### CC08 — Ежедневный календарь наград
+7-дневный цикл `DAILY_REWARDS[]`. `state.loginStreak/lastLoginDate/streakRewardsClaimed`. Модал `claimDailyReward()`. Рамки по редкости. Стрик сбрасывается при пропуске.
+
+### CC10 — Газировка (Soda Mechanic)
+`state.sodaLevel` (0..ROWS). `cell.bottle=true` — матч рядом → `popBottle()` → `sodaLevel++`. Синий оверлей + пузырьки в drawBoard. Обратная гравитация в soda-зоне (`fillFromTop` skip).
+
+### CC34 — Система жизней
+`state.lives/livesTimestamp/lives24hUntil`. `MAX_LIVES=5`, рег. каждые 30 мин. `spendLife()`. Экран "Нет жизней". Таймер MM:SS. "Безлимит" за 50💎.
+
+### CC06 — Мистический контейнер
+`cell.mystery=true`. `canSwap()` блокирует. BOMB/STRIPE/MEGA иммунен. Матч рядом → `popMystery()`: STRIPE_H(30%), STRIPE_V(30%), BOMB(25%), RAINBOW(10%), MEGA(5%). Рендер: ❓ фиолетовый. L60/70/80 хардкод, generateLevel difficulty>55.
 
 ### TASK-MP3 — Интеграция MP3 треков
 `_makeMp3Bgm(src)` — HTML5 Audio wrapper. `MENU_BGM=_makeMp3Bgm('audio/menu.mp3')`, `BGM=_makeMp3Bgm('audio/bgm.mp3')`. `state.musicVol` (0-100) + слайдер в настройках. `state.musicOn` тоггл. `BGM_LAYERS` Web Audio поверх mp3. audio/menu.mp3 и audio/bgm.mp3 в репозитории.
@@ -213,65 +231,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ---
 
 ## 🔵 ОЖИДАЮТ РЕАЛИЗАЦИИ
-
----
-
-### TASK-CC06 · Мистический контейнер (Mystery Container)
-**Приоритет: средний | ~3 часа**
-
-1. `cell.mystery = true`. Не свапается, не уничтожается BOMB.
-2. При матче в любой соседней клетке → лопается: STRIPE_H(30%), STRIPE_V(30%), BOMB(25%), RAINBOW(10%), MEGA(5%).
-3. Визуал: 🎁 поверх клетки. Генератор: difficulty>55 → 1-3 mystery.
-
-**AC:** Не свапается. После матча рядом → спецфишка. Спецфишка активируется если попадает в матч.
-
----
-
-### TASK-CC07 · Экран пре-уровневых бустеров
-**Приоритет: средний | ~3 часа**
-
-1. Новый экран `pregame` между `levels` и `game`. С L10+.
-2. Карточки: **+3 хода** (20💎), **Радуга** (30💎), **Бомба** (20💎).
-3. Кнопка "Начать без бустеров". Превью целей уровня.
-
-**AC:** Покупка списывает 💎 и применяется. Пропуск запускает уровень без изменений.
-
----
-
-### TASK-CC08 · Ежедневный календарь наград
-**Приоритет: низкий | ~2 часа**
-
-7-дневный цикл: Д1 +3💎, Д2 +1жизнь, Д3 +5💎, Д4 +2жизни+бустер, Д5 +10💎, Д6 +3жизни+бомба, Д7 +25💎+радуга(золото).
-`state.loginStreak/lastLoginDate/streakRewardsClaimed`. Модал при открытии если не забирал. Рамка по редкости. Стрик сбрасывается при пропуске.
-
-**AC:** Раз в день. Сброс при пропуске. День 7 — золотая рамка + торжественная анимация.
-
----
-
-### TASK-CC09 · Рыболовный турнир
-**Приоритет: низкий | ~6 часов**
-
-7-дневное событие. `state.eventActive/eventPoints/eventEndDate`. Очки = счёт × множитель за победу. 20 игроков (17 ботов). Призы: 1м→50💎+скин, 2м→25💎, 3м→10💎. Таймер в меню. По истечении → итоги + награда.
-
-**AC:** Очки начисляются. Лидерборд обновляется. По таймеру — итоги.
-
----
-
-### TASK-CC10 · Газировка (Soda Mechanic)
-**Приоритет: низкий | ~6 часов**
-
-`type:'soda'`. `state.sodaLevel` (0..ROWS). Бутылки `cell.bottle=true` — при матче рядом лопаются, `sodaLevel++`. В soda-зоне гравитация инвертирована (гемы всплывают вверх). Синий оверлей + пузырьки. С L50+.
-
-**AC:** В soda-зоне гемы идут вверх. Бутылка лопается при матче рядом. Вне зоны — обычная гравитация.
-
----
-
-### TASK-CC17 · Лакрица-слои (Licorice)
-**Приоритет: средний | ~3-4 часа**
-
-`cell.licorice=N` (0-5). Матч рядом → `licorice--`. При 0 → свободна. Автоспавн каждые `licoriceSpawnRate` ходов с 50%. BOMB/STRIPE снимают все слои. N концентрических эллипсов в рендере. Схема уровня: `licoriceCount/spawnRate/max`. Генератор: difficulty>50.
-
-**AC:** 3 слоя → 3 удара. Через N ходов новые клетки. BOMB → все слои сразу.
 
 ---
 
@@ -356,15 +315,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC34 · Система жизней
-**Приоритет: средний | ~3-4 часа**
-
-`state.lives` (0-5), `state.livesTimestamp`. Проигрыш → `lives--`. При 0 → экран "Нет жизней". Восстановление каждые 30 мин. Lose-экран: `⏰ Следующая жизнь через MM:SS`. "Безлимит" за 50💎 (`unlimitedLivesUntil`). HUD меню: ❤️ + таймер. Dev → жизни не тратятся.
-
-**AC:** При 0 жизнях блокирует старт. Таймер реального времени. Безлимит работает.
-
----
-
 ### TASK-CC36 · Диорама — анимированный хаб
 **Приоритет: низкий | ~8-10 часов**
 
@@ -398,15 +348,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 `state.recentResults[]` (последние 5). `getDynamicDifficulty(n)` → 0.7-1.3. 3+ проигрыша → 0.75 (меньше цветов, чаще спешлы). 0 проигрышей последние 3 → 1.15. Игроку не показывать. Dev → показывать коэффициент.
 
 **AC:** После 3 проигрышей игра реально легче. Коэффициент в dev-панели.
-
----
-
-### TASK-CC47 · Калибровка физики
-**Приоритет: низкий | ~1 час**
-
-Сверить PHYSICS по tweakdata CCSS: swap 75ms, fish 1000ms, hint_beginner 3.0s, hint_expert 5.0s, bounce_scale -0.48, destroy 200ms, base_score 20.
-
-**AC:** Все значения в PHYSICS. Свап 75ms. Рыбка 1с.
 
 ---
 
