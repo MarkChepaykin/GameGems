@@ -234,6 +234,12 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC56 — Responsive layout
 `resizeCanvas()` portrait_narrow/portrait_square/landscape detection. `boardOffX/Y` как % viewport. HUD относительно board bounds. Landscape — board максимум высоты. `orientationchange` listener.
 
+### CC58 — Bronze/Silver/Gold targets
+`starlevel=[t, ×2.5, ×4.0]` в `patchLevelBalance()`. `calcStars()` по starlevel. `win-star-labels` показывает пороги. Уже реализовано в базовом коде.
+
+### CC72 — First Attempt бейдж
+`firstAttemptWins[n]` + `_firstAttemptLevel`. При победе с первой попытки: `#win-first-attempt` показывает "⚡ С первого раза! ⭐" (normal) или "HARD: С ПЕРВОГО РАЗА! 🏆" (hard+). +5💎 тост. Маркер 🏆 на кнопке уровня.
+
 ### CC70 — Login Calendar
 `dailyDayClaimed/dailyLastClaim/dailyLastClaimTs` в state. `shouldShowDailyReward()` — 20ч + calendar day check. 7-day grid в `popup-daily`: `past/claimed/today/rarity-*` классы. `claimDailyReward()` → coins/crystals/lives/booster + `_flyRewardAnim()`. День 7 = legendary reward. Цикл: `dailyDayClaimed%7+1`.
 
@@ -340,15 +346,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC58 · Bronze/Silver/Gold targets
-**Приоритет: средний | ~1 час**
-
-`scoreTargets:[n1,n2,n3]` вместо `targetScore`. `calcStars()` по starlevel[0/1/2]. Win-экран: до следующей звезды. Ранние: [1000,5000,10000]; поздние: [50000,150000,300000].
-
-**AC:** Каждый уровень — 3 цели. Win-экран показывает прогресс.
-
----
-
 ### TASK-CC59 · Scrolling Board
 **Приоритет: низкий | ~5 часов**
 
@@ -401,15 +398,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 При `lives===0` — полноценный экран. "Попросить помощь" (3 случайных "друга"). "Смотреть рекламу" → `simulateAd()` → +1 жизнь (5s). Таймер в HUD. "Осталось: X/5" на lose-экране.
 
 **AC:** 0 жизней → экран с опциями. Таймер видим.
-
----
-
-### TASK-CC72 · First Attempt бейдж
-**Приоритет: низкий | ~1 час**
-
-`state.levelFirstAttempt[n]`. При `levelAttempts[n]===1` + win → "С первого раза! ⭐". Hard: "HARD: С ПЕРВОГО РАЗА! 🏆". На кнопке уровня: ⚡.
-
-**AC:** Бейдж при первом прохождении. Hard — особый. Маркер на кнопке.
 
 ---
 

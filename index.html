@@ -1147,6 +1147,7 @@ canvas { display: block; touch-action: none; }
   </div>
   <div id="win-star-labels" style="display:flex;justify-content:center;gap:16px;font-size:11px;color:#f9a8d4;margin:-4px 0 4px;min-width:200px;"></div>
   <div id="win-total-stars"></div>
+  <div id="win-first-attempt" style="display:none;font-size:13px;font-weight:700;letter-spacing:1px;color:#fde68a;text-shadow:0 0 12px #f59e0b;margin:2px 0;animation:winStarBounce .5s ease-out"></div>
   <div class="reward-row" id="win-reward">+50 🪙</div>
   <div class="win-score-ticker" id="win-score-ticker">0</div>
   <div class="result-sub"  id="win-score"></div>
@@ -7738,7 +7739,17 @@ function _doShowWin() {
     state.crystals += 5;
     if (!state.firstAttemptWins) state.firstAttemptWins = {};
     state.firstAttemptWins[state.currentLevel] = true;
+    const _tier = getDifficultyTier(getLevel(state.currentLevel));
+    const _faEl = document.getElementById('win-first-attempt');
+    if (_faEl) {
+      _faEl.textContent = _tier >= 1 ? 'HARD: С ПЕРВОГО РАЗА! 🏆' : '⚡ С первого раза! ⭐';
+      _faEl.style.display = '';
+      _faEl.style.color = _tier >= 2 ? '#ef4444' : '#fde68a';
+    }
     setTimeout(() => showToast('🏆 Первая попытка! +5 💎'), 3600);
+  } else {
+    const _faEl = document.getElementById('win-first-attempt');
+    if (_faEl) _faEl.style.display = 'none';
   }
   state._firstAttemptLevel = -1;
   saveGame();
