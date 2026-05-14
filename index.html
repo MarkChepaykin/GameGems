@@ -518,6 +518,16 @@ canvas { display: block; touch-action: none; }
   0%,100% { text-shadow:0 0 8px #f59e0b,0 0 20px #f59e0b; }
   50%     { text-shadow:0 0 40px #fff,0 0 20px #ffe066; }
 }
+@keyframes winStarBounce {
+  0%   { transform:scale(1); }
+  40%  { transform:scale(1.55); }
+  70%  { transform:scale(0.9); }
+  100% { transform:scale(1); }
+}
+#win-total-stars {
+  display:none; text-align:center; font-size:18px; font-weight:700; color:#ffe066;
+  letter-spacing:2px; margin:4px 0; transition:color .2s;
+}
 @keyframes heartBreak {
   0%   { transform:scale(1);    filter:drop-shadow(0 0 0px #ef4444); }
   20%  { transform:scale(1.15); filter:drop-shadow(0 0 12px #ef4444); }
@@ -1136,6 +1146,7 @@ canvas { display: block; touch-action: none; }
     <span class="win-star" id="win-star-3">☆</span>
   </div>
   <div id="win-star-labels" style="display:flex;justify-content:center;gap:16px;font-size:11px;color:#f9a8d4;margin:-4px 0 4px;min-width:200px;"></div>
+  <div id="win-total-stars"></div>
   <div class="reward-row" id="win-reward">+50 🪙</div>
   <div class="win-score-ticker" id="win-score-ticker">0</div>
   <div class="result-sub"  id="win-score"></div>
@@ -7980,6 +7991,9 @@ function animateWinStars(stars) {
     })(i);
   }
 
+  // CC77: Звёзды летят к счётчику после приземления (задержка: последняя звезда ~1800ms)
+  setTimeout(() => flyStarsToCounter(stars), 100 + (stars - 1) * 550 + 820);
+
   // Разблокировать кнопки через 3500ms
   setTimeout(()=>{
     if (btns) { btns.style.opacity='1'; btns.style.pointerEvents=''; }
@@ -7987,6 +8001,52 @@ function animateWinStars(stars) {
     if (nextBtn&&nextBtn.style.display!=='none') nextBtn.classList.add('pulsing');
     startConfetti();
   }, 3500);
+}
+
+// CC77: летящие звёзды от win-звёзд к счётчику
+function flyStarsToCounter(numStars) {
+  const counterEl = document.getElementById('win-total-stars');
+  if (!counterEl) return;
+  const baseStar = Math.max(0, getTotalStars() - numStars);
+  counterEl.style.display = '';
+  counterEl.textContent = `⭐ ${baseStar}`;
+  const FREQS = [440, 523, 659];
+  const DELAYS = [0, 400, 800];
+  let count = baseStar;
+  for (let i = 0; i < numStars; i++) {
+    ((idx) => {
+      setTimeout(() => {
+        const srcEl = document.getElementById(`win-star-${idx+1}`);
+        if (!srcEl || !counterEl) return;
+        const sr = srcEl.getBoundingClientRect();
+        const dr = counterEl.getBoundingClientRect();
+        const sx = sr.left + sr.width/2, sy = sr.top + sr.height/2;
+        const tx = dr.left + dr.width/2, ty = dr.top + dr.height/2;
+        const cx = (sx+tx)/2 + (sx>tx?-50:50), cy = (sy+ty)/2 - 80;
+        const fly = document.createElement('span');
+        fly.textContent = '⭐';
+        fly.style.cssText = 'position:fixed;font-size:24px;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);';
+        fly.style.left = sx+'px'; fly.style.top = sy+'px';
+        document.body.appendChild(fly);
+        const dur = 600, t0 = performance.now();
+        (function step(now) {
+          const p = Math.min((now-t0)/dur, 1), q = 1-p;
+          fly.style.left = (q*q*sx + 2*q*p*cx + p*p*tx)+'px';
+          fly.style.top  = (q*q*sy + 2*q*p*cy + p*p*ty)+'px';
+          fly.style.transform = `translate(-50%,-50%) scale(${1+0.4*Math.sin(p*Math.PI)})`;
+          fly.style.opacity = p>0.8 ? String(1-(p-0.8)/0.2) : '1';
+          if (p < 1) { requestAnimationFrame(step); return; }
+          fly.remove();
+          count++;
+          counterEl.textContent = `⭐ ${count}`;
+          counterEl.style.animation = 'none';
+          void counterEl.offsetWidth;
+          counterEl.style.animation = 'winStarBounce 0.45s cubic-bezier(.2,1.4,.4,1) forwards';
+          SFX._tone(FREQS[Math.min(idx,2)], 'sine', 0.2, 0.15, 0);
+        })(performance.now());
+      }, DELAYS[Math.min(idx,2)]);
+    })(i);
+  }
 }
 
 // CC80: bottom-sheet swipe for lose screen

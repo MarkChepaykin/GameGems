@@ -234,6 +234,9 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC56 — Responsive layout
 `resizeCanvas()` portrait_narrow/portrait_square/landscape detection. `boardOffX/Y` как % viewport. HUD относительно board bounds. Landscape — board максимум высоты. `orientationchange` listener.
 
+### CC77 — Stars fly-to-HUD
+`flyStarsToCounter(numStars)`: JS bezier quadratic path per star, fixed-position overlay ⭐ elements. Задержки 0/400/800ms. При прилёте: `counterEl` текст +1, `@keyframes winStarBounce` bounce-анимация, `SFX._tone` 440/523/659 Hz. `#win-total-stars` div показывается в win-экране.
+
 ### CC45 — Динамическая сложность
 `state.recentResults[]` последние 5. `getDynamicDifficulty()` → 0.75/1.0/1.15. 3+ потерь → 0.75: `_activeGemTypes-1` + 8% шанс STRIPE/BOMB в `fillFromTop()`. 3 победы подряд → 1.15 (норм). `_currentDynDiff` отображается в dev-панели. Результаты пишутся в `showWin/showLose`, сохраняются в `SAVE_FIELDS`.
 
@@ -442,14 +445,6 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC77 · Stars fly-to-HUD
-**Приоритет: средний | ~2 часа**
-
-Win-экран: звёзды летят от поля к HUD по bezier. Задержки: t=0/0.4s/0.8s. В HUD: scale 1→1.4→1 (`EASE.outQuad`). Счётчик в меню: bounce при пролёте. Звук: 440/523/659 Hz.
-
-**AC:** Звёзды летят по кривой. Каждая с задержкой. Иконка bounces.
-
----
 
 ### TASK-CC80 · Lose-screen swipe-to-minimize
 **Приоритет: низкий | ~2 часа**
