@@ -797,9 +797,15 @@ canvas { display: block; touch-action: none; }
   .levels-title { padding: 8px 0 4px; font-size: 18px; }
   .level-grid { gap: 6px; padding: 0 10px 8px; }
   .settings-wrap { gap: 8px; padding: 10px; }
-  #hud { padding: 5px 14px; }
-  #hud .hud-moves { font-size: 22px; }
-  #hud .hud-score { font-size: 16px; }
+  #hud { padding: 3px 12px; }
+  #hud .hud-moves { font-size: 20px; }
+  #hud .hud-score { font-size: 14px; }
+  .hud-row1 { padding: 3px 10px 2px; }
+  .hud-row2 { padding: 1px 10px 3px; }
+}
+/* CC56: Широкий экран (планшет/десктоп) */
+@media (min-width: 900px) {
+  #app { max-width: 520px; margin: 0 auto; }
 }
 
 /* ══ Шаг 5: Онбординг (подсказка на 1-3 уровнях) ══ */
@@ -4092,24 +4098,41 @@ function initCanvas() {
   pCtx    = pCanvas.getContext('2d');
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 150));
 }
 
+// CC56: Responsive layout — portrait_narrow/portrait_square/landscape aware
 function resizeCanvas() {
-  const appEl=document.getElementById('app');
-  const W=appEl?appEl.clientWidth:window.innerWidth, H=window.innerHeight;
-  const dpr=Math.min(window.devicePixelRatio||1,2);
-  const hudH=110;
-  cellSize = Math.max(38, Math.min(70, Math.floor(Math.min((W-16)/COLS, (H-hudH-16)/ROWS))));
-  const bw=cellSize*COLS, bh=cellSize*ROWS;
-  canvasLogW=W; canvasLogH=H;
-  canvas.width=pCanvas.width=Math.round(W*dpr);
-  canvas.height=pCanvas.height=Math.round(H*dpr);
-  canvas.style.width=pCanvas.style.width=W+'px';
-  canvas.style.height=pCanvas.style.height=H+'px';
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  pCtx.setTransform(dpr,0,0,dpr,0,0);
-  boardOffX = Math.floor((W-bw)/2);
-  boardOffY = hudH + Math.floor((H-hudH-bh)/2);
+  const appEl = document.getElementById('app');
+  const W = appEl ? appEl.clientWidth : window.innerWidth;
+  const H = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  const ratio = W / H;
+  const isLandscape = ratio > 1.2;
+  const pad = isLandscape ? 8 : 16;
+
+  // Measure actual HUD height; fall back to 110 if HUD not yet laid out
+  const hudEl = document.getElementById('hud');
+  const hudH = (hudEl && hudEl.offsetHeight > 20) ? hudEl.offsetHeight + 4 : 110;
+
+  const csFromW = Math.floor((W - pad * 2) / COLS);
+  const csFromH = Math.floor((H - hudH - pad) / ROWS);
+  const csMin = isLandscape ? 32 : 38;
+  const csMax = isLandscape ? 90 : 70;
+  cellSize = Math.max(csMin, Math.min(csMax, Math.min(csFromW, csFromH)));
+
+  const bw = cellSize * COLS, bh = cellSize * ROWS;
+  canvasLogW = W; canvasLogH = H;
+  canvas.width  = pCanvas.width  = Math.round(W * dpr);
+  canvas.height = pCanvas.height = Math.round(H * dpr);
+  canvas.style.width  = pCanvas.style.width  = W + 'px';
+  canvas.style.height = pCanvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  pCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  boardOffX = Math.floor((W - bw) / 2);
+  boardOffY = Math.max(hudH, hudH + Math.floor((H - hudH - bh) / 2));
 }
 
 // ══════════════════════════════════════════

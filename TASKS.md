@@ -207,26 +207,12 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ### CC16 — Порталы на поле
 `state.portalGrid[r][c]={id,exitR,exitC,color}`. `initBoard()` читает `lvl.portals[[r1,c1,r2,c2]]`. Матч у входа → exit-клетка добавляется в `cellsArr`. STRIPE_H/V продолжает всю exit-строку/колонку. BOMB/MEGA добавляют exit в множество. Визуал: пульсирующие кольца + дуга-безье + 🌀. L103/106/109/112 хардкод, generateLevel difficulty>70 детерминировано.
 
+### TASK-MP3 — Интеграция MP3 треков
+`_makeMp3Bgm(src)` — HTML5 Audio wrapper. `MENU_BGM=_makeMp3Bgm('audio/menu.mp3')`, `BGM=_makeMp3Bgm('audio/bgm.mp3')`. `state.musicVol` (0-100) + слайдер в настройках. `state.musicOn` тоггл. `BGM_LAYERS` Web Audio поверх mp3. audio/menu.mp3 и audio/bgm.mp3 в репозитории.
+
 ---
 
 ## 🔵 ОЖИДАЮТ РЕАЛИЗАЦИИ
-
----
-
-### TASK-MP3 · Интеграция MP3 треков
-**Приоритет: высокий**
-
-Файлы: `C:\Users\user\Downloads\Sugar Plum Quest (1).mp3` (меню) и `Sugar Plum Quest.mp3` (уровень).
-
-1. Скопировать оба файла в папку проекта: `GameGems/audio/menu.mp3` и `GameGems/audio/bgm.mp3`.
-2. Создать HTML5 Audio элементы: `<audio id="menu-audio" loop src="audio/menu.mp3">` и `<audio id="game-audio" loop src="audio/bgm.mp3">`.
-3. Заменить запуск `MENU_BGM` на `document.getElementById('menu-audio').play()`.
-4. Заменить запуск `BGM` на `document.getElementById('game-audio').play()`.
-5. Сохранить логику `BGM_LAYERS` (HighIntensity + EGP через Web Audio GainNode) поверх основного трека — они независимы.
-6. `state.musicOn` тоггл должен управлять обоими треками.
-7. При смене экрана: плавный crossfade (gainNode ramp за 0.5s) между menu и game треком.
-
-**AC:** Меню играет Sugar Plum Quest (1). Уровень играет Sugar Plum Quest. Тоггл музыки работает. BGM_LAYERS слои накладываются поверх mp3.
 
 ---
 
