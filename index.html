@@ -583,12 +583,6 @@ canvas { display: block; touch-action: none; }
 .win-tier-hard .result-title   { color:#fb923c; text-shadow:0 0 20px rgba(249,115,22,.5); }
 .win-tier-super .result-title  { color:#f87171; text-shadow:0 0 20px rgba(239,68,68,.5); }
 .win-tier-ultra .result-title  { color:#c084fc; text-shadow:0 0 24px rgba(168,85,247,.6); }
-.result-screen::before {
-  content: ''; position: fixed; inset: 0;
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  background: rgba(0,0,0,0.45); z-index: -1;
-  pointer-events: none;
-}
 .result-title   { font-size: 42px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #b1226a, 0 4px 0 #7c0a4a, 0 8px 18px rgba(74,15,51,.6); transform: rotate(-2deg); display:inline-block; }
 .result-sub     { font-size: 16px; color: #ffe6f1; font-weight:700; }
 .stars-row      { font-size: 50px; letter-spacing: 8px; display:flex; justify-content:center; gap:8px; }
@@ -667,7 +661,7 @@ canvas { display: block; touch-action: none; }
 .tab-btn {
   flex: 1; padding: 9px 4px; border-radius: 10px; border: none; cursor: pointer;
   font-size: 12px; font-weight: bold;
-  background: rgba(255,255,255,.07); color: #aaa;
+  background: rgba(255,255,255,.07); color: rgba(255,255,255,.80);
   transition: background .15s, color .15s;
 }
 .tab-btn.active { background: linear-gradient(135deg,var(--c-primary),var(--c-primary2)); color: #fff; }
@@ -726,7 +720,7 @@ canvas { display: block; touch-action: none; }
 .toc-badge { position:absolute; top:6px; right:8px; font-size:10px; font-weight:800; background:#ef4444; color:#fff; border-radius:6px; padding:1px 6px; }
 .toc-timer { font-size:11px; color:#f59e0b; font-weight:bold; margin-top:2px; }
 .toc-timer.last-chance { color:#ef4444; animation:nearMissPulse 0.8s ease-in-out infinite alternate; }
-.toc-old-price { font-size:11px; color:#aaa; text-decoration:line-through; margin-right:4px; }
+.toc-old-price { font-size:11px; color:rgba(255,255,255,.65); text-decoration:line-through; margin-right:4px; }
 
 /* ── настройки ── */
 #screen-settings { gap: 0; justify-content: flex-start; }
@@ -771,7 +765,7 @@ canvas { display: block; touch-action: none; }
   width: 40px; height: 52px; border-radius: 10px;
   background: rgba(255,255,255,.07);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  font-size: 10px; color: #888; gap: 2px;
+  font-size: 10px; color: #ccc; gap: 2px;
   border: 2px solid transparent;
 }
 .daily-day.today   { border-color: #ffe066; background: rgba(255,224,102,.12); }
@@ -935,22 +929,24 @@ canvas { display: block; touch-action: none; }
 .qfc-bar { background: rgba(74,15,51,.4); }
 .qfc-bar-fill, .quest-bar-fill { background: linear-gradient(90deg,#ffd75a,#ff5a9d); }
 .qfc-reward, .quest-reward { color: #fff5b0; }
-.quests-section-title { color: #ffd2ea; }
+.quests-section-title { color: #fff; text-shadow: 0 1px 2px rgba(74,15,51,.55); }
+.quests-title { color: #fff; text-shadow: 0 1px 2px rgba(74,15,51,.55); }
 
 /* Booster buttons */
 .booster-btn {
-  background: rgba(255,255,255,.10);
-  border: 2px solid rgba(255,255,255,.25);
+  background: rgba(74,15,51,.22);
+  border: 2px solid rgba(255,255,255,.30);
   border-radius: 16px;
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(74,15,51,.20);
 }
 .booster-btn.selected {
   border-color: #ffd75a;
-  background: rgba(255,215,90,.18);
+  background: rgba(255,215,90,.22);
 }
-.booster-btn .b-name { color: #fff; font-size: 12px; }
-.booster-btn .b-cost { font-size: 12px; }
-.boosters-title { color: #ffd2ea; font-weight: 800; font-size: 15px; }
+.booster-btn .b-name { color: #fff; font-size: 12px; text-shadow: 0 1px 2px rgba(74,15,51,.55); }
+.booster-btn .b-cost { font-size: 12px; text-shadow: 0 1px 2px rgba(74,15,51,.45); }
+.booster-btn .b-cost-crystal { color: #a5f3fc; text-shadow: 0 1px 2px rgba(0,60,90,.55); }
+.boosters-title { color: #fff; text-shadow: 0 1px 2px rgba(74,15,51,.55); font-weight: 800; font-size: 15px; }
 
 /* In-game booster buttons */
 .hud-bst-btn {
@@ -968,8 +964,8 @@ canvas { display: block; touch-action: none; }
   box-shadow: none;
 }
 .pg-goal-type { color: #fff; text-shadow: 0 2px 0 #c0185f; }
-.pg-goal-desc { color: #ffd2ea; }
-.pg-level-lbl, .pg-moves-lbl { color: #ffd2ea; font-weight: 700; font-size: 15px; }
+.pg-goal-desc { color: #fff; text-shadow: 0 1px 2px rgba(74,15,51,.50); }
+.pg-level-lbl, .pg-moves-lbl { color: #fff; text-shadow: 0 1px 2px rgba(74,15,51,.50); font-weight: 700; font-size: 15px; }
 .pg-title { font-weight: 800; }
 
 /* Settings rows */
@@ -1007,7 +1003,6 @@ canvas { display: block; touch-action: none; }
 #screen-season, #screen-tournament { padding-bottom: 60px; }
 
 /* Result screen sheet */
-.result-screen::before { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(40,5,28,.55); }
 .screen { color: #fff; }
 
 /* ══ Шаг 5: Safe area / мобайл адаптив ══ */
@@ -1152,7 +1147,7 @@ canvas { display: block; touch-action: none; }
   </div>
 
   <!-- Последний трофей (CC73) -->
-  <div id="m-last-trophy" style="display:none;font-size:12px;color:#fbbf24;text-align:center;font-weight:700;cursor:pointer;margin:-4px 0 4px;animation:winStarBounce .5s ease-out;" onclick="showScreen('achievements')"></div>
+  <div id="m-last-trophy" style="display:none;font-size:12px;color:#4a0f33;text-align:center;font-weight:700;cursor:pointer;margin:-4px 0 4px;animation:winStarBounce .5s ease-out;" onclick="showScreen('achievements')"></div>
 
   <!-- Пигги-банк -->
   <div class="piggy-wrap">
@@ -1208,7 +1203,7 @@ canvas { display: block; touch-action: none; }
     <div id="quests-daily-full"></div>
     <div class="quests-section-title" style="margin-top:12px;">На неделю</div>
     <div id="quests-weekly-full"></div>
-    <div id="quests-timer" style="text-align:center;padding:16px 0 4px;color:#64748b;font-size:13px;"></div>
+    <div id="quests-timer" style="text-align:center;padding:16px 0 4px;color:#fff;font-size:13px;text-shadow:0 1px 2px rgba(74,15,51,.50);"></div>
   </div>
 </div>
 
@@ -2177,7 +2172,7 @@ const GEMS = [
   { id:5, color:'#ff8a3a', shape:'flower',  name:'Цветок'   },
 ];
 
-const SPECIAL = { NONE:0, STRIPE_H:1, STRIPE_V:2, BOMB:3, RAINBOW:4, MEGA:5, FISH:6, WRAPPED:7, COLORING:8 };
+const SPECIAL = { NONE:0, STRIPE_H:1, STRIPE_V:2, RAINBOW:4, MEGA:5, FISH:6, WRAPPED:7, COLORING:8 };
 
 // Скины — цветовые палитры [gem0..gem5] для геометрических скинов
 // Для emoji-скинов цвет = фоновый оттенок за emoji
@@ -2501,8 +2496,58 @@ const LEVELS = [
       lvl.moves = Math.max(lvl.moves, computed);
     }
 
-    // Зажать ходы в диапазон 20-35 (CCSS-стиль: сложность через препятствия, не ходы)
-    lvl.moves = Math.max(20, Math.min(35, lvl.moves));
+    if (lvl.type === 'collect') {
+      const cnt = lvl.target || 20;
+      const gemPen = Math.round(Math.max(0, (lvl.gems||[]).length - 1) * 3);
+      const computed = Math.round(cnt * 0.65) + obs + typ + gemPen + Math.round(holes*0.2);
+      lvl.moves = Math.max(lvl.moves, computed);
+    }
+
+    if (lvl.type === 'ice') {
+      const cnt = lvl.iceCount || lvl.target || 5;
+      const computed = Math.round(cnt * 1.2) + obs + typ + Math.round(holes*0.2);
+      lvl.moves = Math.max(lvl.moves, computed);
+    }
+
+    if (lvl.type === 'jelly') {
+      const cnt = lvl.jellyCount || 10;
+      const computed = Math.round(cnt * 0.85) + obs + typ + Math.round(holes*0.2);
+      lvl.moves = Math.max(lvl.moves, computed);
+    }
+
+    if (lvl.type === 'stone') {
+      const cnt = lvl.stoneCount || lvl.target || 5;
+      const computed = Math.round(cnt * 1.4) + obs + typ + Math.round(holes*0.2);
+      lvl.moves = Math.max(lvl.moves, computed);
+    }
+
+    if (lvl.type === 'chocolate') {
+      const cnt = lvl.chocolateCount || 5;
+      const computed = Math.round(cnt * 1.8) + obs + typ + Math.round(holes*0.2);
+      lvl.moves = Math.max(lvl.moves, computed);
+    }
+
+    if (lvl.type === 'carpet') {
+      const total = COLS * ROWS - holes;
+      const computed = Math.round(total * 0.15) + obs + typ;
+      lvl.moves = Math.max(lvl.moves, computed);
+    }
+
+    if (lvl.type === 'soda') {
+      const cnt = lvl.bottleCount || lvl.target || 3;
+      const computed = Math.round(cnt * 4.5) + obs + typ + Math.round(holes*0.2);
+      lvl.moves = Math.max(lvl.moves, computed);
+    }
+
+    if (lvl.type === 'bears') {
+      const cnt = lvl.bearsTarget || 3;
+      const honeyCnt = lvl.honeyCount || 0;
+      const computed = Math.round(cnt * 5) + Math.round(honeyCnt * 1.5) + obs + typ;
+      lvl.moves = Math.max(lvl.moves, computed);
+    }
+
+    // CCSS-стиль: сложность через препятствия, не ходы. Диапазон 20-40 ходов.
+    lvl.moves = Math.max(20, Math.min(40, lvl.moves));
   });
 })();
 
@@ -2795,11 +2840,28 @@ function generateLevel(levelNumber) {
     }
   }
 
-  return { level:levelNumber, type, target, moves, gems, gemTypes,
+  const lvlObj = { level:levelNumber, type, target, moves, gems, gemTypes,
     iceCount, stoneCount, jellyCount, holes:holesArr,
     chocolateCount, marmaladeCount, lockCount, mysteryCount, ingredientCount, bottleCount,
     licoriceCount, licoriceSpawnRate, licoriceMax, honeyCount,
-    portals: _portalPairs.length > 0 ? _portalPairs : undefined };
+    portals: _portalPairs.length > 0 ? _portalPairs : undefined, revision: 0 };
+
+  // Быстрая симуляция баланса (40 проб). Корректируем ходы или цель если нужно.
+  const _bsim = simulateLevelObj(lvlObj, 40);
+  if (_bsim) {
+    const _ep = Math.ceil(levelNumber / 16);
+    const _minWR = _ep <= 2 ? 0.35 : _ep <= 5 ? 0.22 : 0.12;
+    const _maxWR = _ep <= 2 ? 0.85 : _ep <= 5 ? 0.80 : 0.75;
+    if (_bsim.winRate < _minWR) {
+      if (type === 'score') lvlObj.target = Math.round(lvlObj.target * 0.80 / 500) * 500;
+      else lvlObj.moves = Math.min(40, lvlObj.moves + 3);
+    } else if (_bsim.winRate > _maxWR) {
+      if (type === 'score') lvlObj.target = Math.round(lvlObj.target * 1.20 / 500) * 500;
+      else lvlObj.moves = Math.max(20, lvlObj.moves - 2);
+    }
+  }
+
+  return lvlObj;
 }
 
 function generateCampaign(from, to) {
@@ -4497,7 +4559,7 @@ function drawBoard() {
   const cs=cellSize;
   // 1. Адаптивный фон — мягкая малиновая «доска» с тенью
   const _lvlTier=getDifficultyTier(getLevel(state.currentLevel));
-  const _boardBg=_lvlTier>=3?'rgba(140,32,90,0.72)':_lvlTier>=2?'rgba(160,42,100,0.66)':'rgba(180,52,112,0.6)';
+  const _boardBg=_lvlTier>=3?'rgba(195,75,135,0.42)':_lvlTier>=2?'rgba(205,85,145,0.38)':'rgba(215,95,155,0.33)';
   ctx.save();
   ctx.shadowColor='rgba(0,0,0,0.55)'; ctx.shadowBlur=16; ctx.shadowOffsetY=4;
   ctx.fillStyle=_boardBg;
@@ -5513,11 +5575,16 @@ function findMatches() {
 
 function analyzeMatch(cells) {
   if (!cells.length) return null;
-  const rows=[...new Set(cells.map(c=>c.r))];
-  const cols=[...new Set(cells.map(c=>c.c))];
   const n=cells.length;
-  // 5+ по прямой → RAINBOW
-  if (n>=5&&(rows.length===1||cols.length===1)) return { special:SPECIAL.RAINBOW };
+  // Считаем ячейки по строкам и столбцам
+  const rCnt={}, cCnt={};
+  for (const {r,c} of cells) { rCnt[r]=(rCnt[r]||0)+1; cCnt[c]=(cCnt[c]||0)+1; }
+  const rVals=Object.values(rCnt), cVals=Object.values(cCnt);
+  const maxR=Math.max(0,...rVals), maxC=Math.max(0,...cVals);
+  const rows=rVals.length, cols=cVals.length;
+  // 5+ в ЛЮБОЙ одной строке или столбце → RAINBOW
+  // (включая случай, когда 5-в-ряд пересекается с матчем другого направления)
+  if (maxR>=5||maxC>=5) return { special:SPECIAL.RAINBOW };
   // 2×2-подпаттерн в небольших матчах (n≤5) → FISH
   // Проверяем до WRAPPED, чтобы 2×2 не тонул в смешанном матче
   if (n<=5) {
@@ -5526,15 +5593,14 @@ function analyzeMatch(cells) {
       if (ps.has(`${r},${c+1}`)&&ps.has(`${r+1},${c}`)&&ps.has(`${r+1},${c+1}`)) return {special:SPECIAL.FISH};
     }
   }
-  // 7+ 2D → COLORING (порог поднят с 6 до 7, иначе 2×2-сканер раздувает n и
-  // нормальные WRAPPED-паттерны из 5 клеток ошибочно дают COLORING)
-  if (rows.length>1&&cols.length>1&&n>=7) return { special:SPECIAL.COLORING };
-  // 4-6 клеток 2D (Г/Т/крест) → WRAPPED
-  if (rows.length>1&&cols.length>1&&n>=4) return { special:SPECIAL.WRAPPED };
+  // 7+ 2D → COLORING
+  if (rows>1&&cols>1&&n>=7) return { special:SPECIAL.COLORING };
+  // 4-6 клеток 2D (Г/Т/крест) → WRAPPED (бомба)
+  if (rows>1&&cols>1&&n>=4) return { special:SPECIAL.WRAPPED };
   // 4 по прямой → STRIPE
   if (n===4) {
-    if (rows.length===1) return { special:SPECIAL.STRIPE_H };
-    if (cols.length===1) return { special:SPECIAL.STRIPE_V };
+    if (rows===1) return { special:SPECIAL.STRIPE_H };
+    if (cols===1) return { special:SPECIAL.STRIPE_V };
   }
   return null;
 }
@@ -5666,8 +5732,8 @@ async function processMatches(hintR, hintC) {
       BGM_LAYERS.triggerEGP();
       ng=createGem(matchType);
       ng.special=specialResult.special;
-      // RAINBOW и COLORING не имеют цвета — они бесцветные бонусные фишки
-      if (ng.special===SPECIAL.RAINBOW || ng.special===SPECIAL.COLORING) ng.type=-1;
+      // RAINBOW не имеет цвета; COLORING сохраняет цвет фишек, из которых создан
+      if (ng.special===SPECIAL.RAINBOW) ng.type=-1;
       // Размещаем бонус: предпочитаем позицию свапа, иначе центр группы совпадения
       let placed=false;
       if (firstIter && hintR!==undefined && matched.has(`${hintR},${hintC}`)) {
@@ -5904,10 +5970,10 @@ function fillFromTop() {
         else if (_currentDynDiff < 1.0 && Math.random() < 0.08) {
           if (_currentSpecialWeights) {
             const sw = _currentSpecialWeights;
-            const keys = ['stripe','bomb','rainbow','fish','wrapped'];
+            const keys = ['stripe','rainbow','fish','wrapped'];
             const vals = keys.map(k => sw[k] ?? 0);
             const pick = keys[weightedRandom(vals)];
-            const _sp={stripe:Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V,bomb:SPECIAL.WRAPPED,rainbow:SPECIAL.RAINBOW,fish:SPECIAL.FISH,wrapped:SPECIAL.WRAPPED}[pick];
+            const _sp={stripe:Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V,rainbow:SPECIAL.RAINBOW,fish:SPECIAL.FISH,wrapped:SPECIAL.WRAPPED}[pick];
             g.special = _sp ?? (Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V);
           } else {
             g.special = Math.random()<0.6 ? (Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V) : SPECIAL.WRAPPED;
@@ -5986,19 +6052,16 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
   const addRow=r=>{ for(let c=0;c<COLS;c++){if(r>=0&&r<ROWS)td.add(`${r},${c}`);}};
   const addCol=c=>{ for(let r=0;r<ROWS;r++){if(c>=0&&c<COLS)td.add(`${r},${c}`);}};
   const addArea=(r,c,rad)=>{ for(let dr=-rad;dr<=rad;dr++) for(let dc=-rad;dc<=rad;dc++){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)td.add(`${nr},${nc}`);}};
-  if (sp1===SPECIAL.BOMB) sp1 = SPECIAL.WRAPPED;
-  if (sp2===SPECIAL.BOMB) sp2 = SPECIAL.WRAPPED;
-  // Coloring+Coloring → два цвета меняются местами
+  // Coloring+Coloring → все фишки становятся одного цвета (цвет первой красящей)
   if (sp1===SPECIAL.COLORING&&sp2===SPECIAL.COLORING) {
     const col1 = (_t1>=0) ? _t1 : Math.floor(Math.random()*_activeGemTypes);
-    const col2 = (_t2>=0) ? _t2 : (col1+1+Math.floor(Math.random()*(_activeGemTypes-1)))%_activeGemTypes;
+    await animateColoringWave(r1, c1);
     for(let rr=0;rr<ROWS;rr++) for(let cc=0;cc<COLS;cc++){
       const cl=state.board[rr]?.[cc];
       if(!cl||cl.stone||cl.chocolate||cl.locked||cl.ingredient) continue;
-      if(cl.type===col1){cl.type=col2;cl.special=SPECIAL.NONE;spawnParticles(rr,cc,getSkinColor(col2),3);}
-      else if(cl.type===col2){cl.type=col1;cl.special=SPECIAL.NONE;spawnParticles(rr,cc,getSkinColor(col1),3);}
+      if(cl.special===SPECIAL.NONE){cl.type=col1;spawnParticles(rr,cc,getSkinColor(col1),3);}
     }
-    showToast('🎨🎨 Цвета поменялись!'); drawBoard();
+    showToast('🎨🎨 Все фишки одного цвета!'); drawBoard();
     return;
   }
   // MEGA+COLORING → радужная волна, красим всё в один цвет, взрыв 5×5
@@ -6035,30 +6098,55 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     if(mcp>0){state.score+=mcp;spawnFloatingScore(megaR,megaC,mcp,'#ec4899');updateGoalProgress();}
     return;
   }
-  // Coloring+Rainbow → уничтожить все гемы цвета COLORING
-  if (sp1===SPECIAL.COLORING||sp2===SPECIAL.COLORING) {
+  // Coloring + Stripe/Wrapped/Fish → все гемы цвета красящей становятся этим спешлом и взрываются
+  // Rainbow+Coloring обрабатывается ниже в блоке Rainbow
+  if ((sp1===SPECIAL.COLORING||sp2===SPECIAL.COLORING) && sp1!==SPECIAL.RAINBOW && sp2!==SPECIAL.RAINBOW) {
     const rawCol=sp1===SPECIAL.COLORING?_t1:_t2;
-    const targetCol = (rawCol>=0) ? rawCol : Math.floor(Math.random()*_activeGemTypes);
-    for(let rr=0;rr<ROWS;rr++) for(let cc=0;cc<COLS;cc++){
-      const cl=state.board[rr]?.[cc];
-      if(cl&&cl.type===targetCol&&!cl.stone&&!cl.chocolate&&!cl.ingredient){
-        if(state.iceGrid[rr]?.[cc]){state.iceGrid[rr][cc]=0;state.iceBroken++;updateQuestProgress('ice',1);}
-        spawnParticles(rr,cc,getSkinColor(targetCol),6);
-        state.board[rr][cc]=null; clearJellyAt(rr,cc); clearCarpetAt(rr,cc,false);
-        state.score+=30; breakAdjacentChocolate(rr,cc);
-        if(cl.type>=0) state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
+    const coloringType = (rawCol>=0) ? rawCol : Math.floor(Math.random()*_activeGemTypes);
+    const partnerSp = sp1===SPECIAL.COLORING ? sp2 : sp1;
+    if (partnerSp===SPECIAL.STRIPE_H||partnerSp===SPECIAL.STRIPE_V||partnerSp===SPECIAL.WRAPPED||partnerSp===SPECIAL.FISH) {
+      await animateColoringWave(r1, c1);
+      const targets=[];
+      for(let rr=0;rr<ROWS;rr++) for(let cc=0;cc<COLS;cc++){
+        const cl=state.board[rr]?.[cc];
+        if(cl&&cl.type===coloringType&&!cl.stone&&!cl.chocolate&&!cl.ingredient&&cl.special===SPECIAL.NONE){
+          cl.special=partnerSp; targets.push([rr,cc,partnerSp]);
+        }
       }
+      drawBoard(); await new Promise(res=>setTimeout(res,200));
+      let pts=0;
+      for(const[tr,tc,sp]of targets){
+        const tcl=state.board[tr]?.[tc];
+        if(tcl&&!tcl.ingredient){await triggerSpecial(tr,tc,sp);state.board[tr][tc]=null;pts+=30;}
+      }
+      if(pts>0){state.score+=pts;spawnFloatingScore(r1,c1,pts,'#a855f7');}
+      updateGoalProgress(); showToast('🎨✨ ПРЕОБРАЗОВАНО!');
+      applyGravity(); fillFromTop(); await animateDrop();
+      return;
+    } else {
+      // Другие комбо — уничтожить все гемы цвета красящей
+      for(let rr=0;rr<ROWS;rr++) for(let cc=0;cc<COLS;cc++){
+        const cl=state.board[rr]?.[cc];
+        if(cl&&cl.type===coloringType&&!cl.stone&&!cl.chocolate&&!cl.ingredient){
+          if(state.iceGrid[rr]?.[cc]){state.iceGrid[rr][cc]=0;state.iceBroken++;updateQuestProgress('ice',1);}
+          spawnParticles(rr,cc,getSkinColor(coloringType),6);
+          state.board[rr][cc]=null; clearJellyAt(rr,cc); clearCarpetAt(rr,cc,false);
+          state.score+=30; breakAdjacentChocolate(rr,cc);
+          if(cl.type>=0) state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
+        }
+      }
+      updateGoalProgress(); showToast('🎨 ВЗОРВАНЫ!');
+      applyGravity(); fillFromTop(); await animateDrop();
+      return;
     }
-    updateGoalProgress(); showToast('🎨🌈 ВСЕ ЦВЕТА ВЗОРВАНЫ!');
-    applyGravity(); fillFromTop(); await animateDrop();
-    return;
   }
   if (sp1===SPECIAL.RAINBOW||sp2===SPECIAL.RAINBOW) {
     const otherSp  = sp1===SPECIAL.RAINBOW ? sp2 : sp1;
     const otherType= sp1===SPECIAL.RAINBOW ? _t2 : _t1;
-    if (otherSp===SPECIAL.RAINBOW) {
-      // Rainbow + Rainbow → clear everything
+    if (otherSp===SPECIAL.RAINBOW || otherSp===SPECIAL.COLORING) {
+      // Rainbow + Rainbow / Rainbow + Coloring → clear everything
       getAllPositions().forEach(([r,c])=>td.add(`${r},${c}`));
+      if (otherSp===SPECIAL.COLORING) showToast('🎨🌈 ВСЕ УНИЧТОЖЕНО!');
     } else {
       // Rainbow + Special → convert all gems of partner color to partner special, chain-activate
       const tt = otherType>=0 ? otherType : (()=>{
@@ -6459,7 +6547,6 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
   state.totalSpecials = (state.totalSpecials || 0) + 1;
   if (state.totalSpecials >=  5) unlockAchievement('special_5');
   if (state.totalSpecials >= 50) unlockAchievement('special_50');
-  if (special===SPECIAL.BOMB) special = SPECIAL.WRAPPED;
   // Rainbow — при активации в цепочке взрывает все гемы целевого цвета
   if (special===SPECIAL.RAINBOW) {
     // When triggered standalone (no partner, colorless gem), pick most-common color on board
@@ -7547,6 +7634,7 @@ async function activateSpecialByTap(r, c) {
   const gem=state.board[r]?.[c];
   if (!gem||gem.special===SPECIAL.NONE||state.busy) return;
   state.busy=true;
+  spendMove();
   const sp=gem.special, tp=gem.type;
   state.board[r][c]=null;
   spawnParticles(r,c,getSkinColor(tp>=0?tp:0),12);
@@ -9297,76 +9385,107 @@ const SFX = (() => {
     } catch(e) {}
   }
 
+  // Резонансный шум с высоким Q — кристальный «псевдопитч» без осциллятора
+  function noise2(vol, dur, freq, q=4, delay=0) {
+    if (!state.soundOn) return;
+    try {
+      const a = ac(), sr = a.sampleRate;
+      const bufLen = Math.ceil(sr * Math.max(dur * 2.5, 0.15));
+      const buf = a.createBuffer(1, bufLen, sr);
+      const d = buf.getChannelData(0);
+      for (let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+      const src = a.createBufferSource();
+      src.buffer = buf;
+      const flt = a.createBiquadFilter();
+      flt.type = 'bandpass'; flt.frequency.value = freq; flt.Q.value = q;
+      const g = a.createGain();
+      src.connect(flt); flt.connect(g); g.connect(master());
+      const t0 = a.currentTime + delay;
+      g.gain.setValueAtTime(vol, t0);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      src.start(t0); src.stop(t0 + dur + 0.05);
+    } catch(e) {}
+  }
+
+  let _matchV = 0; // счётчик активных голосов match
+
   return {
-    // Матч — мягкий «pop» из шума + тёплый пузырьковый тон, восходящий с длиной комбо
+    // Матч — глухой кристальный «pop» с лимитом полифонии
     match(lvl=0) {
-      const vol = Math.min(0.18, 0.10 + lvl * 0.012);
-      // Шумовой бургер (как было)
-      noise(vol, 0.045, 1500 + Math.random() * 700);
-      noise(vol * 0.35, 0.025, 4800);
-      // Лёгкий питч-pop — поднимается с lvl
-      const baseFreq = 520 + lvl * 90;
-      osc(baseFreq * 1.6, 'sine', vol*0.55, 0.002, 0.10, 0,    0, 1800);
-      osc(baseFreq,       'sine', vol*0.45, 0.003, 0.13, 0.02, 0, 1200);
+      if (_matchV >= 4) return;                        // max 4 одновременно — не каша
+      _matchV++;
+      setTimeout(() => _matchV--, 70);                 // освободить слот после угасания
+      const vary = 0.91 + Math.random() * 0.20;        // ±10% питч: каждый щелчок уникален
+      const f = (850 + lvl * 130) * vary;
+      const vol = 0.28 - _matchV * 0.05;              // duck: 2-й и 3-й голоса тише
+
+      noise2(vol,        0.048, f,       18);
+      noise2(vol * 0.40, 0.030, f * 1.6, 12);
+      if (_matchV <= 2) noise2(0.06, 0.022, 6000, 6); // искра — только первые 2 голоса
     },
 
-    // Комбо — глубокий тёплый «бум» + шипение наверху
+    // Комбо — нарастающий каскадный удар (только шум!)
     combo(n) {
-      noise(0.24 + n * 0.018, 0.16, 120);
-      noise(0.10, 0.07, 4200, 0.02);
-      // Glide-вниз для драмы
-      osc(420 + n*40, 'triangle', 0.18, 0.005, 0.20, 0, 0, 900);
-      osc(180,        'sine',     0.20, 0.005, 0.30, 0.04, 0, 280);
+      noise2(0.34 + n * 0.025, 0.22, 95,  1.4);       // суббасовый удар
+      noise2(0.18,             0.12, 650,  4,   0.02); // средний крэш
+      noise2(0.10,             0.07, 4200, 5,   0.06); // высокое шипение
     },
 
-    // Спецгем — взрыв из трёх полос шума + низкая сабовая «нота»
+    // Спецгем — мощный магический взрыв (только шум!)
     special() {
-      noise(0.26, 0.16, 200);
-      noise(0.16, 0.11, 1200, 0.01);
-      noise(0.10, 0.09, 4500, 0.04);
-      osc(80, 'sine', 0.30, 0.003, 0.22, 0, 0, 140);
+      noise2(0.42, 0.26, 65,   1.2);        // глубокий бум
+      noise2(0.24, 0.18, 400,  3,   0.01);  // средний удар
+      noise2(0.15, 0.13, 2200, 5,   0.04);  // кристальный треск
+      noise2(0.08, 0.09, 7500, 4,   0.07);  // рассыпающиеся искры
     },
 
-    // Клик — короткий тик
-    click() { osc(900, 'sine', 0.10, 0.001, 0.04, 0, 0, 600); },
+    // Клик — кристальный «дзинь» гема
+    click() {
+      noise2(0.20, 0.022, 3800, 22);
+      osc(2400, 'sine', 0.06, 0.001, 0.022, 0, 0, 1200);
+    },
 
-    // Награда — три звонких нисходящих "дзинь"
+    // Награда — звон монет / падение звёздочек
     reward() {
-      [0, 0.12, 0.22].forEach((d,i) => osc(1200 - i*180, 'sine', 0.14, 0.005, 0.22, d));
-    },
-
-    // Победа в уровне — короткий аккорд
-    win() {
-      [0, 0.09, 0.18].forEach((d,i) => {
-        const f = [440, 554, 659][i];
-        osc(f, 'sine', 0.15, 0.01, 0.35, d);
+      [0, 0.10, 0.19].forEach((d, i) => {
+        const f = 1320 - i * 165;
+        osc(f, 'triangle', 0.13, 0.003, 0.24, d);
+        noise2(0.08, 0.04, f * 1.9, 14, d + 0.012);
       });
-      noise(0.07, 0.12, 800, 0.05);
     },
 
-    // Поражение — два нисходящих тона
+    // Победа в уровне — C-мажорный аккорд + кристальный блеск
+    win() {
+      [[0, 523], [0.07, 659], [0.14, 784]].forEach(([d, f]) =>
+        osc(f, 'triangle', 0.14, 0.008, 0.32, d)
+      );
+      noise2(0.09, 0.14, 2400, 3, 0.13);
+    },
+
+    // Поражение — нисходящее карикатурное «вуп-вуп»
     lose() {
-      osc(320, 'sine', 0.18, 0.01, 0.28, 0, 0, 200);
-      osc(240, 'sine', 0.14, 0.01, 0.35, 0.18, 0, 160);
-      noise(0.05, 0.15, 300, 0.02);
+      osc(440, 'sawtooth', 0.11, 0.006, 0.27, 0,    0, 220);
+      osc(330, 'sawtooth', 0.11, 0.006, 0.27, 0.22, 0, 165);
+      noise2(0.06, 0.17, 270, 2, 0.06);
     },
 
-    // Победный джингл — арпеджио + удар
+    // Победный джингл — задорное C-мажорное арпеджио + финальный аккорд
     winJingle() {
       if (!state.soundOn) return;
-      const seq = [440, 554, 659, 880, 659, 880, 1109];
-      seq.forEach((f, i) => osc(f, 'sine', 0.16, 0.01, 0.16, i * 0.1));
-      // финальный аккорд
-      [440, 554, 659, 880].forEach(f => osc(f, 'sine', 0.14, 0.02, 0.7, seq.length * 0.1));
-      noise(0.12, 0.2, 900, seq.length * 0.1);
+      const melody = [523, 659, 784, 1047, 784, 1047, 1175, 1568];
+      melody.forEach((f, i) => osc(f, 'triangle', 0.13, 0.006, 0.13, i * 0.095));
+      [523, 659, 784, 1047].forEach(f =>
+        osc(f, 'triangle', 0.12, 0.02, 0.9, melody.length * 0.095)
+      );
+      noise2(0.11, 0.18, 2600, 3, melody.length * 0.095);
     },
 
-    // Джингл поражения — нисходящие тоны с затуханием
+    // Джингл поражения — нисходящий «ваааа» саксофонного тона
     loseJingle() {
       if (!state.soundOn) return;
-      const seq = [392, 330, 294, 220, 196];
-      seq.forEach((f, i) => osc(f, 'sine', 0.14, 0.01, 0.28, i * 0.22));
-      osc(110, 'sine', 0.08, 0.01, 0.5, seq.length * 0.22);
+      const seq = [370, 311, 277, 233, 196];
+      seq.forEach((f, i) => osc(f, 'sawtooth', 0.12, 0.01, 0.36, i * 0.25, 0, f * 0.82));
+      osc(98, 'sine', 0.07, 0.01, 0.55, seq.length * 0.25);
     },
 
     _tone: (f,t,d,v,delay,pan) => osc(f,t,v,0.005,d,delay||0,pan||0),
@@ -9847,7 +9966,36 @@ window.addEventListener('load', () => {
   step4TickLoop();
   loadingScreen();
   initDevPanel();
+  // Фоновый авто-баланс статичных уровней: запускается через 4 с после старта,
+  // не блокирует игру. Обрабатывает по одному уровню за тик.
+  _scheduleBackgroundBalance();
 });
+
+function _scheduleBackgroundBalance() {
+  const KEY = 'gg_balance_v3';
+  // Сброс кэша при смене версии — если ключ совпадает, баланс уже применён в этой сессии
+  if (sessionStorage.getItem(KEY)) return;
+  sessionStorage.setItem(KEY, '1');
+  let idx = 0;
+  function processOne() {
+    if (idx >= LEVELS.length) return;
+    const lvl = LEVELS[idx++];
+    const r = simulateLevelObj(lvl, 30);
+    if (!r) { setTimeout(processOne, 0); return; }
+    const ep = Math.ceil(lvl.level / 16);
+    const minWR = ep <= 2 ? 0.30 : ep <= 5 ? 0.18 : 0.08;
+    const maxWR = ep <= 2 ? 0.90 : ep <= 5 ? 0.88 : 0.82;
+    if (r.winRate < minWR) {
+      if (lvl.type === 'score') lvl.target = Math.round(lvl.target * 0.82 / 500) * 500;
+      else lvl.moves = Math.min(40, lvl.moves + 2);
+    } else if (r.winRate > maxWR) {
+      if (lvl.type === 'score') lvl.target = Math.round(lvl.target * 1.18 / 500) * 500;
+      else lvl.moves = Math.max(20, lvl.moves - 1);
+    }
+    setTimeout(processOne, 0); // следующий уровень в следующем тике
+  }
+  setTimeout(processOne, 4000); // старт через 4 с после загрузки
+}
 
 // ══════════════════════════════════════════
 //  СИМУЛЯТОР БАЛАНСА (TASK-01)
@@ -10087,8 +10235,33 @@ function _simProcessMatches(simState, lvl) {
   }
 }
 
-function simulateLevel(levelIndex, trials = 200) {
-  const lvl = LEVELS[levelIndex];
+// Жадный выбор хода: предпочитает ход, дающий наибольшее покрытие целевых клеток.
+// 35% времени — случайный выбор (разнообразие).
+function _simPickBestMove(sim, moves, lvl) {
+  if (Math.random() < 0.35) return moves[Math.floor(Math.random() * moves.length)];
+  let best = null, bestScore = -1;
+  for (const mv of moves) {
+    const [r, c, nr, nc] = mv;
+    const tmp = sim.board[r][c]; sim.board[r][c] = sim.board[nr][nc]; sim.board[nr][nc] = tmp;
+    const matched = _simFindMatches(sim.board);
+    let score = matched.size;
+    for (const key of matched) {
+      const [mr, mc] = key.split(',').map(Number);
+      if (sim.iceGrid[mr]?.[mc])       score += 3; // бьём по льду
+      if (sim.jellyGrid[mr]?.[mc] > 0) score += 2; // убираем желе
+      if (sim.carpetGrid?.[mr]?.[mc])  score += 2; // красим ковёр
+      const cell = sim.board[mr]?.[mc];
+      if (cell?.stone)     score += 2;
+      if (cell?.chocolate) score += 2;
+    }
+    if (score > bestScore) { bestScore = score; best = mv; }
+    sim.board[nr][nc] = sim.board[r][c]; sim.board[r][c] = tmp;
+  }
+  return best || moves[0];
+}
+
+// Основная функция симуляции — принимает объект уровня (не индекс).
+function simulateLevelObj(lvl, trials = 150) {
   if (!lvl) return null;
   const wins = [], movesArr = [], scoresArr = [];
   for (let t = 0; t < trials; t++) {
@@ -10097,7 +10270,7 @@ function simulateLevel(levelIndex, trials = 200) {
     while (sim.moves > 0) {
       const moves = _simFindAllMoves(sim.board, sim.holes, sim.iceGrid);
       if (!moves.length) break;
-      const [r, c, nr, nc] = moves[Math.floor(Math.random() * moves.length)];
+      const [r, c, nr, nc] = _simPickBestMove(sim, moves, lvl);
       const tmp = sim.board[r][c]; sim.board[r][c] = sim.board[nr][nc]; sim.board[nr][nc] = tmp;
       sim.moves--; sim.comboCount = 0;
       _simProcessMatches(sim, lvl);
@@ -10114,6 +10287,11 @@ function simulateLevel(levelIndex, trials = 200) {
   return { winRate, avgMovesUsed, avgScore, medianScore: scoresArr[Math.floor(trials/2)] };
 }
 
+// Обёртка по индексу (обратная совместимость с dev-панелью).
+function simulateLevel(levelIndex, trials = 150) {
+  return simulateLevelObj(LEVELS[levelIndex], trials);
+}
+
 function runBalanceReport() {
   console.log('▶ Запуск симуляции баланса...');
   const t0 = performance.now();
@@ -10122,7 +10300,7 @@ function runBalanceReport() {
   console.log('─'.repeat(80));
   for (let i = 0; i < LEVELS.length; i++) {
     const lvl = LEVELS[i];
-    const r = simulateLevel(i, 100);
+    const r = simulateLevelObj(lvl, 100);
     const verdict =
       r.winRate < 0.15 ? '🔴 сложный'    :
       r.winRate < 0.30 ? '🟡 сложноват'  :
@@ -10142,16 +10320,26 @@ function autoBalanceLevels() {
   const patches = [];
   for (let i = 0; i < LEVELS.length; i++) {
     const lvl = LEVELS[i];
-    const r = simulateLevel(i, 100);
-    if (r.winRate < 0.15) {
-      // Слишком сложный: снижаем цель или, если winRate<5%, только тогда добавляем ходы
-      if (lvl.type === 'score') { const old=lvl.target; lvl.target=Math.round(lvl.target*0.8); patches.push(`L${lvl.level}: target ${old}→${lvl.target}`); }
-      else if (r.winRate < 0.05 && lvl.moves < 35) { const old=lvl.moves; lvl.moves=Math.min(35,old+3); patches.push(`L${lvl.level}: moves ${old}→${lvl.moves} (экстрим)`); }
-      else { const old=lvl.target; lvl.target=Math.max(1,Math.round(lvl.target*0.85)); patches.push(`L${lvl.level}: target ${old}→${lvl.target}`); }
-    } else if (r.winRate > 0.85) {
-      // Слишком лёгкий: повышаем цель (не уменьшаем ходы)
-      if (lvl.type === 'score') { const old=lvl.target; lvl.target=Math.round(lvl.target*1.2); patches.push(`L${lvl.level}: target ${old}→${lvl.target}`); }
-      else { const old=lvl.target; lvl.target=Math.round((lvl.target||10)*1.15)+1; patches.push(`L${lvl.level}: target ${old}→${lvl.target}`); }
+    const r = simulateLevelObj(lvl, 80);
+    // Целевой диапазон winRate зависит от эпизода (ранние — легче, поздние — сложнее)
+    const episode = Math.ceil(lvl.level / 16);
+    const minWR = episode <= 2 ? 0.35 : episode <= 5 ? 0.22 : 0.12;
+    const maxWR = episode <= 2 ? 0.85 : episode <= 5 ? 0.80 : 0.75;
+
+    if (r.winRate < minWR) {
+      if (lvl.type === 'score') {
+        const old=lvl.target; lvl.target=Math.round(lvl.target*0.82/500)*500; patches.push(`L${lvl.level}: target ${old}→${lvl.target}`);
+      } else if (r.winRate < minWR * 0.4 && lvl.moves < 40) {
+        const old=lvl.moves; lvl.moves=Math.min(40,old+3); patches.push(`L${lvl.level}: moves ${old}→${lvl.moves} (критично)`);
+      } else if (lvl.moves < 40) {
+        const old=lvl.moves; lvl.moves=Math.min(40,old+2); patches.push(`L${lvl.level}: moves ${old}→${lvl.moves}`);
+      }
+    } else if (r.winRate > maxWR) {
+      if (lvl.type === 'score') {
+        const old=lvl.target; lvl.target=Math.round(lvl.target*1.18/500)*500; patches.push(`L${lvl.level}: target ${old}→${lvl.target}`);
+      } else if (lvl.moves > 20) {
+        const old=lvl.moves; lvl.moves=Math.max(20,old-2); patches.push(`L${lvl.level}: moves ${old}→${lvl.moves}`);
+      }
     }
     lvl.revision = (lvl.revision||0) + 1;
   }
@@ -10317,7 +10505,7 @@ function startTestLevel() {
   const SP_ROW0 = [SPECIAL.STRIPE_H, SPECIAL.STRIPE_V, SPECIAL.WRAPPED, SPECIAL.MEGA,
                    SPECIAL.FISH, SPECIAL.WRAPPED, SPECIAL.RAINBOW, SPECIAL.COLORING];
   SP_ROW0.forEach((sp,c)=>{ if(c<COLS){ board[0][c]=createGem(c%5); board[0][c].special=sp;
-    if(sp===SPECIAL.RAINBOW||sp===SPECIAL.COLORING) board[0][c].type=-1; }});
+    if(sp===SPECIAL.RAINBOW) board[0][c].type=-1; }});
 
   // Ряд 2: комбо-пары для тестирования
   const COMBOS = [
@@ -10327,9 +10515,9 @@ function startTestLevel() {
     [SPECIAL.FISH, 1],     [SPECIAL.MEGA, 2],     // рыбка+мега
   ];
   COMBOS.forEach(([sp,type],c)=>{ if(c<COLS){ board[2][c]=createGem(type>=0?type:0); board[2][c].special=sp;
-    if(sp===SPECIAL.RAINBOW||sp===SPECIAL.COLORING) board[2][c].type=-1; }});
+    if(sp===SPECIAL.RAINBOW) board[2][c].type=-1; }});
 
-  // Ряд 4: ещё комбо: мега+мега, рыбка+молния, wrapped+wrapped, rainbow+bomb
+  // Ряд 4: ещё комбо: мега+мега, рыбка+молния, wrapped+wrapped, радуга+врапд
   const COMBOS2 = [
     [SPECIAL.MEGA, 0],     [SPECIAL.MEGA, 1],     // мега+мега
     [SPECIAL.FISH, 2],     [SPECIAL.STRIPE_H, 3], // рыбка+молния
@@ -10337,7 +10525,7 @@ function startTestLevel() {
     [SPECIAL.RAINBOW, -1], [SPECIAL.WRAPPED, 2],   // радуга+врапд
   ];
   COMBOS2.forEach(([sp,type],c)=>{ if(c<COLS){ board[4][c]=createGem(type>=0?type:0); board[4][c].special=sp;
-    if(sp===SPECIAL.RAINBOW||sp===SPECIAL.COLORING) board[4][c].type=-1; }});
+    if(sp===SPECIAL.RAINBOW) board[4][c].type=-1; }});
 
   // Препятствия в нижних рядах для тестирования
   if (ROWS>6) { // лёд в ряду 6
@@ -10394,7 +10582,7 @@ function devSpawnSpecial(sp) {
     const cl=state.board[r]?.[c];
     if (cl&&!cl.stone&&!cl.chocolate&&!state.holes.has(`${r},${c}`)) {
       cl.special=sp;
-      if (sp===SPECIAL.RAINBOW||sp===SPECIAL.COLORING) cl.type=-1;
+      if (sp===SPECIAL.RAINBOW) cl.type=-1;
       drawBoard();
       showToast(`Спавн: ${Object.keys(SPECIAL).find(k=>SPECIAL[k]===sp)} [${r},${c}]`);
       return;
@@ -10615,8 +10803,8 @@ function renderQuestsFull() {
 
   const daily  = state.quests.filter(q => !q.weekly);
   const weekly = state.quests.filter(q => q.weekly);
-  dailyEl.innerHTML  = daily.length  ? daily.map(cardHTML).join('')  : '<div style="color:#64748b;font-size:13px;padding:8px 0;">Нет ежедневных заданий</div>';
-  weeklyEl.innerHTML = weekly.length ? weekly.map(cardHTML).join('') : '<div style="color:#64748b;font-size:13px;padding:8px 0;">Нет еженедельных заданий</div>';
+  dailyEl.innerHTML  = daily.length  ? daily.map(cardHTML).join('')  : '<div style="color:#fff;font-size:13px;padding:8px 0;text-shadow:0 1px 2px rgba(74,15,51,.5);">Нет ежедневных заданий</div>';
+  weeklyEl.innerHTML = weekly.length ? weekly.map(cardHTML).join('') : '<div style="color:#fff;font-size:13px;padding:8px 0;text-shadow:0 1px 2px rgba(74,15,51,.5);">Нет еженедельных заданий</div>';
 
   // Таймер до следующих заданий
   const timerEl = document.getElementById('quests-timer');
@@ -10628,9 +10816,9 @@ function renderQuestsFull() {
       const msLeft = midnight - now;
       const hh = Math.floor(msLeft/3600000);
       const mm = Math.floor((msLeft%3600000)/60000);
-      timerEl.innerHTML = `<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:12px 16px;margin-top:8px;">
+      timerEl.innerHTML = `<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:12px 16px;margin-top:8px;color:#fff;text-shadow:0 1px 2px rgba(74,15,51,.5);">
         ✅ На сегодня все задания выполнены!<br>
-        <span style="color:#f9a8d4;">Следующие задания через ${hh}ч ${mm}м</span>
+        <span style="color:#ffd2ea;">Следующие задания через ${hh}ч ${mm}м</span>
       </div>`;
     } else {
       timerEl.innerHTML = '';
@@ -10788,11 +10976,13 @@ function renderAchievements() {
   const bar = document.getElementById('achievements-progress-bar');
   if (bar) {
     const pct = Math.round(done / total * 100);
-    bar.innerHTML = `<div style="display:flex;align-items:center;gap:10px;color:#a78bfa;font-size:14px;font-weight:700;margin-bottom:4px;">
-      <span>Получено: ${done} / ${total}</span><span style="color:#ffe066;">${pct}%</span>
-    </div>
-    <div style="background:rgba(255,255,255,0.1);border-radius:8px;height:8px;overflow:hidden;">
-      <div style="background:linear-gradient(90deg,#a855f7,#6366f1);height:100%;width:${pct}%;transition:width .4s;border-radius:8px;"></div>
+    bar.innerHTML = `<div style="background:rgba(255,255,255,0.55);border-radius:12px;padding:10px 14px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;color:#2d1048;font-size:14px;font-weight:700;margin-bottom:6px;">
+        <span>Получено: ${done} / ${total}</span><span style="color:#7c2cc6;">${pct}%</span>
+      </div>
+      <div style="background:rgba(74,15,51,0.15);border-radius:8px;height:8px;overflow:hidden;">
+        <div style="background:linear-gradient(90deg,#a855f7,#6366f1);height:100%;width:${pct}%;transition:width .4s;border-radius:8px;"></div>
+      </div>
     </div>`;
   }
 
@@ -10804,13 +10994,13 @@ function renderAchievements() {
   el.innerHTML = sorted.map(a => {
     const got = unlocked.includes(a.id);
     return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:8px;
-      border-radius:14px;background:${got?'rgba(168,85,247,0.15)':'rgba(255,255,255,0.05)'};
-      border:1.5px solid ${got?'rgba(168,85,247,0.5)':'rgba(255,255,255,0.08)'};
-      opacity:${got?'1':'0.55'};">
+      border-radius:14px;background:${got?'rgba(255,255,255,0.72)':'rgba(255,255,255,0.38)'};
+      border:1.5px solid ${got?'rgba(168,85,247,0.55)':'rgba(255,255,255,0.30)'};
+      opacity:${got?'1':'0.65'};">
       <div style="font-size:28px;flex-shrink:0;${got?'':'filter:grayscale(1);'}">${a.icon}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;font-weight:700;color:${got?'#ffe066':'#94a3b8'};">${a.title}</div>
-        <div style="font-size:12px;color:#64748b;margin-top:2px;">${a.desc}</div>
+        <div style="font-size:14px;font-weight:700;color:#2d1048;">${a.title}</div>
+        <div style="font-size:12px;color:#6b3a5c;margin-top:2px;">${a.desc}</div>
       </div>
       ${got?'<div style="color:#a855f7;font-size:18px;">✓</div>':''}
     </div>`;
@@ -10821,20 +11011,20 @@ function renderAchievements() {
   const trophyHTML = TROPHIES.map(t => {
     const got = earnedTrophies.includes(t.id);
     return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:8px;
-      border-radius:14px;background:${got?'rgba(255,215,0,0.12)':'rgba(255,255,255,0.04)'};
-      border:1.5px solid ${got?'rgba(255,215,0,0.45)':'rgba(255,255,255,0.07)'};
-      opacity:${got?'1':'0.5'};">
+      border-radius:14px;background:${got?'rgba(255,255,255,0.72)':'rgba(255,255,255,0.38)'};
+      border:1.5px solid ${got?'rgba(255,215,0,0.55)':'rgba(255,255,255,0.25)'};
+      opacity:${got?'1':'0.65'};">
       <div style="font-size:30px;flex-shrink:0;${got?'filter:drop-shadow(0 0 6px #fbbf24);':'filter:grayscale(1);'}">${t.icon}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;font-weight:700;color:${got?'#fbbf24':'#94a3b8'};">${t.name}</div>
-        <div style="font-size:12px;color:#64748b;margin-top:2px;">${t.desc}</div>
+        <div style="font-size:14px;font-weight:700;color:#2d1048;">${t.name}</div>
+        <div style="font-size:12px;color:#6b3a5c;margin-top:2px;">${t.desc}</div>
       </div>
-      ${got?'<div style="color:#fbbf24;font-size:18px;">🏅</div>':''}
+      ${got?'<div style="color:#b45309;font-size:18px;">🏅</div>':''}
     </div>`;
   }).join('');
 
   el.insertAdjacentHTML('beforeend', `
-    <div style="margin-top:18px;margin-bottom:6px;font-size:13px;font-weight:700;color:#fbbf24;letter-spacing:0.05em;text-transform:uppercase;">
+    <div style="margin-top:18px;margin-bottom:6px;font-size:13px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(74,15,51,.55);letter-spacing:0.05em;text-transform:uppercase;">
       🏆 Трофеи (${earnedTrophies.length}/${TROPHIES.length})
     </div>
     ${trophyHTML}
