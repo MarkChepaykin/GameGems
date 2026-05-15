@@ -2614,7 +2614,7 @@ const LEVELS = [
   });
 })();
 
-// ── Постобработка уровней: формула Candy Crush ────────────────
+// ── Постобработка уровней: формула сложности ────────────────
 (function patchLevelBalance() {
   LEVELS.forEach(lvl => {
     const holes = (lvl.holes||[]).length;
@@ -6612,7 +6612,7 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     return;
   } else if ((sp1===SPECIAL.WRAPPED&&(sp2===SPECIAL.STRIPE_H||sp2===SPECIAL.STRIPE_V))||
              ((sp1===SPECIAL.STRIPE_H||sp1===SPECIAL.STRIPE_V)&&sp2===SPECIAL.WRAPPED)) {
-    // Candy Crush: 3 строки И 3 столбца одновременно (крест)
+    // Stripe+Wrapped: 3 строки И 3 столбца одновременно (крест)
     const wr=sp1===SPECIAL.WRAPPED?r1:r2, wc=sp1===SPECIAL.WRAPPED?c1:c2;
     addRow(wr-1); addRow(wr); addRow(wr+1);
     addCol(wc-1); addCol(wc); addCol(wc+1);
