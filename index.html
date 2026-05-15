@@ -2590,6 +2590,11 @@ const LEVELS = [
     holes:[[0,0],[0,1],[0,6],[0,7],[1,0],[1,7],[6,0],[6,7],[7,0],[7,1],[7,6],[7,7]] },
   { level:112, type:'score',   target:22000, moves:18, gems:[],      iceCount:10, stoneCount:10, jellyCount:0,  gemTypes:6,
     holes:[[0,0],[0,1],[0,2],[0,5],[0,6],[0,7],[1,0],[1,1],[1,6],[1,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,2],[7,5],[7,6],[7,7]], portals:[[3,1,6,6]] },
+
+  // ── CC18: Path Mode (уровни 113-118) ─────────────────────────────────────
+  { level:113, type:'path', target:0, moves:22, pathCells:[[1,1],[1,2],[1,3],[1,4],[2,4],[3,4],[3,3],[3,2],[4,2],[5,2]], gems:[], gemTypes:5 },
+  { level:114, type:'path', target:0, moves:20, pathCells:[[0,0],[1,0],[2,0],[2,1],[2,2],[2,3],[1,3],[0,3],[0,4],[0,5],[1,5],[2,5]], gems:[], gemTypes:5 },
+  { level:115, type:'path', target:0, moves:25, pathCells:[[4,0],[4,1],[4,2],[3,2],[2,2],[1,2],[0,2],[0,3],[0,4],[1,4],[2,4],[3,4],[4,4],[4,5],[4,6]], gems:[], gemTypes:6 },
 ];
 
 // ── Миграция 8×8 → 8×10 ──────────────────────────────────────
@@ -3060,6 +3065,7 @@ const LEVEL_DESC = {
   chocolate:   lvl => `Рассей всю тьму ✕`,
   soda:        lvl => `Лопни ${lvl.target} бутылок`,
   carpet:      lvl => `Покрась всё поле 🎨`,
+  path:        lvl => `Проведи волшебника по пути из ${lvl.pathCells?.length||0} клеток 🧙`,
 };
 
 // Ежедневные награды (цикл 7 дней)
@@ -4550,6 +4556,11 @@ function initBoard(lvl) {
   const holeSet = new Set((lvl.holes || []).map(([r,c]) => `${r},${c}`));
   state.holes = holeSet;
 
+  // CC18: Path Mode — сброс прогресса пути
+  if (lvl.type === 'path') {
+    state.pathProgress = 0;
+  }
+
   // Инициализируем сетки желе, ковра и льда (cell-bound, не движутся с гемами)
   state.jellyGrid  = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
   state.carpetGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
@@ -5077,7 +5088,77 @@ function drawBoard() {
     roundRect(ctx, boardOffX+sc*cs+2, boardOffY+sr*cs+2, cs-4, cs-4, 8);
     ctx.stroke(); ctx.globalAlpha=1;
   }
+
+  // CC18: Path Mode overlay
+  { const _pLvl = getLevel(state.currentLevel);
+    if (_pLvl && _pLvl.type === 'path' && _pLvl.pathCells) {
+      drawPathOverlay(_pLvl.pathCells, state.pathProgress || 0);
+    }
+  }
+
   if (_hasEntryAnim) ctx.restore();
+}
+
+// CC18: Path Mode — отрисовка дорожки поверх гемов
+function drawPathOverlay(cells, progress) {
+  if (!cells || !cells.length) return;
+  const cs = cellSize;
+  ctx.save();
+
+  // 1. Соединяющие линии между клетками (серая линия)
+  ctx.strokeStyle = 'rgba(200,200,200,0.55)';
+  ctx.lineWidth = Math.max(3, cs * 0.09);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  for (let i = 0; i < cells.length; i++) {
+    const [r, c] = cells[i];
+    const px = boardOffX + c * cs + cs / 2;
+    const py = boardOffY + r * cs + cs / 2;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // 2. Пройденные клетки — зелёный полупрозрачный прямоугольник
+  for (let i = 0; i < Math.min(progress, cells.length); i++) {
+    const [r, c] = cells[i];
+    const bx = boardOffX + c * cs, by = boardOffY + r * cs;
+    ctx.fillStyle = 'rgba(34,197,94,0.35)';
+    roundRect(ctx, bx + 2, by + 2, cs - 4, cs - 4, 8);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(34,197,94,0.7)';
+    ctx.lineWidth = 2;
+    roundRect(ctx, bx + 2, by + 2, cs - 4, cs - 4, 8);
+    ctx.stroke();
+  }
+
+  // 3. Текущая target клетка — золотой пульсирующий контур
+  if (progress < cells.length) {
+    const [tr, tc] = cells[progress];
+    const bx = boardOffX + tc * cs, by = boardOffY + tr * cs;
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 300);
+    ctx.strokeStyle = `rgba(255,200,0,${0.6 + 0.4 * pulse})`;
+    ctx.lineWidth = 3 + pulse * 2;
+    roundRect(ctx, bx + 2, by + 2, cs - 4, cs - 4, 8);
+    ctx.stroke();
+    // Внутренняя подсветка
+    ctx.fillStyle = `rgba(255,215,0,${0.12 + 0.1 * pulse})`;
+    roundRect(ctx, bx + 2, by + 2, cs - 4, cs - 4, 8);
+    ctx.fill();
+  }
+
+  // 4. Персонаж 🧙 на текущей позиции
+  const charIdx = Math.min(progress, cells.length - 1);
+  const [cr, cc2] = cells[charIdx];
+  const charX = boardOffX + cc2 * cs + cs / 2;
+  const charY = boardOffY + cr * cs + cs / 2;
+  ctx.font = `${Math.round(cs * 0.7)}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🧙', charX, charY);
+
+  ctx.restore();
 }
 
 // Рисует только фишку (с анимацией) — без фона клетки, желе и льда
@@ -6092,6 +6173,21 @@ async function processMatches(hintR, hintC) {
     applyGravity();   await animateDrop();
     fillFromTop();    await animateDrop();
     updateGoalProgress(); updateHUD();
+
+    // CC18: Path Mode — проверяем продвижение по дорожке
+    { const _pathLvl = getLevel(state.currentLevel);
+      if (_pathLvl && _pathLvl.type === 'path' && _pathLvl.pathCells && state.pathProgress !== undefined) {
+        const _pathTarget = _pathLvl.pathCells[state.pathProgress];
+        if (_pathTarget) {
+          const [_ptr, _ptc] = _pathTarget;
+          const _nearby = [[_ptr,_ptc],[_ptr-1,_ptc],[_ptr+1,_ptc],[_ptr,_ptc-1],[_ptr,_ptc+1]];
+          if (_nearby.some(([_r,_c]) => matched.has(`${_r},${_c}`))) {
+            state.pathProgress++;
+            updateGoalProgress();
+          }
+        }
+      }
+    }
 
     if (firstIter && state.supersonicActive) {
       const _c0 = [...matched].map(k=>k.split(',').map(Number));
@@ -8499,6 +8595,12 @@ function updateGoalProgress() {
       prog=Math.min((state.bearsFreed||0)/bt,1);
       html=`🐻 Медведи: ${Math.min(state.bearsFreed||0,bt)} / ${bt}`; break;
     }
+    case 'path': {
+      const pn = lvl.pathCells?.length || 1;
+      const pp = Math.min(state.pathProgress||0, pn);
+      prog = pp / pn;
+      html = `🧙 Путь: ${pp} / ${pn} клеток`; break;
+    }
   }
   // Прогресс-бар со звёздами
   const barEl=document.getElementById('star-bar');
@@ -8568,6 +8670,7 @@ function checkWin() {
     case 'soda':         mainWin = state.bottlesBroken>=lvl.target; break;
     case 'carpet':       mainWin = countCarpetRemaining()===0; break;
     case 'bears':        mainWin = (state.bearsFreed||0) >= (lvl.bearsTarget||lvl.honeyCount||1); break;
+    case 'path':         mainWin = (state.pathProgress||0) >= (lvl.pathCells?.length||1); break;
   }
   // CC54: secondary objective must also be met
   if (mainWin && lvl.objective) {
@@ -8603,6 +8706,7 @@ function calcStars() {
     case 'soda': prog=Math.min(state.bottlesBroken/lvl.target,1); break;
     case 'carpet': { const tot=state.carpetTotal||1; prog=Math.max(0,1-countCarpetRemaining()/tot); break; }
     case 'bears': prog=Math.min((state.bearsFreed||0)/(lvl.bearsTarget||lvl.honeyCount||1),1); break;
+    case 'path':  prog=Math.min((state.pathProgress||0)/(lvl.pathCells?.length||1),1); break;
     default: prog=1;
   }
   if (prog>=1.0) return 3;
