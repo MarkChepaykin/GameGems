@@ -6446,19 +6446,16 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
 function animateBombBlast(r,c) {
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
-    const dur=220, t0=performance.now();
-    function f(now) {
+    const dur=220, t0=performance.now(), id=++_animOverlayId;
+    _animOverlays.set(id,(now)=>{
       const t=Math.min((now-t0)/dur,1);
-      drawBoard(); updateParticles();
       ctx.save();
-      // Flash core
       if (t<0.25) {
         ctx.globalAlpha=(0.25-t)/0.25*0.9;
         const grd=ctx.createRadialGradient(bx,by,0,bx,by,cellSize*1.1);
         grd.addColorStop(0,'#fff'); grd.addColorStop(0.5,'rgba(255,200,50,0.8)'); grd.addColorStop(1,'rgba(255,80,0,0)');
         ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(bx,by,cellSize*1.1,0,Math.PI*2); ctx.fill();
       }
-      // Two expanding rings
       [0,0.15].forEach((off,i)=>{
         const lt=Math.min(Math.max(t-off,0)/(1-off||0.01),1);
         ctx.globalAlpha=Math.max(0,(1-lt)*0.85);
@@ -6468,9 +6465,8 @@ function animateBombBlast(r,c) {
         ctx.beginPath(); ctx.arc(bx,by,cellSize*(0.4+lt*1.9+i*0.25),0,Math.PI*2); ctx.stroke();
       });
       ctx.restore();
-      t<1?requestAnimationFrame(f):res();
-    }
-    requestAnimationFrame(f);
+      if (t>=1) { _animOverlays.delete(id); res(); }
+    });
   });
 }
 
@@ -6478,22 +6474,19 @@ function animateBombBlast(r,c) {
 function animateFishBlast(r,c) {
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
-    const dur=400, t0=performance.now();
+    const dur=400, t0=performance.now(), id=++_animOverlayId;
     const numRays=14;
     const angles=Array.from({length:numRays},(_,i)=>i*Math.PI*2/numRays+(Math.random()-0.5)*0.22);
     const rayColors=['#ff4040','#ff8800','#ffdd00','#40ff80','#40ccff','#cc44ff','#ff44bb','#ffffff','#ff6600','#88ff00','#00ccff','#ff0088','#ffbb00','#aaffaa'];
-    function f(now) {
+    _animOverlays.set(id,(now)=>{
       const t=Math.min((now-t0)/dur,1);
-      drawBoard(); updateParticles();
       ctx.save();
-      // Яркая вспышка в центре
       if (t<0.22) {
         ctx.globalAlpha=(0.22-t)/0.22*0.92;
         const grd=ctx.createRadialGradient(bx,by,0,bx,by,cellSize*1.4);
         grd.addColorStop(0,'#fff'); grd.addColorStop(0.35,'rgba(255,230,100,0.85)'); grd.addColorStop(1,'rgba(255,80,0,0)');
         ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(bx,by,cellSize*1.4,0,Math.PI*2); ctx.fill();
       }
-      // Лучи взрыва
       const maxLen=cellSize*2.2;
       ctx.lineCap='round';
       angles.forEach((ang,i)=>{
@@ -6510,9 +6503,8 @@ function animateFishBlast(r,c) {
         ctx.stroke();
       });
       ctx.restore();
-      t<1?requestAnimationFrame(f):res();
-    }
-    requestAnimationFrame(f);
+      if (t>=1) { _animOverlays.delete(id); res(); }
+    });
   });
 }
 
@@ -6520,10 +6512,9 @@ function animateFishBlast(r,c) {
 function animateMegaBlast(r,c) {
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
-    const dur=320, t0=performance.now();
-    function f(now) {
+    const dur=320, t0=performance.now(), id=++_animOverlayId;
+    _animOverlays.set(id,(now)=>{
       const t=Math.min((now-t0)/dur,1);
-      drawBoard(); updateParticles();
       ctx.save();
       if (t<0.28) {
         ctx.globalAlpha=(0.28-t)/0.28*0.92;
@@ -6541,9 +6532,8 @@ function animateMegaBlast(r,c) {
         ctx.beginPath(); ctx.arc(bx,by,cellSize*(0.3+lt*3.2+i*0.35),0,Math.PI*2); ctx.stroke();
       });
       ctx.restore();
-      t<1?requestAnimationFrame(f):res();
-    }
-    requestAnimationFrame(f);
+      if (t>=1) { _animOverlays.delete(id); res(); }
+    });
   });
 }
 
@@ -6551,10 +6541,9 @@ function animateMegaBlast(r,c) {
 function animateColoringWave(r,c) {
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
-    const dur=340, t0=performance.now(), hue0=Math.random()*360;
-    function f(now) {
+    const dur=340, t0=performance.now(), hue0=Math.random()*360, id=++_animOverlayId;
+    _animOverlays.set(id,(now)=>{
       const t=Math.min((now-t0)/dur,1);
-      drawBoard(); updateParticles();
       ctx.save();
       if (t<0.22) {
         ctx.globalAlpha=(0.22-t)/0.22*0.8;
@@ -6573,9 +6562,8 @@ function animateColoringWave(r,c) {
         ctx.beginPath(); ctx.arc(bx,by,cellSize*(0.35+lt*3.0),0,Math.PI*2); ctx.stroke();
       }
       ctx.restore();
-      t<1?requestAnimationFrame(f):res();
-    }
-    requestAnimationFrame(f);
+      if (t>=1) { _animOverlays.delete(id); res(); }
+    });
   });
 }
 
@@ -6583,10 +6571,9 @@ function animateColoringWave(r,c) {
 function animateSuperMegaBlast(r,c) {
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
-    const dur=440, t0=performance.now();
-    function f(now) {
+    const dur=440, t0=performance.now(), id=++_animOverlayId;
+    _animOverlays.set(id,(now)=>{
       const t=Math.min((now-t0)/dur,1);
-      drawBoard(); updateParticles();
       ctx.save();
       if (t<0.22) {
         ctx.globalAlpha=(0.22-t)/0.22*0.65;
@@ -6604,21 +6591,18 @@ function animateSuperMegaBlast(r,c) {
         ctx.beginPath(); ctx.arc(bx,by,cellSize*(0.2+lt*5.0+i*0.2),0,Math.PI*2); ctx.stroke();
       }
       ctx.restore();
-      t<1?requestAnimationFrame(f):res();
-    }
-    requestAnimationFrame(f);
+      if (t>=1) { _animOverlays.delete(id); res(); }
+    });
   });
 }
 
 // ── Анимация луча-волны для полосатой ───────────────────────────────────
 function animateStripeBeam(r,c,horizontal) {
   return new Promise(res=>{
-    const dur=200, t0=performance.now();
-    function f(now) {
+    const dur=200, t0=performance.now(), id=++_animOverlayId;
+    _animOverlays.set(id,(now)=>{
       const t=Math.min((now-t0)/dur,1);
-      drawBoard(); updateParticles();
       ctx.save();
-      // Яркий луч — полная ширина с угасанием
       ctx.globalAlpha = (1-t)*0.85;
       ctx.fillStyle = `rgba(255,255,120,${0.7*(1-t)})`;
       if (horizontal) {
@@ -6628,15 +6612,13 @@ function animateStripeBeam(r,c,horizontal) {
         const hx = boardOffX+c*cellSize;
         ctx.fillRect(hx+2, boardOffY, cellSize-4, cellSize*ROWS);
       }
-      // Дополнительная яркая полоса по центру
       ctx.globalAlpha = (1-t)*0.5;
       ctx.fillStyle = '#fff';
       if (horizontal) { ctx.fillRect(boardOffX, boardOffY+r*cellSize+cellSize/2-2, cellSize*COLS, 4); }
       else             { ctx.fillRect(boardOffX+c*cellSize+cellSize/2-2, boardOffY, 4, cellSize*ROWS); }
       ctx.restore();
-      t<1?requestAnimationFrame(f):res();
-    }
-    requestAnimationFrame(f);
+      if (t>=1) { _animOverlays.delete(id); res(); }
+    });
   });
 }
 
@@ -6645,7 +6627,6 @@ function animateRainbowBurst(targetType) {
     const targets=[];
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
       const cl=state.board[r]?.[c];
-      // targetType=-1 означает все гемы (Rainbow+Rainbow)
       if (cl && (targetType===-1 || cl.type===targetType||cl.special===SPECIAL.RAINBOW)) targets.push({r,c,cl});
     }
     if (!targets.length) { res(); return; }
@@ -6654,7 +6635,6 @@ function animateRainbowBurst(targetType) {
       const t=Math.min((now-t0)/dur,1);
       const pulse=Math.sin(t*Math.PI);
       targets.forEach(({cl})=>{ cl.anim={scale:1+pulse*0.35}; });
-      drawBoard(); updateParticles();
       if (t<1) requestAnimationFrame(f);
       else { targets.forEach(({cl})=>{ cl.anim={}; }); res(); }
     }
@@ -6926,12 +6906,11 @@ function animateFishFlight(fromR,fromC,toR,toC) {
       dx: 2*(1-t)*(cpx-fx)+2*t*(tx-cpx),
       dy: 2*(1-t)*(cpy-fy)+2*t*(ty-cpy)
     };}
-    function f(now) {
+    const id=++_animOverlayId;
+    _animOverlays.set(id,(now)=>{
       const t=Math.min((now-t0)/dur,1);
       const {x:px,y:py}=bezier(t);
       const {dx,dy}=bezierTangent(t);
-      const angle=Math.atan2(dy,dx)+Math.PI/2; // нос вперёд
-      // Спавн радужных искр позади снаряда
       if (t<0.96) {
         for (let i=0;i<3;i++) trail.push({
           x:px+(Math.random()-0.5)*4, y:py+(Math.random()-0.5)*4,
@@ -6940,9 +6919,7 @@ function animateFishFlight(fromR,fromC,toR,toC) {
           hue:Math.random()*360
         });
       }
-      drawBoard(); updateParticles();
       ctx.save();
-      // Трейл из радужных искр
       for (let i=trail.length-1;i>=0;i--) {
         const p=trail[i];
         p.x+=p.vx; p.y+=p.vy; p.vx*=0.92; p.vy*=0.92; p.life-=0.065;
@@ -6953,7 +6930,6 @@ function animateFishFlight(fromR,fromC,toR,toC) {
         ctx.fillStyle=rg; ctx.globalAlpha=1;
         ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
       }
-      // Снаряд — светящийся шар
       const rs=cellSize*0.42;
       ctx.translate(px,py);
       ctx.shadowColor='rgba(255,220,50,0.95)'; ctx.shadowBlur=24;
@@ -6968,9 +6944,8 @@ function animateFishFlight(fromR,fromC,toR,toC) {
       ctx.fillStyle='rgba(255,255,255,0.85)';
       ctx.beginPath(); ctx.arc(-rs*0.07,-rs*0.08,rs*0.09,0,Math.PI*2); ctx.fill();
       ctx.restore();
-      t<1?requestAnimationFrame(f):res();
-    }
-    requestAnimationFrame(f);
+      if (t>=1) { _animOverlays.delete(id); res(); }
+    });
   });
 }
 
@@ -6994,25 +6969,22 @@ async function explodeCell(r,c) {
 // ══════════════════════════════════════════
 function animateDestroy(cells) {
   return new Promise(res => {
-    const dur=180, t0=performance.now(); // bubblegum: 240→180 (snappier pop)
+    const dur=180, t0=performance.now();
     function f(now) {
       const t=Math.min((now-t0)/dur,1);
-      // pop: scale 1→1.35 за первые 28%, затем 1.35→0; alpha 1 весь pop, потом падает
       const scale = t<0.28 ? 1+t/0.28*0.35 : 1.35*(1-(t-0.28)/0.72);
       const alpha = t<0.28 ? 1 : Math.max(0, 1-(t-0.28)/0.72);
       cells.forEach(({r,c})=>{ const cl=state.board[r]?.[c]; if(cl) cl.anim={scale,alpha}; });
-      drawBoard(); updateParticles();
       t<1?requestAnimationFrame(f):res();
     }
     requestAnimationFrame(f);
   });
 }
 
-// Волновая анимация уничтожения — гемы прыгают вверх, delay по расстоянию от центра
 function animateDestroyWave(cells, centerR, centerC) {
   if (!cells.length) return Promise.resolve();
   return new Promise(res => {
-    const dur=200, waveDur=60, t0=performance.now(); // bubblegum: 260/80 → 200/60
+    const dur=200, waveDur=60, t0=performance.now();
     const maxDist = Math.max(...cells.map(({r,c})=>Math.abs(r-centerR)+Math.abs(c-centerC)),1);
     function f(now) {
       const elapsed=now-t0;
@@ -7030,7 +7002,6 @@ function animateDestroyWave(cells, centerR, centerC) {
         cl.anim={scale,alpha,oy};
         if (t<1) anyAlive=true;
       });
-      drawBoard(); updateParticles();
       anyAlive?requestAnimationFrame(f):res();
     }
     requestAnimationFrame(f);
@@ -7111,14 +7082,13 @@ function animateDrop() {
     const cl=state.board[r]?.[c];
     if (cl?.anim?.oy) drops.push({cl, startOy:cl.anim.oy});
   }
-  if (!drops.length) { drawBoard(); return Promise.resolve(); }
+  if (!drops.length) return Promise.resolve();
   return new Promise(res => {
     const dur=PHYSICS.DROP_MS, t0=performance.now();
     function f(now) {
       const t=Math.min((now-t0)/dur,1);
       const ease=EASE.outBounce(t);
       drops.forEach(({cl,startOy})=>{ if(cl.anim) cl.anim.oy=startOy*(1-ease); });
-      drawBoard();
       t<1?requestAnimationFrame(f):(drops.forEach(({cl})=>{if(cl.anim)cl.anim.oy=0;}),res());
     }
     requestAnimationFrame(f);
@@ -7134,7 +7104,6 @@ function animateSwap(r1,c1,r2,c2) {
       const t=EASE.outQuad(Math.min((now-t0)/dur,1));
       if(cl1)cl1.anim={ox:dx*t,oy:dy*t};
       if(cl2)cl2.anim={ox:-dx*t,oy:-dy*t};
-      drawBoard();
       if(t<1) requestAnimationFrame(f);
       else { if(cl1)cl1.anim={}; if(cl2)cl2.anim={}; res(); }
     }
@@ -9946,8 +9915,19 @@ function step4TickLoop() {
 // ══════════════════════════════════════════
 //  GAME LOOP
 // ══════════════════════════════════════════
+// Реестр оверлеев: анимации регистрируют функцию рисованья вместо своего drawBoard()
+const _animOverlays = new Map();
+let _animOverlayId = 0;
+
 function gameLoop() {
-  if (state.screen==='game') { drawBoard(); updateParticles(); }
+  if (state.screen==='game') {
+    drawBoard();
+    if (_animOverlays.size > 0) {
+      const _now = performance.now();
+      _animOverlays.forEach(fn => fn(_now));
+    }
+    updateParticles();
+  }
   requestAnimationFrame(gameLoop);
 }
 
