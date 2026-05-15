@@ -5516,13 +5516,22 @@ function analyzeMatch(cells) {
   const rows=[...new Set(cells.map(c=>c.r))];
   const cols=[...new Set(cells.map(c=>c.c))];
   const n=cells.length;
+  // 5+ по прямой → RAINBOW
   if (n>=5&&(rows.length===1||cols.length===1)) return { special:SPECIAL.RAINBOW };
-  if (n>=6) return { special:SPECIAL.COLORING }; // 6+ любая форма → Coloring (приоритет над MEGA)
-  // L/T/+ shape of exactly 5 → WRAPPED (double-blast)
-  if (rows.length>1&&cols.length>1&&n===5) return { special:SPECIAL.WRAPPED };
-  // Pure 2×2 square → FISH (before general WRAPPED check)
-  if (rows.length===2&&cols.length===2&&n===4) return { special:SPECIAL.FISH };
+  // 2×2-подпаттерн в небольших матчах (n≤5) → FISH
+  // Проверяем до WRAPPED, чтобы 2×2 не тонул в смешанном матче
+  if (n<=5) {
+    const ps=new Set(cells.map(({r,c})=>`${r},${c}`));
+    for (const {r,c} of cells) {
+      if (ps.has(`${r},${c+1}`)&&ps.has(`${r+1},${c}`)&&ps.has(`${r+1},${c+1}`)) return {special:SPECIAL.FISH};
+    }
+  }
+  // 7+ 2D → COLORING (порог поднят с 6 до 7, иначе 2×2-сканер раздувает n и
+  // нормальные WRAPPED-паттерны из 5 клеток ошибочно дают COLORING)
+  if (rows.length>1&&cols.length>1&&n>=7) return { special:SPECIAL.COLORING };
+  // 4-6 клеток 2D (Г/Т/крест) → WRAPPED
   if (rows.length>1&&cols.length>1&&n>=4) return { special:SPECIAL.WRAPPED };
+  // 4 по прямой → STRIPE
   if (n===4) {
     if (rows.length===1) return { special:SPECIAL.STRIPE_H };
     if (cols.length===1) return { special:SPECIAL.STRIPE_V };
