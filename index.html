@@ -427,6 +427,29 @@ canvas { display: block; touch-action: none; }
 #goal-bar { display: none; }
 #hud-level-row { display: none; }
 
+/* CC25: Sidekick HUD bar */
+#hud-sidekick {
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 12px 5px;
+}
+#hud-sk-icon { font-size: 18px; flex-shrink: 0; }
+#hud-sk-bar-wrap {
+  flex: 1; height: 6px; border-radius: 3px;
+  background: rgba(255,255,255,0.15); overflow: hidden;
+}
+#hud-sk-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg,#34d96f,#3aa8ff);
+  border-radius: 3px; transition: width .3s;
+}
+@keyframes skFlash {
+  0%   { opacity:1; transform:scale(1); }
+  40%  { opacity:1; transform:scale(1.4); }
+  70%  { opacity:1; transform:scale(0.9); }
+  100% { opacity:1; transform:scale(1); }
+}
+#hud-sk-icon.sk-activate { animation: skFlash .5s ease-out; }
+
 #combo-display {
   position: absolute; top: 44%; left: 50%; transform: translate(-50%,-50%);
   font-size: 52px; font-weight: 900; color: #ffe066;
@@ -1435,6 +1458,11 @@ canvas { display: block; touch-action: none; }
         <div id="buff-bar-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#ef4444);border-radius:3px;transition:width .3s;"></div>
       </div>
       <button id="buff-nuke-btn" onclick="activateBuffNuke()" style="display:none;font-size:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);border:none;border-radius:8px;padding:2px 8px;color:#fff;font-weight:bold;cursor:pointer;pointer-events:all;">НЮК!</button>
+    </div>
+    <!-- CC25: Sidekick bar -->
+    <div id="hud-sidekick" style="display:none;">
+      <span id="hud-sk-icon">🐢</span>
+      <div id="hud-sk-bar-wrap"><div id="hud-sk-bar"></div></div>
     </div>
   </div>
   <canvas id="game-canvas"></canvas>
@@ -3052,6 +3080,13 @@ const BOOSTERS = [
   { id:'color',     icon:'🌈', name:'Радуга',    desc:'Убирает 1 цвет',   cost:300 },
 ];
 
+// ── CC25: Компаньоны-помощники (Sidekick) ──
+const SIDEKICKS = {
+  turtle: { id:'turtle', icon:'🐢', name:'Черепаха', desc:'Ломает 3 случайных льда',           maxCharge:20 },
+  bird:   { id:'bird',   icon:'🐦', name:'Птичка',   desc:'Создаёт горизонтальную молнию',      maxCharge:15 },
+  bear:   { id:'bear',   icon:'🐻', name:'Медведь',  desc:'+3 хода',                            maxCharge:25 },
+};
+
 // Кристалл-бустеры перед уровнем (только L10+)
 const PRE_BOOSTERS = [
   { id:'extra_moves', icon:'🕐', name:'+3 хода',  desc:'Добавляет 3 хода к лимиту', cost:20 },
@@ -3189,6 +3224,9 @@ const state = {
 
   // CC24: Острова — набор купленных тайлов {[tileId]: true}
   islandTiles: {},
+
+  // CC25: Sidekick (компаньон-помощник)
+  sidekick: { id: null, charge: 0, maxCharge: 20 },
 };
 
 // ══════════════════════════════════════════
@@ -3247,6 +3285,7 @@ function buildSaveObj() {
     unlockedSkins:    state.unlockedSkins,
     recentResults:    state.recentResults,
     islandTiles:      state.islandTiles,
+    sidekickId:       state.sidekick.id,
     ts:               Date.now(),
   };
 }
@@ -3260,7 +3299,8 @@ const SAVE_FIELDS = ['coins','crystals','lives','livesTimestamp','lives24hUntil'
   'quests','questsDate','weeklyQuestDate','achievements','piggyFill',
   'levelAttempts','firstAttemptWins','tutorialDone','tutorialSeen','specialOfferShown','lastPlayedAt','totalSpecials',
   'totalIceBroken','totalStonesBroken',
-  'activeSkin','unlockedSkins','trophies','totalWins','shopOfferExpiry','recentResults','islandTiles'];
+  'activeSkin','unlockedSkins','trophies','totalWins','shopOfferExpiry','recentResults',
+  'islandTiles','sidekickId'];
 
 function applySaveObj(s) {
   SAVE_FIELDS.forEach(k => { if (s[k] !== undefined) state[k] = s[k]; });
@@ -3277,6 +3317,11 @@ function applySaveObj(s) {
   FREE_SKINS.forEach(s => { if (!state.unlockedSkins.includes(s)) state.unlockedSkins.push(s); });
   if (!state.unlockedSkins.includes('classic')) state.unlockedSkins.unshift('classic');
   if (!SKINS[state.activeSkin]) state.activeSkin = 'classic';
+  // CC25: restore sidekick id
+  if (s.sidekickId !== undefined) {
+    const skDef = SIDEKICKS[s.sidekickId];
+    if (skDef) { state.sidekick.id = s.sidekickId; state.sidekick.maxCharge = skDef.maxCharge; }
+  }
 }
 
 function saveGame() {
@@ -5887,6 +5932,18 @@ async function processMatches(hintR, hintC) {
     const cascMult  = state.comboCount > 1 ? Math.min(3.0, 1 + (state.comboCount - 1) * 0.3) : 1.0;
     const pts = Math.floor(matchSize * PHYSICS.BASE_SCORE * sizeMult * cascMult * streakBonus);
     state.score += pts;
+    // CC25: Sidekick charge accumulation
+    if (state.sidekick.id) {
+      let skCharge = 1; // +1 за матч 3
+      if (sizeMult > 1.0) skCharge = 3;          // +3 за спешл (матч 4+)
+      if (state.comboCount >= 3) skCharge = 5;   // +5 за каскад 3+
+      state.sidekick.charge = Math.min(state.sidekick.maxCharge, state.sidekick.charge + skCharge);
+      updateSidekickHUD();
+      if (state.sidekick.charge >= state.sidekick.maxCharge) {
+        // Небольшая задержка чтобы не прерывать текущую анимацию матча
+        setTimeout(activateSidekick, 300);
+      }
+    }
     if (state.comboCount>1) { showCombo(state.comboCount); updateQuestProgress('combo', 1); }
     if (state.comboCount>=3) unlockAchievement('combo_3');
     if (state.comboCount>=5) unlockAchievement('combo_5');
@@ -7957,6 +8014,82 @@ function updateHUD() {
       btn.disabled = isLocked;
     }
   });
+  // CC25: sidekick HUD
+  updateSidekickHUD();
+}
+
+// ── CC25: Sidekick HUD + logic ──────────────────────────────────────────────
+function updateSidekickHUD() {
+  const sk = state.sidekick;
+  const el = document.getElementById('hud-sidekick');
+  if (!el) return;
+  const isVisible = sk.id !== null && state.currentLevel >= 25;
+  el.style.display = isVisible ? 'flex' : 'none';
+  if (!isVisible) return;
+  const iconEl = document.getElementById('hud-sk-icon');
+  const barEl  = document.getElementById('hud-sk-bar');
+  if (iconEl) iconEl.textContent = SIDEKICKS[sk.id]?.icon || '❓';
+  if (barEl)  barEl.style.width  = Math.min(100, Math.round(sk.charge / sk.maxCharge * 100)) + '%';
+}
+
+async function activateSidekick() {
+  const sk = state.sidekick;
+  if (!sk.id || sk.charge < sk.maxCharge) return;
+  // Сброс заряда
+  sk.charge = 0;
+  updateSidekickHUD();
+  // Flash анимация иконки
+  const iconEl = document.getElementById('hud-sk-icon');
+  if (iconEl) {
+    iconEl.classList.remove('sk-activate');
+    void iconEl.offsetWidth; // reflow
+    iconEl.classList.add('sk-activate');
+    setTimeout(() => iconEl.classList.remove('sk-activate'), 600);
+  }
+  SFX.click();
+  if (sk.id === 'turtle') {
+    // Ломаем до 3 случайных льдов
+    const iceCells = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      if (state.iceGrid[r]?.[c]) iceCells.push([r, c]);
+    }
+    shuffleArray(iceCells);
+    const targets = iceCells.slice(0, 3);
+    for (const [r, c] of targets) {
+      state.iceGrid[r][c] = 0;
+      state.iceBroken++;
+      spawnParticles(r, c, '#a5f3fc', 6);
+      updateQuestProgress('ice', 1);
+    }
+    if (targets.length > 0) {
+      drawBoard();
+      await new Promise(res => setTimeout(res, 200));
+      updateGoalProgress();
+    }
+    showToast(`🐢 Черепаха сломала ${targets.length} льда!`);
+  } else if (sk.id === 'bird') {
+    // Ставит STRIPE_H в случайную не-специальную клетку
+    const free = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      if (state.holes.has(`${r},${c}`)) continue;
+      const cell = state.board[r]?.[c];
+      if (cell && cell.special === SPECIAL.NONE && !cell.stone && !cell.chocolate && cell.type >= 0) {
+        free.push([r, c]);
+      }
+    }
+    if (free.length) {
+      const [r, c] = free[Math.floor(Math.random() * free.length)];
+      state.board[r][c].special = SPECIAL.STRIPE_H;
+      spawnParticles(r, c, '#3aa8ff', 8);
+      drawBoard();
+    }
+    showToast('🐦 Птичка создала молнию!');
+  } else if (sk.id === 'bear') {
+    // +3 хода
+    state.moves += 3;
+    updateHUD();
+    showToast('🐻 Медведь добавил 3 хода!');
+  }
 }
 
 const BOOSTER_META = {
@@ -9282,6 +9415,8 @@ function playLevel(n, fresh) {
     state.lastSwap=null; state.undoUsedThisLevel=false; hideGestureHint();
     state.buffPieces=0; state.buffNukeReady=false; state.buffNukeActive=false;
     state.supersonicActive=false; state.supersonicMovesLeft=0;
+    // CC25: reset sidekick charge on new level
+    if (state.sidekick.id) { state.sidekick.charge = 0; }
     setTimeout(updateRainbowRoundHUD, 50);
     setTimeout(updateBuffBar, 100);
     setTimeout(() => {
@@ -10650,6 +10785,13 @@ function initDevPanel() {
       <button onclick="startTestLevel()" style="${devBtnStyle('#134e4a')};width:100%;margin-bottom:4px;">🧪 Тест-уровень</button>
       <button onclick="(()=>{state.questsDate='';state.weeklyQuestDate='';generateDailyQuests();renderQuestsRow();showToast('Квесты сброшены!')})()" style="${devBtnStyle('#1e3a5f')};width:100%;margin-bottom:4px;">🔄 Сбросить квесты</button>
       <button onclick="generateCampaign(113,612);showToast('Готово!')" style="${devBtnStyle('#1e3a5f')};width:100%;margin-bottom:4px;">🏭 +500 уровней</button>
+      <div style="margin-top:6px;margin-bottom:3px;font-size:10px;color:#64748b;">🐾 Компаньон (CC25):</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px;">
+        <button onclick="devSetSidekick('turtle')" style="${devBtnStyle('#064e3b')}">🐢 Черепаха</button>
+        <button onclick="devSetSidekick('bird')"   style="${devBtnStyle('#1e3a5f')}">🐦 Птичка</button>
+        <button onclick="devSetSidekick('bear')"   style="${devBtnStyle('#7c2d12')}">🐻 Медведь</button>
+        <button onclick="devSetSidekick(null)"     style="${devBtnStyle('#334155')}">✖ Отключить</button>
+      </div>
       <input id="dev-lvl-input" type="number" min="1" max="9999" placeholder="→ уровень"
         style="width:100%;background:#1e1b4b;color:#ffe066;border:1px solid #4c1d95;border-radius:6px;padding:3px 6px;font-size:12px;"
         onkeydown="if(event.key==='Enter')devCmd('goto')">
@@ -10845,6 +10987,19 @@ function devSpawnSpecial(sp) {
     }
   }
 }
+function devSetSidekick(id) {
+  if (id === null) {
+    state.sidekick = { id: null, charge: 0, maxCharge: 20 };
+  } else {
+    const skDef = SIDEKICKS[id];
+    if (!skDef) return;
+    state.sidekick = { id, charge: 0, maxCharge: skDef.maxCharge };
+  }
+  saveGame();
+  updateSidekickHUD();
+  showToast(id ? `Компаньон: ${SIDEKICKS[id]?.icon} ${SIDEKICKS[id]?.name}` : 'Компаньон отключён');
+}
+
 function devUpdateInfo() {
   const el = document.getElementById('dev-info'); if (!el) return;
   const lvl = getLevel(state.currentLevel);
