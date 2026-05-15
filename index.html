@@ -2013,6 +2013,19 @@ canvas { display: block; touch-action: none; }
   </div>
 </div>
 
+<!-- CC44: Ежедневный URM-сундук -->
+<div class="popup-overlay hidden" id="popup-daily-chest" onclick="if(event.target===this)closeDailyChestPopup()">
+  <div class="popup-box">
+    <div class="popup-title">🎁 Ежедневный сундук</div>
+    <p id="chest-streak-text" style="margin:0 0 8px;font-size:14px;color:#fde68a;font-weight:700;text-align:center;"></p>
+    <div id="chest-anim" style="font-size:80px;text-align:center;line-height:1;margin:8px 0;transition:transform .15s;">🎁</div>
+    <div id="chest-reward-text" style="display:none;font-size:16px;font-weight:800;color:#4be0a3;text-align:center;margin:8px 0;"></div>
+    <button id="chest-open-btn" class="btn btn-gold" onclick="openDailyChest()" style="width:100%;">Открыть!</button>
+    <small id="chest-tooltip" style="display:block;text-align:center;margin:6px 0 2px;color:rgba(255,255,255,.55);font-size:11px;">ℹ️ Нажми ? для шансов</small>
+    <button class="btn btn-gray btn-sm" onclick="closeDailyChestPopup()" style="width:100%;margin-top:4px;">Позже</button>
+  </div>
+</div>
+
 </div><!-- #app -->
 
 <!-- Яндекс Games SDK (загружается на платформе Яндекс Игр) -->
@@ -3227,6 +3240,10 @@ const state = {
 
   // CC25: Sidekick (компаньон-помощник)
   sidekick: { id: null, charge: 0, maxCharge: 20 },
+
+  // CC44: Ежедневный URM-сундук
+  chestStreak:    0,    // дни подряд открытия сундука (0..7)
+  lastChestDate:  '',   // 'YYYY-MM-DD'
 };
 
 // ══════════════════════════════════════════
@@ -3286,6 +3303,8 @@ function buildSaveObj() {
     recentResults:    state.recentResults,
     islandTiles:      state.islandTiles,
     sidekickId:       state.sidekick.id,
+    chestStreak:      state.chestStreak,
+    lastChestDate:    state.lastChestDate,
     ts:               Date.now(),
   };
 }
@@ -3300,7 +3319,8 @@ const SAVE_FIELDS = ['coins','crystals','lives','livesTimestamp','lives24hUntil'
   'levelAttempts','firstAttemptWins','tutorialDone','tutorialSeen','specialOfferShown','lastPlayedAt','totalSpecials',
   'totalIceBroken','totalStonesBroken',
   'activeSkin','unlockedSkins','trophies','totalWins','shopOfferExpiry','recentResults',
-  'islandTiles','sidekickId'];
+  'islandTiles','sidekickId',
+  'chestStreak','lastChestDate'];
 
 function applySaveObj(s) {
   SAVE_FIELDS.forEach(k => { if (s[k] !== undefined) state[k] = s[k]; });
@@ -4139,6 +4159,179 @@ function _flyRewardAnim(text) {
   el.style.top  = (window.innerHeight/2) + 'px';
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 1000);
+}
+
+// ══════════════════════════════════════════
+//  CC44: Ежедневный URM-сундук
+// ══════════════════════════════════════════
+
+function shouldShowDailyChest() {
+  return state.lastChestDate !== todayStr();
+}
+
+function showDailyChest() {
+  if (!shouldShowDailyChest()) return;
+  const el = document.getElementById('popup-daily-chest');
+  if (!el) return;
+  const streak = state.chestStreak || 0;
+  const streakEl = document.getElementById('chest-streak-text');
+  if (streakEl) streakEl.textContent = `День ${streak + 1} из 7` + (streak >= 6 ? ' — Легендарный гарантирован!' : '');
+  const animEl = document.getElementById('chest-anim');
+  if (animEl) { animEl.textContent = '🎁'; animEl.style.transform = ''; }
+  const rewEl = document.getElementById('chest-reward-text');
+  if (rewEl) rewEl.style.display = 'none';
+  const btn = document.getElementById('chest-open-btn');
+  if (btn) { btn.style.display = ''; btn.disabled = false; }
+  el.classList.remove('hidden');
+}
+
+function closeDailyChestPopup() {
+  const el = document.getElementById('popup-daily-chest');
+  if (el) el.classList.add('hidden');
+}
+
+function _chestRarity() {
+  const streak = state.chestStreak || 0;
+  if (streak >= 7) return 'legendary';
+  const r = Math.random();
+  if (r < 0.50) return 'common';
+  if (r < 0.75) return 'uncommon';
+  if (r < 0.90) return 'rare';
+  if (r < 0.98) return 'epic';
+  return 'legendary';
+}
+
+function _chestReward(rarity) {
+  switch (rarity) {
+    case 'common':    return { crystals:5,  coins:10,  lives:0, text:'+5💎 +10🪙' };
+    case 'uncommon':  return { crystals:15, coins:20,  lives:0, text:'+15💎 +20🪙' };
+    case 'rare':      return { crystals:30, coins:0,   lives:1, text:'+30💎 +1❤️' };
+    case 'epic':      return { crystals:50, coins:0,   lives:2, text:'+50💎 +2❤️' };
+    case 'legendary': return { crystals:100,coins:0,   lives:3, text:'+100💎 +3❤️' };
+    default:          return { crystals:5,  coins:10,  lives:0, text:'+5💎 +10🪙' };
+  }
+}
+
+function openDailyChest() {
+  const btn = document.getElementById('chest-open-btn');
+  if (btn) btn.disabled = true;
+
+  const rarity = _chestRarity();
+  const reward = _chestReward(rarity);
+  const animEl = document.getElementById('chest-anim');
+
+  // Phase 1: shake animation for 500ms
+  if (animEl) {
+    let t0 = null;
+    const shakeDur = 500;
+    function shakeFrame(ts) {
+      if (!t0) t0 = ts;
+      const elapsed = ts - t0;
+      if (elapsed < shakeDur) {
+        const angle = Math.sin(elapsed / 40) * 12;
+        animEl.style.transform = `rotate(${angle}deg)`;
+        requestAnimationFrame(shakeFrame);
+      } else {
+        animEl.style.transform = '';
+        animEl.textContent = '✨';
+        // Phase 2: reveal
+        setTimeout(() => _doRevealChest(rarity, reward), 300);
+      }
+    }
+    requestAnimationFrame(shakeFrame);
+  } else {
+    setTimeout(() => _doRevealChest(rarity, reward), 800);
+  }
+
+  // CC65: play chest sound immediately
+  openChest(rarity);
+}
+
+function _doRevealChest(rarity, reward) {
+  const animEl = document.getElementById('chest-anim');
+  const rewEl  = document.getElementById('chest-reward-text');
+  const rarityEmoji = { common:'💎', uncommon:'💎✨', rare:'💫', epic:'🌟', legendary:'👑' };
+  if (animEl) animEl.textContent = rarityEmoji[rarity] || '🎁';
+
+  // Grant reward
+  state.crystals = (state.crystals || 0) + reward.crystals;
+  state.coins    = (state.coins    || 0) + reward.coins;
+  if (reward.lives > 0) state.lives = Math.min(state.lives + reward.lives, 99);
+
+  // Update streak
+  const prevStreak = state.chestStreak || 0;
+  state.chestStreak   = prevStreak >= 7 ? 0 : prevStreak + 1;
+  state.lastChestDate = todayStr();
+  saveGame();
+  refreshMenu();
+
+  if (rewEl) {
+    rewEl.textContent = reward.text;
+    rewEl.style.display = '';
+  }
+
+  _flyRewardAnim(reward.text);
+  if (rarity === 'legendary') {
+    showToast('🎉 Легендарная награда!');
+  } else {
+    showToast(`Сундук: ${reward.text}`);
+  }
+
+  // Close modal after 2s
+  setTimeout(closeDailyChestPopup, 2000);
+}
+
+// ══════════════════════════════════════════
+//  CC65: Звуки сундука по редкости
+// ══════════════════════════════════════════
+function openChest(rarity) {
+  if (!state.soundOn) return;
+  // Хелперы: _t(freq, waveType, duration, volume, delay)  _n2(vol, dur, freq, q, delay)
+  const _t  = (f, type, dur, vol, delay) => SFX._tone  && SFX._tone(f, type, dur, vol, delay||0);
+  const _n2 = (vol, dur, freq, q, delay) => SFX._noise2 && SFX._noise2(vol, dur, freq, q, delay||0);
+
+  // Фоновый румбл (низкий синус, затухающий за 0.8s)
+  _t(65, 'sine', 0.8, 0.06, 0);
+  _t(75, 'sine', 0.4, 0.04, 0.4);
+
+  if (rarity === 'common') {
+    _n2(0.4, 0.08, 800,  5,  0.1);
+    _n2(0.3, 0.1,  1200, 8,  0.2);
+    _t(440, 'sine', 0.12, 0.3, 0);
+    _t(523, 'sine', 0.12, 0.3, 0.12);
+    _t(659, 'sine', 0.15, 0.3, 0.24);
+  } else if (rarity === 'uncommon') {
+    _n2(0.5, 0.1, 600, 8, 0.1);
+    _t(440, 'triangle', 0.15, 0.35, 0.15);
+    _t(554, 'triangle', 0.15, 0.35, 0.28);
+    _t(659, 'triangle', 0.2,  0.35, 0.42);
+  } else if (rarity === 'rare') {
+    _n2(0.6, 0.15, 500, 10, 0.05);
+    _t(523, 'sine', 0.2,  0.4,  0.1);
+    _t(659, 'sine', 0.2,  0.4,  0.25);
+    _t(784, 'sine', 0.25, 0.4,  0.4);
+    // Echo (эффект реверберации)
+    _t(523, 'sine', 0.12, 0.18, 0.25);
+    _t(659, 'sine', 0.12, 0.18, 0.4);
+  } else if (rarity === 'epic') {
+    _n2(0.7, 0.2, 400, 12, 0.0);
+    // Три волны арпеджио с небольшим смещением
+    [0, 0.15, 0.3].forEach(d => {
+      _t(523, 'sine', 0.25, 0.4,  d);
+      _t(659, 'sine', 0.25, 0.3,  d + 0.12);
+      _t(784, 'sine', 0.3,  0.35, d + 0.24);
+    });
+  } else if (rarity === 'legendary') {
+    _n2(0.9, 0.3, 300, 15, 0.0);
+    // C-мажорное арпеджио 523-659-784-1047
+    [523, 659, 784, 1047].forEach((f, i) => {
+      _t(f, 'sine', 0.3, 0.45, i * 0.12);
+    });
+    // Финальный аккорд
+    [523, 659, 784, 1047].forEach(f => {
+      _t(f, 'sine', 0.5, 0.2, 0.55);
+    });
+  }
 }
 
 function openDailyPopup() {
@@ -9869,6 +10062,7 @@ const SFX = (() => {
     },
 
     _tone: (f,t,d,v,delay,pan) => osc(f,t,v,0.005,d,delay||0,pan||0),
+    _noise2: (vol, dur, freq, q, delay) => noise2(vol, dur, freq, q||4, delay||0),
   };
 })();
 
@@ -10238,7 +10432,14 @@ spawnScreenShake = function() {
 
 const _origShowWin  = showWin;
 // eslint-disable-next-line no-func-assign
-showWin = function() { SFX.win();  _origShowWin(); };
+showWin = function() {
+  SFX.win();
+  _origShowWin();
+  // CC44: показать ежедневный сундук через 4.5s после победы
+  if (shouldShowDailyChest()) {
+    setTimeout(showDailyChest, 4500);
+  }
+};
 
 const _origShowLose = showLose;
 // eslint-disable-next-line no-func-assign
@@ -10341,6 +10542,11 @@ async function loadingScreen() {
     setTimeout(openDailyPopup, 500);
   } else if (state.streakLost) {
     setTimeout(openStreakPopup, 500);
+  }
+
+  // CC44: показать ежедневный сундук через 2s при запуске (если не показан сегодня)
+  if (shouldShowDailyChest()) {
+    setTimeout(showDailyChest, 2000);
   }
 }
 
