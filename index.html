@@ -6570,7 +6570,10 @@ function fillFromTop() {
       if (existing && (existing.stone || existing.chocolate)) { emptyCount=0; continue; }
       if (existing===null) {
         emptyCount++;
-        const g=createGem(); g.anim={oy:-emptyCount*cellSize,alpha:1};
+        // Pick color that avoids creating an immediate 3-in-a-row
+        let _ft = randGem();
+        for (let _fa=0; _fa<_activeGemTypes && wouldMatch(state.board,r,c,_ft); _fa++) _ft=(_ft+1)%_activeGemTypes;
+        const g=createGem(_ft); g.anim={oy:-emptyCount*cellSize,alpha:1};
         // CC43: Rainbow Round — 30% chance to spawn RAINBOW gem
         if (state.rainbowRound?.active && Math.random()<0.30) { g.special=SPECIAL.RAINBOW; g.type=-1; }
         // CC45: Dynamic difficulty — bonus specials when player is struggling
@@ -7366,27 +7369,37 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
     // srcColor: if cell has a real color use it; otherwise use partnerType; else random
     const srcColor = (cellOnBoard?.type >= 0) ? cellOnBoard.type
       : (partnerType >= 0 ? partnerType : Math.floor(Math.random()*_activeGemTypes));
-    // Pick least-common color to avoid creating massive same-color clusters after recoloring
-    function _leastCommonColor(exclude) {
-      const counts = new Array(_activeGemTypes).fill(0);
-      for (let rr=0;rr<ROWS;rr++) for (let cc=0;cc<COLS;cc++) {
-        const t=state.board[rr]?.[cc]?.type; if(t>=0&&t<_activeGemTypes) counts[t]++;
-      }
-      let best=-1, bestN=Infinity;
-      for (let i=0;i<_activeGemTypes;i++) { if(i!==exclude&&counts[i]<bestN){bestN=counts[i];best=i;} }
-      return best>=0?best:(exclude===0?1:0);
-    }
-    const tgtColor = (partnerType >= 0 && partnerType !== srcColor) ? partnerType
-      : _leastCommonColor(srcColor);
     let painted=0;
-    for (let rr=0;rr<ROWS;rr++) for (let cc=0;cc<COLS;cc++) {
-      const cl=state.board[rr]?.[cc];
-      if (cl&&cl.type===srcColor&&!cl.stone&&!cl.chocolate&&!cl.locked&&!cl.ingredient) {
-        cl.type=tgtColor; painted++;
-        spawnParticles(rr,cc,getSkinColor(tgtColor),3);
+    if (partnerType >= 0 && partnerType !== srcColor) {
+      // Intentional player swap: paint all srcColor → partnerType (original mechanic)
+      for (let rr=0;rr<ROWS;rr++) for (let cc=0;cc<COLS;cc++) {
+        const cl=state.board[rr]?.[cc];
+        if (cl&&cl.type===srcColor&&!cl.stone&&!cl.chocolate&&!cl.locked&&!cl.ingredient) {
+          cl.type=partnerType; painted++;
+          spawnParticles(rr,cc,getSkinColor(partnerType),3);
+        }
       }
+      if (painted>0) { showToast('🎨 Перекрашено!'); drawBoard(); }
+    } else {
+      // Standalone / cascade: scatter srcColor gems across all other colors to keep board balanced
+      // Greedy: each gem goes to whichever non-src color currently has the fewest gems
+      const _sc = new Array(_activeGemTypes).fill(0);
+      for (let rr=0;rr<ROWS;rr++) for (let cc=0;cc<COLS;cc++) {
+        const t=state.board[rr]?.[cc]?.type; if(t>=0&&t<_activeGemTypes&&t!==srcColor) _sc[t]++;
+      }
+      for (let rr=0;rr<ROWS;rr++) for (let cc=0;cc<COLS;cc++) {
+        const cl=state.board[rr]?.[cc];
+        if (cl&&cl.type===srcColor&&!cl.stone&&!cl.chocolate&&!cl.locked&&!cl.ingredient) {
+          let best=-1, bestN=Infinity;
+          for (let i=0;i<_activeGemTypes;i++) { if(i!==srcColor&&_sc[i]<bestN){bestN=_sc[i];best=i;} }
+          if (best<0) best=(srcColor===0)?1:0;
+          _sc[best]++;
+          cl.type=best; painted++;
+          spawnParticles(rr,cc,getSkinColor(best),3);
+        }
+      }
+      if (painted>0) { showToast('🎨 Разброс!'); drawBoard(); }
     }
-    if (painted>0) { showToast('🎨 Перекрашено!'); drawBoard(); }
     return;
   }
   // BOMB — Candy Crush style: first blast around bomb (bomb stays), bomb falls, second blast at landing
