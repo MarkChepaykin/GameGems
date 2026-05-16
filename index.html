@@ -4224,8 +4224,8 @@ function goBackToLevels() {
 }
 
 function showLevels() {
-  if (typeof LEVELS === 'undefined' || typeof EPISODES === 'undefined') {
-    showToast('⏳ Уровни ещё загружаются...');
+  if (typeof EPISODES === 'undefined') {
+    showToast('⏳ Загружаем...');
     return;
   }
   showScreen('levels');
@@ -4270,13 +4270,9 @@ function showLevels() {
 }
 
 function showEpisode(epId) {
-  if (typeof LEVELS === 'undefined') {
-    showToast('⏳ Уровни ещё загружаются...');
-    return;
-  }
   _currentEpisodeId = epId;
-  const ep = EPISODES.find(e => e.id === epId);
-  if (!ep) return;
+  const ep = (typeof EPISODES !== 'undefined') && EPISODES.find(e => e.id === epId);
+  if (!ep) { showToast('⏳ Загружаем...'); return; }
 
   showScreen('episode');
   document.getElementById('ep-title').textContent = ep.name;
@@ -4284,7 +4280,15 @@ function showEpisode(epId) {
   const grid = document.getElementById('episode-level-grid');
   grid.innerHTML = '';
 
-  const epLvls = LEVELS.filter(l => l.level >= ep.start && l.level <= ep.end);
+  const epLvls = (typeof LEVELS !== 'undefined') ? LEVELS.filter(l => l.level >= ep.start && l.level <= ep.end) : [];
+
+  // If chunk not yet loaded, trigger load and retry
+  if (epLvls.length === 0 && ep.start > ((typeof LEVELS !== 'undefined') ? LEVELS.length : 0)) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,.6);padding:20px;font-size:13px;">⏳ Загружаем уровни...</div>';
+    const chunkIdx = Math.max(1, Math.ceil(ep.start / 1000));
+    _loadScript(`levels-c${String(chunkIdx).padStart(3,'0')}.js`).then(() => showEpisode(epId));
+    return;
+  }
 
   for (const lvl of epLvls) {
     const stars   = state.levelStars[lvl.level] || 0;
@@ -10529,26 +10533,17 @@ function livesTickLoop() {
 async function loadingScreen() {
   const bar = document.getElementById('loading-bar');
 
-  // levels.js грузится в фоне — меню не ждёт его
-  const levelsReady = new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = 'levels.js';
-    s.onload = resolve;
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
-  levelsReady.then(() => {
-    if (typeof LEVELS !== 'undefined') {
-      patchLevelBalance();
-      reorderLevels();
-      _scheduleBackgroundBalance();
-    }
-  }).catch(() => {});
+  // Load metadata + chunk for player's current level, then menu, then rest in background
+  const curLevel = (state && state.currentLevel) || 1;
+  const curChunk = Math.max(1, Math.ceil(curLevel / 1000));
+  const metaLoad  = _loadScript('levels-meta.js');
+  const firstLoad = metaLoad.then(() => _loadScript(`levels-c${String(curChunk).padStart(3,'0')}.js`));
 
-  // Инициализация SDK и игровых данных — не блокируется levels.js
+  // Init SDK in parallel with chunk loading — both are async
   for (let p=0; p<=40; p+=4) { bar.style.width=p+'%'; await sleep(20); }
 
-  await SDK.init();
+  await Promise.all([SDK.init(), firstLoad]);
+  patchLevelBalance();
 
   for (let p=40; p<=70; p+=3) { bar.style.width=p+'%'; await sleep(20); }
 
@@ -10571,6 +10566,9 @@ async function loadingScreen() {
 
   postLoadInit();
 
+  // Background-load remaining chunks while player is in the menu
+  _loadRemainingChunks(curChunk);
+
   if (shouldShowDailyReward()) {
     setTimeout(openDailyPopup, 500);
   } else if (state.streakLost) {
@@ -10583,6 +10581,26 @@ async function loadingScreen() {
 }
 
 function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+function _loadScript(src) {
+  if (document.querySelector(`script[src="${src}"]`)) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = resolve; // onerror → resolve so one missing chunk doesn't break all
+    document.head.appendChild(s);
+  });
+}
+
+async function _loadRemainingChunks(skipChunk) {
+  const total = (typeof LEVELS_CHUNKS !== 'undefined') ? LEVELS_CHUNKS : 21;
+  for (let i = 1; i <= total; i++) {
+    if (i === skipChunk) continue;
+    await _loadScript(`levels-c${String(i).padStart(3,'0')}.js`);
+    await sleep(80); // yield — don't hammer the network or main thread
+  }
+  reorderLevels();
+  _scheduleBackgroundBalance();
+}
 
 // ══════════════════════════════════════════
 //  ТОЧКА ВХОДА
