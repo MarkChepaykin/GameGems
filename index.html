@@ -2287,7 +2287,7 @@ const PHYSICS = {
   DROP_MS:       320,    // длительность анимации падения
   DESTROY_MS:    200,    // item_default_destruction_process_ticks 12/60
   COLORBOMB_MS:  500,    // colorbomb_destruction_process_ticks 30/60
-  FISH_MS:      1000,    // fish_duration_to_target 1.0s
+  ROCKET_MS:      1000,    // rocket_duration_to_target 1.0s
   SHUFFLE_MS:   1667,    // shuffle_duration_ticks 100/60
   WIN_SEQ_MS:   3000,    // win_sequence_length_seconds 3.0s
   HINT_BEGINNER: 3000,   // board_move_hint_seconds_beginner
@@ -2339,7 +2339,7 @@ const GEMS = [
   { id:5, color:'#ff8a3a', shape:'flower',  name:'Цветок'   },
 ];
 
-const SPECIAL = { NONE:0, STRIPE_H:1, STRIPE_V:2, RAINBOW:4, MEGA:5, FISH:6, WRAPPED:7, COLORING:8 };
+const SPECIAL = { NONE:0, STRIPE_H:1, STRIPE_V:2, RAINBOW:4, MEGA:5, ROCKET:6, BOMB:7, COLORING:8 };
 
 // Скины — цветовые палитры [gem0..gem5] для геометрических скинов
 // Для emoji-скинов цвет = фоновый оттенок за emoji
@@ -3062,7 +3062,7 @@ const TUTORIAL_STEPS = [
   { level:2,  text:'⚡ 4 гема в ряд = Молния! Попробуй!',           autoHint:true,
     handFrom:[3,2], handTo:[3,3] },
   { level:3,  text:'🎯 Посмотри на цель вверху экрана!',            autoHint:true  },
-  { level:4,  text:'🎁 Г-форма = Врапд — двойной взрыв 3×3!',       autoHint:true,
+  { level:4,  text:'🎁 Г-форма = Бомба — двойной взрыв 3×3!',       autoHint:true,
     handFrom:[5,1], handTo:[5,2] },
   { level:5,  text:'🌈 Свайп Радугу с гемом — взрываются все того цвета!', autoHint:false },
   { level:16, text:'❄️ Делай матч рядом со льдом чтобы сломать его!', autoHint:true },
@@ -3110,7 +3110,7 @@ const SIDEKICKS = {
 const PRE_BOOSTERS = [
   { id:'extra_moves', icon:'🕐', name:'+3 хода',  desc:'Добавляет 3 хода к лимиту', cost:20 },
   { id:'rainbow_gem', icon:'🌈', name:'Радуга',   desc:'Rainbow-фишка на случайную клетку', cost:30 },
-  { id:'bomb_gem',    icon:'🎁', name:'Врапд',    desc:'WRAPPED-фишка на случайную клетку', cost:20 },
+  { id:'bomb_gem',    icon:'🎁', name:'Бомба',    desc:'Бомба на случайную клетку', cost:20 },
 ];
 
 // ══════════════════════════════════════════
@@ -4710,6 +4710,7 @@ function createIngredient() {
   return { type: -2, special: SPECIAL.NONE, ice:false, stone:false, chocolate:false, marmalade:false, ingredient:true, icon: icons[Math.floor(Math.random()*icons.length)], anim:{} };
 }
 let _activeGemTypes = GEM_TYPES;
+let _matchEpoch = 0; // инкрементируется при старте нового уровня — прерывает зависшие async-цепочки
 let _currentColorWeights = null;   // CC27: per-level gem color weights
 let _currentSpecialWeights = null; // CC27: per-level special spawn weights
 
@@ -5081,62 +5082,14 @@ function drawBoard() {
     // Внутренний блик (верхняя полоска)
     ctx.fillStyle='rgba(255,255,255,0.08)';
     roundRect(ctx,bx+2,by+2,cs-4,Math.round(cs*0.28),8); ctx.fill();
-    // Ковёр — тёплый янтарный текстурированный фон (до фишки)
+    // Ковёр — кешированный спрайт
     if (state.carpetGrid?.[r]?.[c]) {
-      ctx.fillStyle='rgba(200,140,40,0.28)';
-      roundRect(ctx,bx+1,by+1,cs-2,cs-2,8); ctx.fill();
-      ctx.save();
-      ctx.beginPath(); roundRect(ctx,bx+2,by+2,cs-4,cs-4,6); ctx.clip();
-      ctx.strokeStyle='rgba(180,110,20,0.28)'; ctx.lineWidth=1.2;
-      for(let i=-cs;i<cs*2;i+=7){ctx.beginPath();ctx.moveTo(bx+i,by);ctx.lineTo(bx+i+cs,by+cs);ctx.stroke();}
-      ctx.restore();
-      ctx.strokeStyle='rgba(210,160,60,0.6)'; ctx.lineWidth=2;
-      roundRect(ctx,bx+1,by+1,cs-2,cs-2,8); ctx.stroke();
+      ctx.drawImage(_getCarpetSprite(), bx, by, cs, cs);
     }
-    // Желе — глянцевая розовая мармеладка (до фишки)
+    // Желе — кешированный спрайт
     const jelly=state.jellyGrid[r]?.[c]||0;
     if (jelly>0) {
-      ctx.save();
-      const jpad = 2;
-      // Тёплая базовая заливка с градиентом
-      const jgrd = ctx.createLinearGradient(0, by, 0, by+cs);
-      if (jelly===2) {
-        jgrd.addColorStop(0, 'rgba(255,150,210,0.55)');
-        jgrd.addColorStop(1, 'rgba(255,40,140,0.55)');
-      } else {
-        jgrd.addColorStop(0, 'rgba(255,170,215,0.32)');
-        jgrd.addColorStop(1, 'rgba(255,80,160,0.30)');
-      }
-      ctx.fillStyle = jgrd;
-      roundRect(ctx, bx+jpad, by+jpad, cs-jpad*2, cs-jpad*2, 11); ctx.fill();
-      // Внутренний верхний блик-полумесяц
-      ctx.beginPath();
-      ctx.moveTo(bx+jpad+6, by+jpad+4);
-      ctx.quadraticCurveTo(bx+cs/2, by+jpad+cs*0.28, bx+cs-jpad-6, by+jpad+4);
-      ctx.quadraticCurveTo(bx+cs/2, by+jpad+cs*0.05, bx+jpad+6, by+jpad+4);
-      ctx.closePath();
-      ctx.fillStyle = jelly===2 ? 'rgba(255,255,255,0.42)' : 'rgba(255,255,255,0.28)';
-      ctx.fill();
-      // Точечный «бисер»-блик
-      ctx.beginPath();
-      ctx.arc(bx+cs*0.30, by+cs*0.24, Math.max(1.6, cs*0.05), 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fill();
-      // Контур
-      ctx.strokeStyle = jelly===2 ? 'rgba(255,40,140,0.9)' : 'rgba(255,90,170,0.55)';
-      ctx.lineWidth = jelly===2 ? 2 : 1.4;
-      roundRect(ctx, bx+jpad, by+jpad, cs-jpad*2, cs-jpad*2, 11); ctx.stroke();
-      // 2-слойное желе помечается маленькой «звёздочкой» в углу
-      if (jelly===2) {
-        ctx.fillStyle = '#fff';
-        ctx.strokeStyle = 'rgba(190,20,100,0.9)';
-        ctx.lineWidth = 1.5;
-        ctx.font = `bold ${Math.round(cs*0.22)}px 'Fredoka',Arial`;
-        ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-        ctx.strokeText('×2', bx+cs-5, by+4);
-        ctx.fillText('×2', bx+cs-5, by+4);
-      }
-      ctx.restore();
+      ctx.drawImage(_getJellySprite(jelly), bx, by, cs, cs);
     }
   }
 
@@ -5147,68 +5100,11 @@ function drawBoard() {
     if (cell) drawCellGem(r,c,cell);
   }
 
-  // 4. Лёд поверх фишек — голубой ледяной кристалл с гранями
+  // 4. Лёд поверх фишек — кешированный спрайт
+  const _iceS = _getIceSprite();
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
     if (!state.iceGrid[r]?.[c]) continue;
-    const bx=boardOffX+c*cs, by=boardOffY+r*cs;
-    const icx=bx+cs/2, icy=by+cs/2;
-    ctx.save();
-    // База — холодный полупрозрачный градиент
-    const igrd = ctx.createLinearGradient(0, by, 0, by+cs);
-    igrd.addColorStop(0, 'rgba(220,245,255,0.78)');
-    igrd.addColorStop(0.5, 'rgba(150,210,250,0.72)');
-    igrd.addColorStop(1, 'rgba(80,160,220,0.78)');
-    ctx.fillStyle = igrd;
-    roundRect(ctx, bx+1, by+1, cs-2, cs-2, 10); ctx.fill();
-    // Огранка — диагональные блики
-    ctx.save();
-    roundRect(ctx, bx+1, by+1, cs-2, cs-2, 10); ctx.clip();
-    ctx.fillStyle = 'rgba(255,255,255,0.30)';
-    ctx.beginPath();
-    ctx.moveTo(bx+cs*0.10, by+cs*0.08);
-    ctx.lineTo(bx+cs*0.55, by+cs*0.04);
-    ctx.lineTo(bx+cs*0.32, by+cs*0.50);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    ctx.beginPath();
-    ctx.moveTo(bx+cs*0.62, by+cs*0.55);
-    ctx.lineTo(bx+cs*0.95, by+cs*0.40);
-    ctx.lineTo(bx+cs*0.85, by+cs*0.95);
-    ctx.closePath(); ctx.fill();
-    ctx.restore();
-    // Снежинка — векторная, не emoji
-    ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-    ctx.lineWidth = Math.max(1.6, cs*0.06);
-    ctx.lineCap = 'round';
-    const sr = cs*0.28;
-    for (let a=0;a<6;a++) {
-      const ang = a * Math.PI/3;
-      const dx = Math.cos(ang)*sr, dy = Math.sin(ang)*sr;
-      ctx.beginPath();
-      ctx.moveTo(icx, icy);
-      ctx.lineTo(icx+dx, icy+dy);
-      // Большие веточки
-      ctx.moveTo(icx+dx*0.55, icy+dy*0.55);
-      ctx.lineTo(icx+dx*0.55 + Math.cos(ang+0.65)*sr*0.42, icy+dy*0.55 + Math.sin(ang+0.65)*sr*0.42);
-      ctx.moveTo(icx+dx*0.55, icy+dy*0.55);
-      ctx.lineTo(icx+dx*0.55 + Math.cos(ang-0.65)*sr*0.42, icy+dy*0.55 + Math.sin(ang-0.65)*sr*0.42);
-      // Маленькие на кончиках
-      ctx.moveTo(icx+dx*0.88, icy+dy*0.88);
-      ctx.lineTo(icx+dx*0.88 + Math.cos(ang+0.9)*sr*0.18, icy+dy*0.88 + Math.sin(ang+0.9)*sr*0.18);
-      ctx.moveTo(icx+dx*0.88, icy+dy*0.88);
-      ctx.lineTo(icx+dx*0.88 + Math.cos(ang-0.9)*sr*0.18, icy+dy*0.88 + Math.sin(ang-0.9)*sr*0.18);
-      ctx.stroke();
-    }
-    // Центральный «бисер»
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.beginPath();
-    ctx.arc(icx, icy, Math.max(1.5, cs*0.05), 0, Math.PI*2);
-    ctx.fill();
-    // Светлый кант с лёгким glow
-    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-    ctx.lineWidth = 1.8;
-    roundRect(ctx, bx+1, by+1, cs-2, cs-2, 10); ctx.stroke();
-    ctx.restore();
+    ctx.drawImage(_iceS, boardOffX+c*cs, boardOffY+r*cs, cs, cs);
   }
 
   // 4.3 Порталы — цветные кольца с анимацией
@@ -5512,9 +5408,8 @@ function drawCellGem(r,c,cell) {
         }
         const boltW = cs * 0.34;
         const boltH = cs * 0.40;
-        // Ореол молнии (без shadowBlur)
-        ctx.fillStyle = `rgba(255,235,60,0.22)`;
-        ctx.beginPath(); ctx.ellipse(cx, cy, cs*0.22, cs*0.28, 0, 0, Math.PI*2); ctx.fill();
+        ctx.shadowColor = '#ffe040';
+        ctx.shadowBlur = 12 * pulse;
         ctx.fillStyle = `rgba(255,235,60,${0.80*pulse + 0.15})`;
         // Форма молнии: классический зигзаг ⚡
         ctx.beginPath();
@@ -5574,14 +5469,13 @@ function drawCellGem(r,c,cell) {
           ctx.beginPath(); ctx.arc(bx, by, rr*1.25, 0, Math.PI*2); ctx.stroke();
         }
       }
-      // WRAPPED — двойной взрыв: два кольца + лучи
-      else if (spc === SPECIAL.WRAPPED) {
+      // BOMB — двойной взрыв: два кольца + лучи
+      else if (spc === SPECIAL.BOMB) {
         const r0 = cs * 0.28;
         const numRays = 8;
         ctx.save();
-        // Ореол (без shadowBlur)
-        ctx.fillStyle = `rgba(255,128,208,0.18)`;
-        ctx.beginPath(); ctx.arc(cx, cy, cs*0.35, 0, Math.PI*2); ctx.fill();
+        ctx.shadowColor = '#ff80d0';
+        ctx.shadowBlur = 10 * pulse;
         // Внешнее кольцо
         ctx.strokeStyle = `rgba(255,120,200,${0.70*pulse + 0.20})`;
         ctx.lineWidth = Math.max(2, cs * 0.055);
@@ -5604,16 +5498,16 @@ function drawCellGem(r,c,cell) {
           ctx.stroke();
         }
         // Центральная звёздочка
+        ctx.shadowBlur = 0;
         ctx.fillStyle = `rgba(255,255,255,${0.75*pulse + 0.20})`;
         drawStar(ctx, cx, cy, 4, r0 * 0.28, r0 * 0.14); ctx.fill();
         ctx.restore();
       }
-      // FISH — фейерверк: звёздный взрыв с лучами
-      else if (spc === SPECIAL.FISH) {
+      // ROCKET — фейерверк: звёздный взрыв с лучами
+      else if (spc === SPECIAL.ROCKET) {
         ctx.save();
-        // Ореол (без shadowBlur)
-        ctx.fillStyle = `rgba(255,200,0,0.20)`;
-        ctx.beginPath(); ctx.arc(cx, cy, cs*0.36, 0, Math.PI*2); ctx.fill();
+        ctx.shadowColor = `rgba(255,180,0,${0.70*pulse+0.20})`;
+        ctx.shadowBlur = 12 * pulse;
         const numRays = 8;
         const rInner = cs * 0.10;
         const rOuter = cs * 0.30;
@@ -5639,6 +5533,7 @@ function drawCellGem(r,c,cell) {
           ctx.stroke();
         }
         // Яркое ядро
+        ctx.shadowBlur = 0;
         ctx.fillStyle = `rgba(255,255,200,${0.95*pulse+0.05})`;
         ctx.beginPath(); ctx.arc(cx, cy, cs*0.09, 0, Math.PI*2); ctx.fill();
         ctx.restore();
@@ -5844,7 +5739,127 @@ function _gemPath(ctx,shape,cx,cy,r) {
 // ─── Bubblegum gem sprite cache (perf) ──────────────────────
 const _gemSpriteCache = new Map();
 let _gemCacheGen = 0;
-function invalidateGemCache() { _gemSpriteCache.clear(); _gemCacheGen++; }
+// ─── Кеши статичных клеток ───────────────────────────────────────────────
+let _iceSprite = null, _iceSpriteSz = 0;
+const _jellySprites = {};
+let _carpetSprite = null, _carpetSpriteSz = 0;
+
+function invalidateGemCache() {
+  _gemSpriteCache.clear(); _gemCacheGen++;
+  _iceSprite = null; _iceSpriteSz = 0;
+  for (const k in _jellySprites) delete _jellySprites[k];
+  _carpetSprite = null; _carpetSpriteSz = 0;
+}
+
+function _getIceSprite() {
+  const sz = Math.round(cellSize);
+  if (_iceSprite && _iceSpriteSz === sz) return _iceSprite;
+  _iceSpriteSz = sz;
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const cv = document.createElement('canvas');
+  cv.width = Math.ceil(sz * dpr); cv.height = Math.ceil(sz * dpr);
+  const c = cv.getContext('2d');
+  c.scale(dpr, dpr);
+  const cs = sz, icx = cs/2, icy = cs/2;
+  const igrd = c.createLinearGradient(0, 0, 0, cs);
+  igrd.addColorStop(0, 'rgba(220,245,255,0.78)');
+  igrd.addColorStop(0.5, 'rgba(150,210,250,0.72)');
+  igrd.addColorStop(1, 'rgba(80,160,220,0.78)');
+  c.fillStyle = igrd;
+  roundRect(c, 1, 1, cs-2, cs-2, 10); c.fill();
+  c.save();
+  roundRect(c, 1, 1, cs-2, cs-2, 10); c.clip();
+  c.fillStyle = 'rgba(255,255,255,0.30)';
+  c.beginPath(); c.moveTo(cs*0.10, cs*0.08); c.lineTo(cs*0.55, cs*0.04); c.lineTo(cs*0.32, cs*0.50); c.closePath(); c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.18)';
+  c.beginPath(); c.moveTo(cs*0.62, cs*0.55); c.lineTo(cs*0.95, cs*0.40); c.lineTo(cs*0.85, cs*0.95); c.closePath(); c.fill();
+  c.restore();
+  c.strokeStyle = 'rgba(255,255,255,0.95)';
+  c.lineWidth = Math.max(1.6, cs*0.06); c.lineCap = 'round';
+  const sr = cs*0.28;
+  for (let a = 0; a < 6; a++) {
+    const ang = a * Math.PI/3, dx = Math.cos(ang)*sr, dy = Math.sin(ang)*sr;
+    c.beginPath();
+    c.moveTo(icx, icy); c.lineTo(icx+dx, icy+dy);
+    c.moveTo(icx+dx*0.55, icy+dy*0.55);
+    c.lineTo(icx+dx*0.55+Math.cos(ang+0.65)*sr*0.42, icy+dy*0.55+Math.sin(ang+0.65)*sr*0.42);
+    c.moveTo(icx+dx*0.55, icy+dy*0.55);
+    c.lineTo(icx+dx*0.55+Math.cos(ang-0.65)*sr*0.42, icy+dy*0.55+Math.sin(ang-0.65)*sr*0.42);
+    c.moveTo(icx+dx*0.88, icy+dy*0.88);
+    c.lineTo(icx+dx*0.88+Math.cos(ang+0.9)*sr*0.18, icy+dy*0.88+Math.sin(ang+0.9)*sr*0.18);
+    c.moveTo(icx+dx*0.88, icy+dy*0.88);
+    c.lineTo(icx+dx*0.88+Math.cos(ang-0.9)*sr*0.18, icy+dy*0.88+Math.sin(ang-0.9)*sr*0.18);
+    c.stroke();
+  }
+  c.fillStyle = 'rgba(255,255,255,0.95)';
+  c.beginPath(); c.arc(icx, icy, Math.max(1.5, cs*0.05), 0, Math.PI*2); c.fill();
+  c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = 1.8;
+  roundRect(c, 1, 1, cs-2, cs-2, 10); c.stroke();
+  _iceSprite = cv;
+  return cv;
+}
+
+function _getJellySprite(jelly) {
+  const sz = Math.round(cellSize);
+  const key = `${jelly}_${sz}`;
+  if (_jellySprites[key]) return _jellySprites[key];
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const cv = document.createElement('canvas');
+  cv.width = Math.ceil(sz * dpr); cv.height = Math.ceil(sz * dpr);
+  const c = cv.getContext('2d');
+  c.scale(dpr, dpr);
+  const cs = sz, jpad = 2;
+  const jgrd = c.createLinearGradient(0, 0, 0, cs);
+  if (jelly === 2) {
+    jgrd.addColorStop(0, 'rgba(255,150,210,0.55)'); jgrd.addColorStop(1, 'rgba(255,40,140,0.55)');
+  } else {
+    jgrd.addColorStop(0, 'rgba(255,170,215,0.32)'); jgrd.addColorStop(1, 'rgba(255,80,160,0.30)');
+  }
+  c.fillStyle = jgrd;
+  roundRect(c, jpad, jpad, cs-jpad*2, cs-jpad*2, 11); c.fill();
+  c.beginPath();
+  c.moveTo(jpad+6, jpad+4); c.quadraticCurveTo(cs/2, jpad+cs*0.28, cs-jpad-6, jpad+4);
+  c.quadraticCurveTo(cs/2, jpad+cs*0.05, jpad+6, jpad+4); c.closePath();
+  c.fillStyle = jelly===2 ? 'rgba(255,255,255,0.42)' : 'rgba(255,255,255,0.28)'; c.fill();
+  c.beginPath(); c.arc(cs*0.30, cs*0.24, Math.max(1.6, cs*0.05), 0, Math.PI*2);
+  c.fillStyle = 'rgba(255,255,255,0.85)'; c.fill();
+  c.strokeStyle = jelly===2 ? 'rgba(255,40,140,0.9)' : 'rgba(255,90,170,0.55)';
+  c.lineWidth = jelly===2 ? 2 : 1.4;
+  roundRect(c, jpad, jpad, cs-jpad*2, cs-jpad*2, 11); c.stroke();
+  if (jelly === 2) {
+    c.fillStyle = '#fff'; c.strokeStyle = 'rgba(190,20,100,0.9)'; c.lineWidth = 1.5;
+    c.font = `bold ${Math.round(cs*0.22)}px 'Fredoka',Arial`;
+    c.textAlign = 'right'; c.textBaseline = 'top';
+    c.strokeText('×2', cs-5, 4); c.fillText('×2', cs-5, 4);
+  }
+  _jellySprites[key] = cv;
+  return cv;
+}
+
+function _getCarpetSprite() {
+  const sz = Math.round(cellSize);
+  if (_carpetSprite && _carpetSpriteSz === sz) return _carpetSprite;
+  _carpetSpriteSz = sz;
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const cv = document.createElement('canvas');
+  cv.width = Math.ceil(sz * dpr); cv.height = Math.ceil(sz * dpr);
+  const c = cv.getContext('2d');
+  c.scale(dpr, dpr);
+  const cs = sz;
+  c.fillStyle = 'rgba(200,140,40,0.28)';
+  roundRect(c, 1, 1, cs-2, cs-2, 8); c.fill();
+  c.save();
+  c.beginPath(); roundRect(c, 2, 2, cs-4, cs-4, 6); c.clip();
+  c.strokeStyle = 'rgba(180,110,20,0.28)'; c.lineWidth = 1.2;
+  for (let i = -cs; i < cs*2; i += 7) {
+    c.beginPath(); c.moveTo(i, 0); c.lineTo(i+cs, cs); c.stroke();
+  }
+  c.restore();
+  c.strokeStyle = 'rgba(210,160,60,0.6)'; c.lineWidth = 2;
+  roundRect(c, 1, 1, cs-2, cs-2, 8); c.stroke();
+  _carpetSprite = cv;
+  return cv;
+}
 
 function _renderGemSprite(shape, color, size, gemType, skin) {
   const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -5984,18 +5999,18 @@ function addRoundRect(ctx,x,y,w,h,r) {
 // ══════════════════════════════════════════
 const _MAX_PARTICLES = 200;
 const _MAX_RINGS = 40;
-function spawnParticles(r,c,color,count=8) {
+function spawnParticles(r,c,color,count=14) {
   if (particles.length >= _MAX_PARTICLES) return;
   const x=boardOffX+c*cellSize+cellSize/2, y=boardOffY+r*cellSize+cellSize/2;
   const slots = Math.min(count, _MAX_PARTICLES - particles.length);
-  // Основные «карамельные крошки»
+  // Основные «карамельные крошки» — с подсветкой
   for (let i=0;i<slots;i++) {
     const a=(Math.PI*2/slots)*i+Math.random()*.9, sp=5+Math.random()*10;
-    particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-3.5, color, life:1, r:4+Math.random()*6 });
+    particles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-3.5, color, life:1, r:3.2+Math.random()*6.5, glow:true });
   }
   if (particles.length >= _MAX_PARTICLES) return;
   // Сверкающие конфетти — белые/жёлтые точки
-  const confettiN = Math.min(6, _MAX_PARTICLES - particles.length);
+  const confettiN = Math.min(12, _MAX_PARTICLES - particles.length);
   for (let i=0;i<confettiN;i++) {
     const a=Math.random()*Math.PI*2, sp=9+Math.random()*14;
     const sc=Math.random()>0.55?'#fff':'#ffe066';
@@ -6003,7 +6018,7 @@ function spawnParticles(r,c,color,count=8) {
   }
   if (particles.length >= _MAX_PARTICLES) return;
   // Лучи-звёздочки от центра
-  const starN = Math.min(4, _MAX_PARTICLES - particles.length);
+  const starN = Math.min(8, _MAX_PARTICLES - particles.length);
   for (let i=0;i<starN;i++) {
     const a=Math.random()*Math.PI*2, sp=7+Math.random()*12;
     const sc=['#fff','#ffe066','#ffccff','#a0e6ff'][Math.floor(Math.random()*4)];
@@ -6037,12 +6052,16 @@ function updateParticles() {
     const a=Math.max(0,p.life);
     pCtx.globalAlpha=a;
     if (p.star) {
-      // Луч: линия по вектору скорости
       pCtx.strokeStyle=p.color; pCtx.lineWidth=2;
       pCtx.beginPath();
       pCtx.moveTo(p.x, p.y);
       pCtx.lineTo(p.x-p.vx*0.5, p.y-p.vy*0.5);
       pCtx.stroke();
+    } else if (p.glow) {
+      pCtx.shadowColor=p.color; pCtx.shadowBlur=10;
+      pCtx.fillStyle=p.color;
+      pCtx.beginPath(); pCtx.arc(p.x,p.y,p.r,0,Math.PI*2); pCtx.fill();
+      pCtx.shadowBlur=0;
     } else if (p.addBlend) {
       pCtx.globalCompositeOperation='lighter';
       pCtx.fillStyle=p.color;
@@ -6129,7 +6148,7 @@ function findMatches() {
       for (let k=0;k<len;k++) matched.add(`${r+k},${c}`);
     }
   }
-  // 2×2 squares → FISH special
+  // 2×2 squares → ROCKET special
   for (let r=0;r<ROWS-1;r++) for (let c=0;c<COLS-1;c++) {
     const tt=board[r][c]?.type;
     if (tt===undefined||tt<0||board[r][c]?.stone||board[r][c]?.chocolate||board[r][c]?.mystery||(board[r][c]?.licorice>0)||(board[r][c]?.honey>0)) continue;
@@ -6157,18 +6176,18 @@ function analyzeMatch(cells) {
   // 5+ в ЛЮБОЙ одной строке или столбце → RAINBOW
   // (включая случай, когда 5-в-ряд пересекается с матчем другого направления)
   if (maxR>=5||maxC>=5) return { special:SPECIAL.RAINBOW };
-  // 2×2-подпаттерн в небольших матчах (n≤5) → FISH
-  // Проверяем до WRAPPED, чтобы 2×2 не тонул в смешанном матче
+  // 2×2-подпаттерн в небольших матчах (n≤5) → ROCKET
+  // Проверяем до BOMB, чтобы 2×2 не тонул в смешанном матче
   if (n<=5) {
     const ps=new Set(cells.map(({r,c})=>`${r},${c}`));
     for (const {r,c} of cells) {
-      if (ps.has(`${r},${c+1}`)&&ps.has(`${r+1},${c}`)&&ps.has(`${r+1},${c+1}`)) return {special:SPECIAL.FISH};
+      if (ps.has(`${r},${c+1}`)&&ps.has(`${r+1},${c}`)&&ps.has(`${r+1},${c+1}`)) return {special:SPECIAL.ROCKET};
     }
   }
   // 7+ 2D → COLORING
   if (rows>1&&cols>1&&n>=7) return { special:SPECIAL.COLORING };
-  // 4-6 клеток 2D (Г/Т/крест) → WRAPPED (бомба)
-  if (rows>1&&cols>1&&n>=4) return { special:SPECIAL.WRAPPED };
+  // 4-6 клеток 2D (Г/Т/крест) → BOMB
+  if (rows>1&&cols>1&&n>=4) return { special:SPECIAL.BOMB };
   // 4 по прямой → STRIPE
   if (n===4) {
     if (rows===1) return { special:SPECIAL.STRIPE_H };
@@ -6181,6 +6200,7 @@ function analyzeMatch(cells) {
 //  ОБРАБОТКА МАТЧЕЙ
 // ══════════════════════════════════════════
 async function processMatches(hintR, hintC) {
+  const _myEpoch = _matchEpoch; // захватываем эпоху — если уровень сменится, возвращаемся досрочно
   state.busy = true;
   unlockAchievement('first_match');
 
@@ -6192,7 +6212,8 @@ async function processMatches(hintR, hintC) {
 
   let _loopGuard = 0;
   while (true) {
-    if (++_loopGuard > 120) { console.warn('processMatches: iteration limit'); break; }
+    if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
+    if (++_loopGuard > 25) { console.warn('processMatches: cascade limit hit'); break; }
     const matched=findMatches();
     if (!matched.size) break;
 
@@ -6267,7 +6288,7 @@ async function processMatches(hintR, hintC) {
       const tp=state.board[r]?.[c]?.type; if(tp===undefined||tp<0) continue;
       (typeMap[tp]||(typeMap[tp]=[])).push({r,c});
     }
-    const spPriority={[SPECIAL.RAINBOW]:5,[SPECIAL.COLORING]:5,[SPECIAL.MEGA]:4,[SPECIAL.WRAPPED]:4,[SPECIAL.FISH]:3,[SPECIAL.STRIPE_H]:2,[SPECIAL.STRIPE_V]:2};
+    const spPriority={[SPECIAL.RAINBOW]:5,[SPECIAL.COLORING]:5,[SPECIAL.MEGA]:4,[SPECIAL.BOMB]:4,[SPECIAL.ROCKET]:3,[SPECIAL.STRIPE_H]:2,[SPECIAL.STRIPE_V]:2};
     let specialResult=null, matchType=0, specialGroupCells=cellsArr;
     let bestPri=-1;
     for (const [tp,cells] of Object.entries(typeMap)) {
@@ -6310,6 +6331,7 @@ async function processMatches(hintR, hintC) {
     }
 
     await animateDestroy(cellsArr.filter(({r,c})=>!state.board[r]?.[c]?.ingredient));
+    if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
     for (const {r,c} of cellsArr) { if (!state.board[r]?.[c]?.ingredient) state.board[r][c]=null; }
 
     let ng=null, ngPlacedR=-1, ngPlacedC=-1;
@@ -6341,9 +6363,11 @@ async function processMatches(hintR, hintC) {
     }
     // Спешлы из матча всегда взрываются (даже если создан новый спешл)
     for (const {r,c,special,type} of specialsInMatch) {
+      if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
       await triggerSpecial(r,c,special,type);
     }
-    // Если цепные спешлы (RAINBOW/WRAPPED) потребили только что созданный спешл — возрождаем его
+    if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
+    // Если цепные спешлы (RAINBOW/BOMB) потребили только что созданный спешл — возрождаем его
     if (ng && ngPlacedR>=0 && state.board[ngPlacedR]?.[ngPlacedC] !== ng) {
       // Ищем свободную клетку рядом с центром группы матча
       const avgR2=Math.round(specialGroupCells.reduce((s,{r})=>s+r,0)/specialGroupCells.length);
@@ -6364,7 +6388,9 @@ async function processMatches(hintR, hintC) {
     if (ng) ng.anim = {};
 
     applyGravity();   await animateDrop();
+    if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
     fillFromTop();    await animateDrop();
+    if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
     updateGoalProgress(); updateHUD();
 
     // CC18: Path Mode — проверяем продвижение по дорожке
@@ -6390,6 +6416,7 @@ async function processMatches(hintR, hintC) {
     if (checkWin()) { _cascadeWon = true; }
   }
 
+  if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
   state.comboCount=0; state.matchSoundLvl=0; state.matchSequenceStep=0; stopOnFire();
   if (_cascadeWon) { state.busy=false; setTimeout(showWin, 600); return; }
   // Финальный sweep — гарантируем отсутствие пустых клеток (баг с дырками после бонусов)
@@ -6401,6 +6428,7 @@ async function processMatches(hintR, hintC) {
     }
     if (hadEmpty) { applyGravity(); fillFromTop(); await animateDrop(); }
   }
+  if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
   // Тьма (шоколад) распространяется каждый ход если не была уничтожена в этот ход
   if (!state.chocolateBrokenThisMove && !_prevChocBroken && hasChocolate()) spreadChocolate();
   // Авто-перемешивание если нет допустимых ходов
@@ -6419,6 +6447,7 @@ async function processMatches(hintR, hintC) {
     if (attempts>0) {
       showToast('Нет ходов — перемешиваем!');
       await animateShuffleEffect();
+      if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
       // Убираем совпадения: несколько проходов пока не чисто
       for (let pass=0; pass<5; pass++) {
         clearInitialMatches(state.board);
@@ -6574,13 +6603,13 @@ function fillFromTop() {
         else if (_currentDynDiff < 1.0 && Math.random() < 0.08) {
           if (_currentSpecialWeights) {
             const sw = _currentSpecialWeights;
-            const keys = ['stripe','rainbow','fish','wrapped'];
+            const keys = ['stripe','rainbow','rocket','bomb'];
             const vals = keys.map(k => sw[k] ?? 0);
             const pick = keys[weightedRandom(vals)];
-            const _sp={stripe:Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V,rainbow:SPECIAL.RAINBOW,fish:SPECIAL.FISH,wrapped:SPECIAL.WRAPPED}[pick];
+            const _sp={stripe:Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V,rainbow:SPECIAL.RAINBOW,rocket:SPECIAL.ROCKET,bomb:SPECIAL.BOMB}[pick];
             g.special = _sp ?? (Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V);
           } else {
-            g.special = Math.random()<0.6 ? (Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V) : SPECIAL.WRAPPED;
+            g.special = Math.random()<0.6 ? (Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V) : SPECIAL.BOMB;
           }
         }
         state.board[r][c]=g;
@@ -6702,13 +6731,13 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     if(mcp>0){state.score+=mcp;spawnFloatingScore(megaR,megaC,mcp,'#ec4899');updateGoalProgress();}
     return;
   }
-  // Coloring + Stripe/Wrapped/Fish → все гемы цвета красящей становятся этим спешлом и взрываются
+  // Coloring + Stripe/Bomb/Rocket → все гемы цвета красящей становятся этим спешлом и взрываются
   // Rainbow+Coloring обрабатывается ниже в блоке Rainbow
   if ((sp1===SPECIAL.COLORING||sp2===SPECIAL.COLORING) && sp1!==SPECIAL.RAINBOW && sp2!==SPECIAL.RAINBOW) {
     const rawCol=sp1===SPECIAL.COLORING?_t1:_t2;
     const coloringType = (rawCol>=0) ? rawCol : Math.floor(Math.random()*_activeGemTypes);
     const partnerSp = sp1===SPECIAL.COLORING ? sp2 : sp1;
-    if (partnerSp===SPECIAL.STRIPE_H||partnerSp===SPECIAL.STRIPE_V||partnerSp===SPECIAL.WRAPPED||partnerSp===SPECIAL.FISH) {
+    if (partnerSp===SPECIAL.STRIPE_H||partnerSp===SPECIAL.STRIPE_V||partnerSp===SPECIAL.BOMB||partnerSp===SPECIAL.ROCKET) {
       await animateColoringWave(r1, c1);
       const targets=[];
       for(let rr=0;rr<ROWS;rr++) for(let cc=0;cc<COLS;cc++){
@@ -6719,23 +6748,23 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
       }
       drawBoard(); await new Promise(res=>setTimeout(res,200));
       let pts=0;
-      if (partnerSp===SPECIAL.WRAPPED) {
+      if (partnerSp===SPECIAL.BOMB) {
         const _pos=[];
         for(const[tr,tc]of targets.map(([r,c])=>[r,c])){const tcl=state.board[tr]?.[tc];if(tcl&&!tcl.ingredient){state.board[tr][tc]=null;pts+=30;_pos.push([tr,tc]);}}
         if(pts>0){state.score+=pts;spawnFloatingScore(r1,c1,pts,'#a855f7');updateGoalProgress();}
-        await Promise.all(_pos.map(([tr,tc])=>_wrappedBlast3x3(tr,tc)));
+        await Promise.all(_pos.map(([tr,tc])=>_bombBlast3x3(tr,tc)));
         spawnScreenShake(12);applyGravity();fillFromTop();await animateDrop();
         await new Promise(res=>setTimeout(res,80));
-        await Promise.all(_pos.map(([tr,tc])=>_wrappedBlast3x3(tr,tc)));
+        await Promise.all(_pos.map(([tr,tc])=>_bombBlast3x3(tr,tc)));
         applyGravity();fillFromTop();await animateDrop();
-      } else if (partnerSp===SPECIAL.FISH) {
+      } else if (partnerSp===SPECIAL.ROCKET) {
         const _fs=[];
         for(const[tr,tc]of targets.map(([r,c])=>[r,c])){const tcl=state.board[tr]?.[tc];if(tcl&&!tcl.ingredient){state.board[tr][tc]=null;pts+=30;_fs.push([tr,tc]);}}
         if(pts>0){state.score+=pts;spawnFloatingScore(r1,c1,pts,'#a855f7');updateGoalProgress();}
         const _uk=new Set();
-        const _fp=_fs.map(([fr,fc])=>{const tgt=findFishTarget(_uk);if(tgt)_uk.add(`${tgt.r},${tgt.c}`);return tgt?{fr,fc,tgt}:null;}).filter(Boolean);
-        await Promise.all(_fp.map(({fr,fc,tgt})=>animateFishFlight(fr,fc,tgt.r,tgt.c)));
-        await Promise.all(_fp.map(async({tgt})=>{spawnBombBeams(tgt.r,tgt.c,1,'rgba(0,200,255,0.9)');spawnExplosionSparks(tgt.r,tgt.c,12,'#00e5ff');await animateFishBlast(tgt.r,tgt.c);await explodeCell(tgt.r,tgt.c);}));
+        const _fp=_fs.map(([fr,fc])=>{const tgt=findRocketTarget(_uk);if(tgt)_uk.add(`${tgt.r},${tgt.c}`);return tgt?{fr,fc,tgt}:null;}).filter(Boolean);
+        await Promise.all(_fp.map(({fr,fc,tgt})=>animateRocketFlight(fr,fc,tgt.r,tgt.c)));
+        await Promise.all(_fp.map(async({tgt})=>{spawnBombBeams(tgt.r,tgt.c,1,'rgba(0,200,255,0.9)');spawnExplosionSparks(tgt.r,tgt.c,12,'#00e5ff');await animateRocketBlast(tgt.r,tgt.c);await explodeCell(tgt.r,tgt.c);}));
         applyGravity();fillFromTop();await animateDrop();
       } else {
         const _sa=[];const _td=new Set();
@@ -6802,23 +6831,23 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
       }
       drawBoard(); await new Promise(res=>setTimeout(res,200));
       let pts=0;
-      if (otherSp===SPECIAL.WRAPPED) {
+      if (otherSp===SPECIAL.BOMB) {
         const _pos=[];
         for(const[tr,tc]of targets.map(([r,c])=>[r,c])){const tcl=state.board[tr]?.[tc];if(tcl&&!tcl.ingredient){state.board[tr][tc]=null;pts+=30;_pos.push([tr,tc]);}}
         if(pts>0){state.score+=pts;spawnFloatingScore(r1,c1,pts,'#a855f7');updateGoalProgress();}
-        await Promise.all(_pos.map(([tr,tc])=>_wrappedBlast3x3(tr,tc)));
+        await Promise.all(_pos.map(([tr,tc])=>_bombBlast3x3(tr,tc)));
         spawnScreenShake(12);applyGravity();fillFromTop();await animateDrop();
         await new Promise(res=>setTimeout(res,80));
-        await Promise.all(_pos.map(([tr,tc])=>_wrappedBlast3x3(tr,tc)));
+        await Promise.all(_pos.map(([tr,tc])=>_bombBlast3x3(tr,tc)));
         applyGravity();fillFromTop();await animateDrop();
-      } else if (otherSp===SPECIAL.FISH) {
+      } else if (otherSp===SPECIAL.ROCKET) {
         const _fs=[];
         for(const[tr,tc]of targets.map(([r,c])=>[r,c])){const tcl=state.board[tr]?.[tc];if(tcl&&!tcl.ingredient){state.board[tr][tc]=null;pts+=30;_fs.push([tr,tc]);}}
         if(pts>0){state.score+=pts;spawnFloatingScore(r1,c1,pts,'#a855f7');updateGoalProgress();}
         const _uk=new Set();
-        const _fp=_fs.map(([fr,fc])=>{const tgt=findFishTarget(_uk);if(tgt)_uk.add(`${tgt.r},${tgt.c}`);return tgt?{fr,fc,tgt}:null;}).filter(Boolean);
-        await Promise.all(_fp.map(({fr,fc,tgt})=>animateFishFlight(fr,fc,tgt.r,tgt.c)));
-        await Promise.all(_fp.map(async({tgt})=>{spawnBombBeams(tgt.r,tgt.c,1,'rgba(0,200,255,0.9)');spawnExplosionSparks(tgt.r,tgt.c,12,'#00e5ff');await animateFishBlast(tgt.r,tgt.c);await explodeCell(tgt.r,tgt.c);}));
+        const _fp=_fs.map(([fr,fc])=>{const tgt=findRocketTarget(_uk);if(tgt)_uk.add(`${tgt.r},${tgt.c}`);return tgt?{fr,fc,tgt}:null;}).filter(Boolean);
+        await Promise.all(_fp.map(({fr,fc,tgt})=>animateRocketFlight(fr,fc,tgt.r,tgt.c)));
+        await Promise.all(_fp.map(async({tgt})=>{spawnBombBeams(tgt.r,tgt.c,1,'rgba(0,200,255,0.9)');spawnExplosionSparks(tgt.r,tgt.c,12,'#00e5ff');await animateRocketBlast(tgt.r,tgt.c);await explodeCell(tgt.r,tgt.c);}));
         applyGravity();fillFromTop();await animateDrop();
       } else {
         const _sa=[];const _td=new Set();
@@ -6877,13 +6906,13 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     addArea(r1,c1,3);
     await animateSuperMegaBlast(r1,c1); spawnScreenShake(22);
     spawnExplosionSparks(r1,c1,40,'#ff6600'); spawnExplosionSparks(r1,c1,20,'#ffe066');
-  } else if ((sp1===SPECIAL.WRAPPED||sp1===SPECIAL.MEGA)&&(sp2===SPECIAL.WRAPPED||sp2===SPECIAL.MEGA)&&!(sp1===SPECIAL.WRAPPED&&sp2===SPECIAL.WRAPPED)) {
-    // Wrapped+Mega или Mega+Wrapped: 5×5
+  } else if ((sp1===SPECIAL.BOMB||sp1===SPECIAL.MEGA)&&(sp2===SPECIAL.BOMB||sp2===SPECIAL.MEGA)&&!(sp1===SPECIAL.BOMB&&sp2===SPECIAL.BOMB)) {
+    // Bomb+Mega или Mega+Wrapped: 5×5
     addArea(r1,c1,2);
     await animateMegaBlast(r1,c1); spawnScreenShake(14);
     spawnExplosionSparks(r1,c1,24,'#ff8800');
-  } else if (sp1===SPECIAL.WRAPPED&&sp2===SPECIAL.WRAPPED) {
-    // Wrapped+Wrapped: 5×5 twice (early return — manages own blast sequence)
+  } else if (sp1===SPECIAL.BOMB&&sp2===SPECIAL.BOMB) {
+    // Bomb+Bomb: 5×5 twice (early return — manages own blast sequence)
     const wr=r1, wc=c1;
     const blast5x5=async()=>{
       const bCells=[];
@@ -6899,10 +6928,10 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     applyGravity(); fillFromTop(); await animateDrop();
     await animateBombBlast(wr,wc); spawnScreenShake(14); await blast5x5();
     return;
-  } else if ((sp1===SPECIAL.WRAPPED&&(sp2===SPECIAL.STRIPE_H||sp2===SPECIAL.STRIPE_V))||
-             ((sp1===SPECIAL.STRIPE_H||sp1===SPECIAL.STRIPE_V)&&sp2===SPECIAL.WRAPPED)) {
-    // Stripe+Wrapped: 3 строки И 3 столбца одновременно (крест)
-    const wr=sp1===SPECIAL.WRAPPED?r1:r2, wc=sp1===SPECIAL.WRAPPED?c1:c2;
+  } else if ((sp1===SPECIAL.BOMB&&(sp2===SPECIAL.STRIPE_H||sp2===SPECIAL.STRIPE_V))||
+             ((sp1===SPECIAL.STRIPE_H||sp1===SPECIAL.STRIPE_V)&&sp2===SPECIAL.BOMB)) {
+    // Stripe+Bomb: 3 строки И 3 столбца одновременно (крест)
+    const wr=sp1===SPECIAL.BOMB?r1:r2, wc=sp1===SPECIAL.BOMB?c1:c2;
     addRow(wr-1); addRow(wr); addRow(wr+1);
     addCol(wc-1); addCol(wc); addCol(wc+1);
     spawnLightning(wr-1,wc,true); spawnLightning(wr,wc,true); spawnLightning(wr+1,wc,true);
@@ -6912,23 +6941,23 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
       animateStripeBeam(wr,wc-1,false), animateStripeBeam(wr,wc,false), animateStripeBeam(wr,wc+1,false)
     ]);
     spawnScreenShake(14);
-  } else if (sp1===SPECIAL.FISH&&sp2===SPECIAL.FISH) {
-    // Fish+Fish: destroy 3 priority targets
+  } else if (sp1===SPECIAL.ROCKET&&sp2===SPECIAL.ROCKET) {
+    // Rocket+Rocket: destroy 3 priority targets
     for (let i=0;i<3;i++) {
-      const t=findFishTarget(); if(!t) break;
-      await animateFishFlight(r1,c1,t.r,t.c);
+      const t=findRocketTarget(); if(!t) break;
+      await animateRocketFlight(r1,c1,t.r,t.c);
       spawnExplosionSparks(t.r,t.c,12,'#00e5ff');
       await animateBombBlast(t.r,t.c);
       await explodeCell(t.r,t.c);
     }
     return;
-  } else if ((sp1===SPECIAL.FISH&&sp2===SPECIAL.MEGA)||(sp1===SPECIAL.MEGA&&sp2===SPECIAL.FISH)) {
+  } else if ((sp1===SPECIAL.ROCKET&&sp2===SPECIAL.MEGA)||(sp1===SPECIAL.MEGA&&sp2===SPECIAL.ROCKET)) {
     // Фейерверк+Мега: летит к цели, там взрывается мегой
-    const bomSp=sp1===SPECIAL.FISH?sp2:sp1;
-    const fishR=sp1===SPECIAL.FISH?r1:r2, fishC=sp1===SPECIAL.FISH?c1:c2;
+    const bomSp=sp1===SPECIAL.ROCKET?sp2:sp1;
+    const rocketR=sp1===SPECIAL.ROCKET?r1:r2, rocketC=sp1===SPECIAL.ROCKET?c1:c2;
     const rad=bomSp===SPECIAL.MEGA?2:1;
-    const tgt=findFishTarget()||{r:r1,c:c1};
-    await animateFishFlight(fishR,fishC,tgt.r,tgt.c);
+    const tgt=findRocketTarget()||{r:r1,c:c1};
+    await animateRocketFlight(rocketR,rocketC,tgt.r,tgt.c);
     spawnBombBeams(tgt.r,tgt.c,rad,'rgba(255,180,40,0.95)');
     spawnExplosionSparks(tgt.r,tgt.c,20,'#ff8800');
     if (bomSp===SPECIAL.MEGA) { await animateMegaBlast(tgt.r,tgt.c); spawnScreenShake(14); }
@@ -6942,13 +6971,13 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     if(bPts>0){state.score+=bPts;spawnFloatingScore(tgt.r,tgt.c,bPts,'#ff8800');updateGoalProgress();}
     applyGravity();fillFromTop();await animateDrop();
     return;
-  } else if ((sp1===SPECIAL.FISH&&(sp2===SPECIAL.STRIPE_H||sp2===SPECIAL.STRIPE_V))||
-             ((sp1===SPECIAL.STRIPE_H||sp1===SPECIAL.STRIPE_V)&&sp2===SPECIAL.FISH)) {
+  } else if ((sp1===SPECIAL.ROCKET&&(sp2===SPECIAL.STRIPE_H||sp2===SPECIAL.STRIPE_V))||
+             ((sp1===SPECIAL.STRIPE_H||sp1===SPECIAL.STRIPE_V)&&sp2===SPECIAL.ROCKET)) {
     // Фейерверк+Молния: летит к цели, оттуда бьёт молния
-    const strSp=sp1===SPECIAL.FISH?sp2:sp1;
-    const fishR=sp1===SPECIAL.FISH?r1:r2, fishC=sp1===SPECIAL.FISH?c1:c2;
-    const tgt=findFishTarget()||{r:r1,c:c1};
-    await animateFishFlight(fishR,fishC,tgt.r,tgt.c);
+    const strSp=sp1===SPECIAL.ROCKET?sp2:sp1;
+    const rocketR=sp1===SPECIAL.ROCKET?r1:r2, rocketC=sp1===SPECIAL.ROCKET?c1:c2;
+    const tgt=findRocketTarget()||{r:r1,c:c1};
+    await animateRocketFlight(rocketR,rocketC,tgt.r,tgt.c);
     spawnExplosionSparks(tgt.r,tgt.c,10,'#00e5ff');
     spawnLightning(tgt.r,tgt.c,strSp===SPECIAL.STRIPE_H);
     await animateStripeBeam(tgt.r,tgt.c,strSp===SPECIAL.STRIPE_H);
@@ -6963,11 +6992,11 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     if(sPts>0){state.score+=sPts;spawnFloatingScore(tgt.r,tgt.c,sPts,'#60a5fa');updateGoalProgress();}
     applyGravity();fillFromTop();await animateDrop();
     return;
-  } else if ((sp1===SPECIAL.FISH&&sp2===SPECIAL.WRAPPED)||(sp1===SPECIAL.WRAPPED&&sp2===SPECIAL.FISH)) {
-    // Фейерверк+Wrapped: летит к цели, там взрыв 3×3
-    const fishR=sp1===SPECIAL.FISH?r1:r2, fishC=sp1===SPECIAL.FISH?c1:c2;
-    const tgt=findFishTarget()||{r:r1,c:c1};
-    await animateFishFlight(fishR,fishC,tgt.r,tgt.c);
+  } else if ((sp1===SPECIAL.ROCKET&&sp2===SPECIAL.BOMB)||(sp1===SPECIAL.BOMB&&sp2===SPECIAL.ROCKET)) {
+    // Фейерверк+Bomb: летит к цели, там взрыв 3×3
+    const rocketR=sp1===SPECIAL.ROCKET?r1:r2, rocketC=sp1===SPECIAL.ROCKET?c1:c2;
+    const tgt=findRocketTarget()||{r:r1,c:c1};
+    await animateRocketFlight(rocketR,rocketC,tgt.r,tgt.c);
     spawnExplosionSparks(tgt.r,tgt.c,16,'#7c3aed');
     await animateBombBlast(tgt.r,tgt.c); spawnScreenShake(12);
     const wCells=[];
@@ -7035,7 +7064,7 @@ function animateBombBlast(r,c) {
 }
 
 // ── Фейерверк — красочный взрыв ──────────────────────────────────────────
-function animateFishBlast(r,c) {
+function animateRocketBlast(r,c) {
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
     const dur=400, t0=performance.now(), id=++_animOverlayId;
@@ -7206,7 +7235,7 @@ function animateRainbowBurst(targetType) {
   });
 }
 
-async function _wrappedBlast3x3(cr, cc) {
+async function _bombBlast3x3(cr, cc) {
   const td=[];
   for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){const nr=cr+dr,nc=cc+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)td.push([nr,nc]);}
   const cells=td.map(([r,c])=>({r,c}));
@@ -7236,6 +7265,7 @@ async function _wrappedBlast3x3(cr, cc) {
 }
 
 async function triggerSpecial(r,c,special,partnerType=-1) {
+  const _myEpoch = _matchEpoch; // захватываем эпоху для прерывания при смене уровня
   updateQuestProgress('specials', 1);
   state.totalSpecials = (state.totalSpecials || 0) + 1;
   if (state.totalSpecials >=  5) unlockAchievement('special_5');
@@ -7254,6 +7284,7 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
     const targetType = partnerType>=0 ? partnerType :
       ((state.board[r]?.[c]?.type ?? -1) >= 0 ? state.board[r][c].type : _mostCommonType());
     await animateRainbowBurst(targetType);
+    if (_matchEpoch !== _myEpoch) return;
     let pts=0;
     const _rbChains=[];
     for (let rr=0;rr<ROWS;rr++) for (let cc=0;cc<COLS;cc++) {
@@ -7270,12 +7301,14 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
     if (pts>0){state.score+=pts; updateGoalProgress();}
     // Все цепные спешлы взрываются одновременно (не по одному)
     if (_rbChains.length) await Promise.all(_rbChains.map(({r,c,special:sp,type:tp})=>triggerSpecial(r,c,sp,tp)));
+    if (_matchEpoch !== _myEpoch) return;
     applyGravity(); fillFromTop(); await animateDrop();
     return;
   }
   // Coloring — перекрашивает все гемы своего цвета в цвет партнёра
   if (special===SPECIAL.COLORING) {
     await animateColoringWave(r, c);
+    if (_matchEpoch !== _myEpoch) return;
     const cellOnBoard = state.board[r]?.[c];
     // srcColor: if cell has a real color use it; otherwise use partnerType; else random
     const srcColor = (cellOnBoard?.type >= 0) ? cellOnBoard.type
@@ -7293,24 +7326,28 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
     if (painted>0) { showToast('🎨 Перекрашено!'); drawBoard(); }
     return;
   }
-  // Wrapped — double 3×3 blast at original position (no falling)
-  if (special===SPECIAL.WRAPPED) {
+  // BOMB — double 3×3 blast at original position (no falling)
+  if (special===SPECIAL.BOMB) {
     if (state.board[r]?.[c]) state.board[r][c]=null;
-    await _wrappedBlast3x3(r, c);
+    await _bombBlast3x3(r, c);
+    if (_matchEpoch !== _myEpoch) return;
     spawnExplosionSparks(r,c,10,'#ec4899');
     applyGravity(); fillFromTop(); await animateDrop();
+    if (_matchEpoch !== _myEpoch) return;
     await new Promise(res=>setTimeout(res,80));
-    await _wrappedBlast3x3(r, c);
+    await _bombBlast3x3(r, c);
     return;
   }
-  // Fish — flies to highest-priority target and destroys it
-  if (special===SPECIAL.FISH) {
-    const target=findFishTarget();
+  // Rocket — flies to highest-priority target and destroys it
+  if (special===SPECIAL.ROCKET) {
+    const target=findRocketTarget();
     if (target) {
-      await animateFishFlight(r,c,target.r,target.c);
+      await animateRocketFlight(r,c,target.r,target.c);
+      if (_matchEpoch !== _myEpoch) return;
       spawnBombBeams(target.r,target.c,1,'rgba(0,200,255,0.9)');
       spawnExplosionSparks(target.r,target.c,16,'#00e5ff');
-      await animateFishBlast(target.r,target.c);
+      await animateRocketBlast(target.r,target.c);
+      if (_matchEpoch !== _myEpoch) return;
       await explodeCell(target.r,target.c);
       applyGravity(); fillFromTop(); await animateDrop();
     }
@@ -7341,18 +7378,20 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
   if (special===SPECIAL.MEGA) {
     spawnBombBeams(r,c,2,'rgba(255,120,20,0.95)');
     await animateMegaBlast(r,c);
+    if (_matchEpoch !== _myEpoch) return;
     spawnScreenShake(16);
     spawnExplosionSparks(r,c,32,'#ff6600');
     spawnExplosionSparks(r,c,16,'#ffe066');
   }
-  if (special===SPECIAL.STRIPE_H) { spawnLightning(r,c,true); await animateStripeBeam(r,c,true); spawnScreenShake(6); }
-  if (special===SPECIAL.STRIPE_V) { spawnLightning(r,c,false); await animateStripeBeam(r,c,false); spawnScreenShake(6); }
+  if (special===SPECIAL.STRIPE_H) { spawnLightning(r,c,true); await animateStripeBeam(r,c,true); if (_matchEpoch !== _myEpoch) return; spawnScreenShake(6); }
+  if (special===SPECIAL.STRIPE_V) { spawnLightning(r,c,false); await animateStripeBeam(r,c,false); if (_matchEpoch !== _myEpoch) return; spawnScreenShake(6); }
   const cells=td.map(([rr,cc])=>({r:rr,c:cc}));
   cells.forEach(({r,c})=>{ const cl=state.board[r]?.[c]; if(cl&&!cl.stone) { const g=GEMS[cl.type]; if(g) spawnParticles(r,c,getSkinColor(cl.type),8); }});
   const useBomb=special===SPECIAL.MEGA;
   const useStripe=special===SPECIAL.STRIPE_H||special===SPECIAL.STRIPE_V;
   if (useBomb||useStripe) await animateDestroyWave(cells,r,c);
   else await animateDestroy(cells);
+  if (_matchEpoch !== _myEpoch) return;
   // Цепочка: собираем спешлы в зоне взрыва перед удалением (для последующего трига)
   const chainSpecials=[];
   let bonusPts=0;
@@ -7385,6 +7424,7 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
   }
   // Тригерим спешлы, попавшие в зону взрыва
   for (const {r,c,special,type} of chainSpecials) {
+    if (_matchEpoch !== _myEpoch) return;
     await triggerSpecial(r,c,special,type);
   }
 }
@@ -7398,7 +7438,7 @@ function popMystery(r, c) {
   const newSpecial =
     roll < 0.30 ? SPECIAL.STRIPE_H :
     roll < 0.60 ? SPECIAL.STRIPE_V :
-    roll < 0.85 ? SPECIAL.WRAPPED  :
+    roll < 0.85 ? SPECIAL.BOMB  :
     roll < 0.95 ? SPECIAL.RAINBOW  : SPECIAL.MEGA;
   const newGem = createGem();
   newGem.special = newSpecial;
@@ -7424,9 +7464,9 @@ function popBottle(r, c) {
 }
 
 // ══════════════════════════════════════════
-//  ФЕЙЕРВЕРК-СПЕЦФИШКА (FISH)
+//  РАКЕТА (ROCKET)
 // ══════════════════════════════════════════
-function findFishTarget(exclude=null) {
+function findRocketTarget(exclude=null) {
   // Priority: jelly-2 > jelly-1 > ice > stone > chocolate > random gem
   const check=(fn)=>{
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
@@ -7452,7 +7492,7 @@ function findFishTarget(exclude=null) {
          })();
 }
 
-function animateFishFlight(fromR,fromC,toR,toC) {
+function animateRocketFlight(fromR,fromC,toR,toC) {
   return new Promise(res=>{
     const dur=420, t0=performance.now();
     const fx=boardOffX+fromC*cellSize+cellSize/2, fy=boardOffY+fromR*cellSize+cellSize/2;
@@ -8954,7 +8994,7 @@ const RETRY_TIPS = [
   '💡 Комбо из 5 в ряд → Радуга убивает все фишки одного цвета!',
   '💡 2×2 квадрат → Фейерверк атакует самый сложный блок на поле',
   '💡 Думай наперёд — планируй 2-3 хода заранее',
-  '💡 Врапд + Полоса = тройной крест! Комбинируй спецфишки',
+  '💡 Бомба + Полоса = тройной крест! Комбинируй спецфишки',
   '💡 Лёд ломается матчем рядом — не нужно бить по нему напрямую',
   '💡 Подсказка мигает — следи за ней в трудные моменты',
   '💡 Собирай фишки в углах — там легче создавать длинные цепи',
@@ -9044,7 +9084,7 @@ function spawnScreenShake(amplitude=10) {
 async function bonusMovesExplosion() {
   if (!state.moves || state.moves <= 0) return;
   state.busy = true;
-  const specials=[SPECIAL.STRIPE_H,SPECIAL.STRIPE_V,SPECIAL.WRAPPED];
+  const specials=[SPECIAL.STRIPE_H,SPECIAL.STRIPE_V,SPECIAL.BOMB];
   // One special at a time for visual clarity; batch 2 when >12 moves remain to keep it reasonable
   while (state.moves > 0) {
     const batchSize = state.moves > 12 ? 2 : 1;
@@ -9724,6 +9764,7 @@ function playLevel(n, fresh) {
     setTimeout(_updateUndoBtn, 0);
     // jellyGrid, carpetGrid и holes инициализируются внутри initBoard
     state.jellyTotal=0; state.carpetTotal=0;
+    _matchEpoch++; // прерываем любые зависшие async-операции предыдущего уровня
     state.board=initBoard(lvl);
     clearInitialMatches(state.board); // убираем совпадения до старта
     state.jellyTotal=countJellyRemaining(); // фиксируем стартовое кол-во слоёв
@@ -9792,7 +9833,7 @@ function applyBoosters() {
   if (state.activePreBoosters.includes('bomb_gem')) {
     const free=[];
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) { const cl=state.board[r][c]; if(cl&&!cl.stone&&!cl.mystery&&!cl.locked&&cl.special===SPECIAL.NONE) free.push([r,c]); }
-    if (free.length) { const [r,c]=free[Math.floor(Math.random()*free.length)]; state.board[r][c].special=SPECIAL.WRAPPED; }
+    if (free.length) { const [r,c]=free[Math.floor(Math.random()*free.length)]; state.board[r][c].special=SPECIAL.BOMB; }
   }
   state.activePreBoosters=[];
 
@@ -10576,13 +10617,11 @@ function step4TickLoop() {
 // Реестр оверлеев: анимации регистрируют функцию рисованья вместо своего drawBoard()
 const _animOverlays = new Map();
 let _animOverlayId = 0;
-
-function gameLoop() {
+function gameLoop(now) {
   if (state.screen==='game') {
     drawBoard();
     if (_animOverlays.size > 0) {
-      const _now = performance.now();
-      _animOverlays.forEach(fn => fn(_now));
+      _animOverlays.forEach(fn => fn(now));
     }
     updateParticles();
   }
@@ -11087,8 +11126,8 @@ function initDevPanel() {
         <button onclick="devSpawnSpecial(SPECIAL.STRIPE_H)"  style="${devBtnStyle('#1e40af')}" title="Горизонтальная молния">⚡H</button>
         <button onclick="devSpawnSpecial(SPECIAL.STRIPE_V)"  style="${devBtnStyle('#1e40af')}" title="Вертикальная молния">⚡V</button>
         <button onclick="devSpawnSpecial(SPECIAL.MEGA)"      style="${devBtnStyle('#7c3aed')}" title="Мега (5-матч)">💥</button>
-        <button onclick="devSpawnSpecial(SPECIAL.FISH)"      style="${devBtnStyle('#065f46')}" title="Фейерверк">🎆</button>
-        <button onclick="devSpawnSpecial(SPECIAL.WRAPPED)"   style="${devBtnStyle('#9d174d')}" title="Завёрнутая">🎁</button>
+        <button onclick="devSpawnSpecial(SPECIAL.ROCKET)"      style="${devBtnStyle('#065f46')}" title="Фейерверк">🎆</button>
+        <button onclick="devSpawnSpecial(SPECIAL.BOMB)"   style="${devBtnStyle('#9d174d')}" title="Бомба">🎁</button>
         <button onclick="devSpawnSpecial(SPECIAL.RAINBOW)"   style="${devBtnStyle('#1e3a5f')}" title="Радуга">🌈</button>
         <button onclick="devSpawnSpecial(SPECIAL.COLORING)"  style="${devBtnStyle('#064e3b')}" title="Красящий">🎨</button>
       </div>
@@ -11210,27 +11249,27 @@ function startTestLevel() {
   }
 
   // Ряд 0: каждая спецфишка отдельно (8 штук = 8 колонок)
-  const SP_ROW0 = [SPECIAL.STRIPE_H, SPECIAL.STRIPE_V, SPECIAL.WRAPPED, SPECIAL.MEGA,
-                   SPECIAL.FISH, SPECIAL.WRAPPED, SPECIAL.RAINBOW, SPECIAL.COLORING];
+  const SP_ROW0 = [SPECIAL.STRIPE_H, SPECIAL.STRIPE_V, SPECIAL.BOMB, SPECIAL.MEGA,
+                   SPECIAL.ROCKET, SPECIAL.BOMB, SPECIAL.RAINBOW, SPECIAL.COLORING];
   SP_ROW0.forEach((sp,c)=>{ if(c<COLS){ board[0][c]=createGem(c%5); board[0][c].special=sp;
     if(sp===SPECIAL.RAINBOW) board[0][c].type=-1; }});
 
   // Ряд 2: комбо-пары для тестирования
   const COMBOS = [
-    [SPECIAL.STRIPE_H, 0], [SPECIAL.WRAPPED, 1],  // молния+врапд
+    [SPECIAL.STRIPE_H, 0], [SPECIAL.BOMB, 1],  // молния+Бомба
     [SPECIAL.STRIPE_V, 2], [SPECIAL.STRIPE_H, 3], // молния+молния
     [SPECIAL.MEGA, 0],     [SPECIAL.COLORING, -1],// мега+красящий
-    [SPECIAL.FISH, 1],     [SPECIAL.MEGA, 2],     // фейерверк+мега
+    [SPECIAL.ROCKET, 1],     [SPECIAL.MEGA, 2],     // фейерверк+мега
   ];
   COMBOS.forEach(([sp,type],c)=>{ if(c<COLS){ board[2][c]=createGem(type>=0?type:0); board[2][c].special=sp;
     if(sp===SPECIAL.RAINBOW) board[2][c].type=-1; }});
 
-  // Ряд 4: ещё комбо: мега+мега, фейерверк+молния, wrapped+wrapped, радуга+врапд
+  // Ряд 4: ещё комбо: мега+мега, фейерверк+молния, bomb+bomb, радуга+Бомба
   const COMBOS2 = [
     [SPECIAL.MEGA, 0],     [SPECIAL.MEGA, 1],     // мега+мега
-    [SPECIAL.FISH, 2],     [SPECIAL.STRIPE_H, 3], // фейерверк+молния
-    [SPECIAL.WRAPPED, 0],  [SPECIAL.WRAPPED, 1],  // wrapped+wrapped
-    [SPECIAL.RAINBOW, -1], [SPECIAL.WRAPPED, 2],   // радуга+врапд
+    [SPECIAL.ROCKET, 2],     [SPECIAL.STRIPE_H, 3], // фейерверк+молния
+    [SPECIAL.BOMB, 0],  [SPECIAL.BOMB, 1],  // Bomb+Bomb
+    [SPECIAL.RAINBOW, -1], [SPECIAL.BOMB, 2],   // радуга+Бомба
   ];
   COMBOS2.forEach(([sp,type],c)=>{ if(c<COLS){ board[4][c]=createGem(type>=0?type:0); board[4][c].special=sp;
     if(sp===SPECIAL.RAINBOW) board[4][c].type=-1; }});
