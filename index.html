@@ -10533,40 +10533,48 @@ function livesTickLoop() {
 async function loadingScreen() {
   const bar = document.getElementById('loading-bar');
 
-  // Load metadata + chunk for player's current level, then menu, then rest in background
+  // Fire everything at t=0 so downloading overlaps with the bar animation
   const curLevel = (state && state.currentLevel) || 1;
   const curChunk = Math.max(1, Math.ceil(curLevel / 1000));
   const metaLoad  = _loadScript('levels-meta.js');
   const firstLoad = metaLoad.then(() => _loadScript(`levels-c${String(curChunk).padStart(3,'0')}.js`));
+  const sdkReady  = SDK.init();
 
-  // Init SDK in parallel with chunk loading — both are async
-  for (let p=0; p<=40; p+=4) { bar.style.width=p+'%'; await sleep(20); }
+  // Bar 0→88% over ~660ms — runs while the chunk downloads in the background
+  let essentialDone = false;
+  Promise.all([sdkReady, firstLoad]).then(() => { essentialDone = true; });
 
-  await Promise.all([SDK.init(), firstLoad]);
+  for (let p = 0; p <= 88; p += 2) { bar.style.width = p + '%'; await sleep(15); }
+
+  // If chunk still loading, pulse gently at ~88% instead of freezing
+  while (!essentialDone) {
+    bar.style.width = (86 + Math.sin(Date.now() / 250) * 2) + '%';
+    await sleep(40);
+  }
   patchLevelBalance();
-
-  for (let p=40; p<=70; p+=3) { bar.style.width=p+'%'; await sleep(20); }
+  bar.style.width = '90%';
 
   loadGame();
   applyLang();
-
   await syncCloud();
 
-  for (let p=70; p<=90; p+=4) { bar.style.width=p+'%'; await sleep(20); }
+  for (let p = 90; p <= 97; p += 3) { bar.style.width = p + '%'; await sleep(25); }
 
   await restorePaidItems();
 
-  for (let p=90; p<=100; p+=2) { bar.style.width=p+'%'; await sleep(20); }
+  bar.style.width = '100%';
+  await sleep(200);
 
   processLoginStreak();
   generateDailyQuests();
   renderQuestsRow();
 
-  showScreen('menu');
+  showScreen('menu'); // ← music starts here via showScreen hook
 
   postLoadInit();
 
-  // Background-load remaining chunks while player is in the menu
+  // Give audio 600ms to initialize before background chunk streaming begins
+  await sleep(600);
   _loadRemainingChunks(curChunk);
 
   if (shouldShowDailyReward()) {
