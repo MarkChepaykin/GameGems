@@ -1,6 +1,6 @@
 // levels.js -- GameGems level pack
 // Auto-generated. Do not edit manually.
-const LEVELS = [
+var LEVELS = [
   // Episode 1 (1-15)
   {level:1,type:'carpet',target:0,moves:29,gems:[],iceCount:0,stoneCount:0,jellyCount:0,gemTypes:6,holes:[[1,1],[1,3],[1,4],[1,6],[3,1],[3,4],[3,6],[6,1],[6,6],[7,0],[7,7],[8,0],[8,1],[8,6],[8,7],[9,0],[9,1],[9,2],[9,5],[9,6],[9,7]]},
   {level:2,type:'carpet',target:0,moves:34,gems:[],iceCount:12,stoneCount:0,jellyCount:0,gemTypes:6,holes:[[0,0],[0,7],[1,0],[1,7],[2,0],[2,7],[3,0],[3,1],[3,2],[3,5],[3,6],[3,7],[4,2],[4,5],[6,2],[6,3],[6,4],[6,5],[7,3],[7,4]]},

@@ -10474,8 +10474,7 @@ function livesTickLoop() {
 async function loadingScreen() {
   const bar = document.getElementById('loading-bar');
 
-  // Шаг 1: параллельно — анимация бара и загрузка levels.js
-  // (preload начался ещё в <head>, здесь просто исполняем уже скачанный файл)
+  console.log('[Load] шаг 1: загрузка levels.js');
   const levelsReady = new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.src = 'levels.js';
@@ -10484,46 +10483,53 @@ async function loadingScreen() {
     document.head.appendChild(s);
   });
 
-  // Анимируем бар пока грузится levels.js
   for (let p=0; p<=40; p+=2) { bar.style.width=p+'%'; await sleep(25); }
 
-  // Дожидаемся levels.js (обычно уже готов из preload-кэша)
-  await levelsReady;
+  try {
+    await levelsReady;
+    console.log('[Load] levels.js загружен, LEVELS:', typeof LEVELS, Array.isArray(LEVELS) ? LEVELS.length : '?');
+  } catch(e) {
+    console.error('[Load] levels.js не загрузился:', e);
+  }
 
-  // Постобработка уровней (ранее были IIFE, теперь вызываются здесь)
-  patchLevelBalance();
-  reorderLevels();
+  if (typeof LEVELS !== 'undefined') {
+    patchLevelBalance();
+    reorderLevels();
+    console.log('[Load] postprocess done');
+  }
 
-  // Шаг 2: инициализация Яндекс SDK
+  console.log('[Load] шаг 2: SDK.init');
   await SDK.init();
 
   for (let p=40; p<=70; p+=3) { bar.style.width=p+'%'; await sleep(20); }
 
-  // Шаг 3: загружаем локальные данные
+  console.log('[Load] шаг 3: loadGame');
   loadGame();
-  applyLang(); // Шаг 5: применяем сохранённый язык
+  applyLang();
 
-  // Шаг 4: синхронизация с облаком (берём более свежие данные)
+  console.log('[Load] шаг 4: syncCloud');
   await syncCloud();
 
   for (let p=70; p<=90; p+=4) { bar.style.width=p+'%'; await sleep(20); }
 
-  // Шаг 5: восстанавливаем платные товары (no_ads, lives_24h)
+  console.log('[Load] шаг 5: restorePaidItems');
   await restorePaidItems();
 
   for (let p=90; p<=100; p+=2) { bar.style.width=p+'%'; await sleep(20); }
 
-  // Шаг 6: стрик + ежедневная награда
+  console.log('[Load] шаг 6: streaks + quests');
   processLoginStreak();
-
-  // Квесты генерируем синхронно ДО показа меню
   generateDailyQuests();
   renderQuestsRow();
 
+  console.log('[Load] showScreen menu');
   showScreen('menu');
 
   // Шаг 7: сезон, турнир, пуши (асинхронно)
   postLoadInit();
+
+  // Авто-баланс: запускается после того как LEVELS загружен
+  _scheduleBackgroundBalance();
 
   if (shouldShowDailyReward()) {
     setTimeout(openDailyPopup, 500);
@@ -10550,9 +10556,6 @@ window.addEventListener('load', () => {
   step4TickLoop();
   loadingScreen();
   initDevPanel();
-  // Фоновый авто-баланс статичных уровней: запускается через 4 с после старта,
-  // не блокирует игру. Обрабатывает по одному уровню за тик.
-  _scheduleBackgroundBalance();
 });
 
 function _scheduleBackgroundBalance() {
