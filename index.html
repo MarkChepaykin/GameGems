@@ -4934,7 +4934,7 @@ function drawPathOverlay(cells, progress) {
   // 4. Персонаж 🧙 на текущей позиции
   const charIdx = Math.min(progress, cells.length - 1);
   const [cr, cc2] = cells[charIdx];
-  const charX = boardOffX + * cs + cs / 2;
+  const charX = boardOffX + cc2 * cs + cs / 2;
   const charY = boardOffY + cr * cs + cs / 2;
   ctx.font = `${Math.round(cs * 0.7)}px Arial`;
   ctx.textAlign = 'center';
