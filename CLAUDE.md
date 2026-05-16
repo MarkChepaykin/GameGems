@@ -223,13 +223,6 @@ SFX.win/lose/reward/winJingle/loseJingle()  // osc+noise2 — финальные
 которая уже применяла гравитацию внутри → удалялись гемы, упавшие сверху.  
 **Исправление:** `triggerCombinedSpecial` обнуляет ячейки в самом НАЧАЛЕ (строки ~5277-5278).
 
-### BOMB взрывается на случайном месте / оставляет дырку
-**Причина:** когда BOMB часть матча, `state.board[r][c]` уже `null` к моменту
-вызова `triggerSpecial`. Код искал `bombRef=null` по доске, не находил,
-оставался на исходной позиции — второй взрыв бил по случайному гему.  
-**Исправление:** если `state.board[r][c]===null` — делаем двойной взрыв на месте без
-попытки отслеживать падение.
-
 ### ROCKET (ракета) оставляет дырку
 **Причина:** `triggerSpecial(ROCKET)` не вызывал `applyGravity` после `explodeCell`.  
 **Исправление:** добавлен `applyGravity(); fillFromTop(); await animateDrop()` после `explodeCell`.
@@ -257,12 +250,6 @@ SFX.win/lose/reward/winJingle/loseJingle()  // osc+noise2 — финальные
 уничтожал другой гем.  
 **Исправление:** `explodeCell` сначала нуллит ячейку, сохранив `cl.special`/`cl.type`, потом вызывает `triggerSpecial`. 
 
-### BOMB падал в новую позицию между взрывами
-**Причина:** при цепном тригере (когда гем на доске) код отслеживал `bombRef` и делал
-второй взрыв на НОВОМ месте после гравитации.  
-**Исправление:** BOMB всегда использует `_bombBlast3x3` (двойной взрыв на исходной позиции).
-Гем немедленно нуллится перед первым взрывом.
-
 ### Пятёрка+врап / ракеты взрывались по одному
 **Причина:** в `triggerCombinedSpecial` (Rainbow+Special, Coloring+Special) цели тригерились
 в `for...await` — строго последовательно.  
@@ -273,11 +260,11 @@ STRIPE → собрать все строки/столбцы в один Set, `P
 ### Бесконечный каскад / перенос взрывов между уровнями
 **Причина:**
 1. COLORING создаёт 7+ матч → новый COLORING → feedback-loop на 120 итераций (~2 мин).
-2. `processMatches` — async; при смене уровня старый экземпляр продолжал работать на новом поле.
+2. `processMatches` и `triggerCombinedSpecial` — async; при смене уровня старые экземпляры продолжали работать на новом поле.
 
 **Исправление:**
 - `_matchEpoch` (глобал) инкрементируется в `playLevel(n, fresh)`.
-- `processMatches` и `triggerSpecial` захватывают `_myEpoch = _matchEpoch` при старте
+- `processMatches`, `triggerSpecial` **и `triggerCombinedSpecial`** захватывают `_myEpoch = _matchEpoch` при старте
   и после каждого `await` делают `if (_matchEpoch !== _myEpoch) return`.
 - Лимит итераций снижен с 120 до **25** (`_loopGuard > 25`).
 
