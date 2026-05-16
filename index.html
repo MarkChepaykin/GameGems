@@ -10813,29 +10813,49 @@ window.addEventListener('load', () => {
 });
 
 function _scheduleBackgroundBalance() {
-  const KEY = 'gg_balance_v3';
-  // Сброс кэша при смене версии — если ключ совпадает, баланс уже применён в этой сессии
-  if (sessionStorage.getItem(KEY)) return;
-  sessionStorage.setItem(KEY, '1');
+  const KEY = 'gg_balance_v4';
+  const cached = localStorage.getItem(KEY);
+  if (cached) {
+    // Применяем сохранённые патчи мгновенно, без симуляции
+    try {
+      const patches = JSON.parse(cached);
+      for (const {i, moves, target} of patches) {
+        if (LEVELS[i]) {
+          if (moves  != null) LEVELS[i].moves  = moves;
+          if (target != null) LEVELS[i].target = target;
+        }
+      }
+    } catch(e) {}
+    return;
+  }
+  // Первый запуск: симулируем по одному уровню в idle-время браузера
+  const patches = [];
   let idx = 0;
   function processOne() {
-    if (idx >= LEVELS.length) return;
-    const lvl = LEVELS[idx++];
-    const r = simulateLevelObj(lvl, 30);
-    if (!r) { setTimeout(processOne, 0); return; }
-    const ep = Math.ceil(lvl.level / 16);
-    const minWR = ep <= 2 ? 0.30 : ep <= 5 ? 0.18 : 0.08;
-    const maxWR = ep <= 2 ? 0.90 : ep <= 5 ? 0.88 : 0.82;
-    if (r.winRate < minWR) {
-      if (lvl.type === 'score') lvl.target = Math.round(lvl.target * 0.82 / 500) * 500;
-      else lvl.moves = Math.min(40, lvl.moves + 2);
-    } else if (r.winRate > maxWR) {
-      if (lvl.type === 'score') lvl.target = Math.round(lvl.target * 1.18 / 500) * 500;
-      else lvl.moves = Math.max(20, lvl.moves - 1);
+    if (idx >= LEVELS.length) {
+      try { localStorage.setItem(KEY, JSON.stringify(patches)); } catch(e) {}
+      return;
     }
-    setTimeout(processOne, 0); // следующий уровень в следующем тике
+    const i = idx++;
+    const lvl = LEVELS[i];
+    const r = simulateLevelObj(lvl, 30);
+    if (r) {
+      const ep = Math.ceil(lvl.level / 16);
+      const minWR = ep <= 2 ? 0.30 : ep <= 5 ? 0.18 : 0.08;
+      const maxWR = ep <= 2 ? 0.90 : ep <= 5 ? 0.88 : 0.82;
+      if (r.winRate < minWR) {
+        if (lvl.type === 'score') { lvl.target = Math.round(lvl.target * 0.82 / 500) * 500; patches.push({i, target: lvl.target}); }
+        else { lvl.moves = Math.min(40, lvl.moves + 2); patches.push({i, moves: lvl.moves}); }
+      } else if (r.winRate > maxWR) {
+        if (lvl.type === 'score') { lvl.target = Math.round(lvl.target * 1.18 / 500) * 500; patches.push({i, target: lvl.target}); }
+        else { lvl.moves = Math.max(20, lvl.moves - 1); patches.push({i, moves: lvl.moves}); }
+      }
+    }
+    // requestIdleCallback — только во время простоя браузера; setTimeout как fallback
+    if (window.requestIdleCallback) requestIdleCallback(processOne, {timeout: 500});
+    else setTimeout(processOne, 50);
   }
-  setTimeout(processOne, 4000); // старт через 4 с после загрузки
+  setTimeout(processOne, 6000); // старт через 6 с — после того как игра полностью инициализирована
 }
 
 // ══════════════════════════════════════════
