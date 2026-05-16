@@ -1202,6 +1202,7 @@ canvas { display: block; touch-action: none; }
   transition: width .4s;
 }
 </style>
+  <link rel="preload" as="script" href="levels.js">
 </head>
 <body>
 <div id="app">
@@ -2379,226 +2380,15 @@ function getSkinColor(gemType) {
   return pal[gemType] ?? GEMS[gemType]?.color ?? '#fff';
 }
 
-const LEVELS = [
-  // ── Эпизод 1: Начало (уровни 1-16) ───────────────────────────────────────
-  { level:1,  type:'score',   target:4000,  moves:20, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:3, holes:[] },
-  { level:2,  type:'collect', target:24,    moves:20, gems:[0],     iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:3, holes:[], colorWeights:[3,1,1] },
-  { level:3,  type:'score',   target:4000,  moves:18, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:3, holes:[[0,0],[0,7],[7,0],[7,7]] },
-  { level:4,  type:'ice',     target:6,     moves:20, gems:[],      iceCount:6,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
-  { level:5,  type:'collect', target:28,    moves:20, gems:[1],     iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[], colorWeights:[1,3,1,1] },
-  { level:6,  type:'score',   target:5500,  moves:18, gems:[],      iceCount:0,  stoneCount:4,  jellyCount:0,  gemTypes:4, holes:[[0,0],[0,1],[0,6],[0,7],[7,0],[7,1],[7,6],[7,7]] },
-  { level:7,  type:'stone',   target:4,     moves:20, gems:[],      iceCount:0,  stoneCount:4,  jellyCount:0,  gemTypes:4, holes:[] },
-  { level:8,  type:'collect', target:32,    moves:20, gems:[2,3],   iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[], colorWeights:[1,1,2,2] },
-  { level:9,  type:'ice',     target:10,    moves:20, gems:[],      iceCount:10, stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
-  { level:10, type:'score',   target:9000,  moves:20, gems:[],      iceCount:4,  stoneCount:4,  jellyCount:0,  gemTypes:5, holes:[] },
-  { level:11, type:'jelly',   target:0,     moves:22, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:8,  gemTypes:4, holes:[] },
-  { level:12, type:'collect', target:28,    moves:20, gems:[0,2],   iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
-  { level:13, type:'ice',     target:8,     moves:20, gems:[],      iceCount:8,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
-  { level:14, type:'score',   target:7500,  moves:20, gems:[],      iceCount:0,  stoneCount:5,  jellyCount:0,  gemTypes:4, marmaladeCount:2, holes:[[0,0],[0,1],[0,6],[0,7],[7,0],[7,1],[7,6],[7,7]] },
-  { level:15, type:'collect', target:40,    moves:20, gems:[1,3],   iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[] },
-  { level:16, type:'stone',   target:6,     moves:20, gems:[],      iceCount:0,  stoneCount:6,  jellyCount:0,  gemTypes:4, holes:[] },
-  // ── Эпизод 2: Препятствия (уровни 17-32) ─────────────────────────────────
-  { level:17, type:'soda',    target:5,     moves:22, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, bottleCount:5, holes:[[0,0],[0,7],[7,0],[7,7]] },
-  { level:18, type:'collect', target:24,    moves:20, gems:[3],     iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
-  { level:19, type:'ice',     target:12,    moves:20, gems:[],      iceCount:12, stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
-  { level:20, type:'carpet',  target:0,     moves:22, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, holes:[] },
-  { level:21, type:'jelly',   target:0,     moves:22, gems:[],      iceCount:0,  stoneCount:3,  jellyCount:16, gemTypes:5, holes:[[0,0],[0,7],[7,0],[7,7]] },
-  { level:22, type:'collect', target:45,    moves:20, gems:[0,2,4], iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[], objective:{type:'score',count:8000} },
-  { level:23, type:'stone',   target:8,     moves:20, gems:[],      iceCount:0,  stoneCount:8,  jellyCount:0,  gemTypes:5, holes:[] },
-  { level:24, type:'score',   target:9000,  moves:22, gems:[],      iceCount:6,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[[0,3],[0,4],[1,3],[1,4],[2,3],[2,4],[5,3],[5,4],[6,3],[6,4],[7,3],[7,4]] },
-  { level:25, type:'ice',     target:14,    moves:20, gems:[],      iceCount:14, stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[[0,0],[0,7]] },
-  { level:26, type:'jelly',   target:0,     moves:22, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:14, gemTypes:5, holes:[] },
-  { level:27, type:'collect', target:35,    moves:22, gems:[1,5],   iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:6, holes:[] },
-  { level:28, type:'bears',   target:0,     moves:22, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, honeyCount:4, bearsTarget:4, holes:[[0,0],[0,7],[7,0],[7,7]] },
-  { level:29, type:'stone',   target:6,     moves:22, gems:[],      iceCount:0,  stoneCount:6,  jellyCount:0,  gemTypes:5, holes:[] },
-  { level:30, type:'score',   target:14000, moves:20, gems:[],      iceCount:6,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[[0,0],[0,7],[7,0],[7,7]] },
-  // ── Эпизод 3: Испытание (уровни 33-48) ───────────────────────────────────
-  { level:31, type:'collect', target:28,    moves:24, gems:[3],     iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[] },
-  { level:32, type:'ice',     target:10,    moves:22, gems:[],      iceCount:10, stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[] },
-  { level:33, type:'carpet',  target:0,     moves:20, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[] },
-  { level:34, type:'score',   target:11000, moves:22, gems:[],      iceCount:0,  stoneCount:5,  jellyCount:0,  gemTypes:5, lockCount:3, holes:[[3,0],[3,1],[3,6],[3,7],[4,0],[4,1],[4,6],[4,7],[5,0],[5,1],[5,6],[5,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,6],[7,7]] },
-  { level:35, type:'stone',   target:10,    moves:18, gems:[],      iceCount:0,  stoneCount:10, jellyCount:0,  gemTypes:5, holes:[] },
-  { level:36, type:'collect', target:50,    moves:18, gems:[0,1,2,3],iceCount:0, stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[[0,0],[0,1],[0,6],[0,7],[7,0],[7,1],[7,6],[7,7]] },
-  { level:37, type:'chocolate', target:0,   moves:22, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[], chocolateCount:6 },
-  { level:38, type:'ice',     target:8,     moves:22, gems:[],      iceCount:8,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[] },
-  { level:39, type:'collect', target:35,    moves:22, gems:[2,4],   iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[] },
-  { level:40, type:'score',   target:13000, moves:20, gems:[],      iceCount:0,  stoneCount:4,  jellyCount:0,  gemTypes:5, holes:[[0,0],[0,7],[7,0],[7,7]] },
-  // ── Эпизод 4: Нестандартные (уровни 49-64) ───────────────────────────────
-  { level:41, type:'carpet',  target:0,     moves:20, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[] },
-  { level:42, type:'collect', target:48,    moves:20, gems:[1,3,5], iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:6, holes:[] },
-  { level:43, type:'ice',     target:14,    moves:18, gems:[],      iceCount:14, stoneCount:0,  jellyCount:0,  gemTypes:6, holes:[[0,0],[0,7]] },
-  { level:44, type:'chocolate', target:0,  moves:24, gems:[],      iceCount:4,  stoneCount:0,  jellyCount:0,  gemTypes:5, holes:[], chocolateCount:8 },
-  { level:45, type:'stone',   target:12,    moves:20, gems:[],      iceCount:0,  stoneCount:12, jellyCount:0,  gemTypes:6, holes:[] },
-  { level:46, type:'collect', target:55,    moves:18, gems:[0,2,4], iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:6, holes:[[0,0],[0,1],[0,6],[0,7],[7,0],[7,1],[7,6],[7,7]] },
-  { level:47, type:'score',   target:14000, moves:20, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:5,  gemTypes:5, holes:[], marmaladeCount:4, lockCount:2 },
-  { level:48, type:'jelly',   target:0,     moves:20, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:20, gemTypes:6, holes:[[0,0],[0,7],[7,0],[7,7]] },
-  { level:49, type:'stone',   target:12,    moves:18, gems:[],      iceCount:0,  stoneCount:12, jellyCount:0,  gemTypes:6, holes:[] },
-  { level:50, type:'score',   target:14000, moves:22, gems:[],      iceCount:8,  stoneCount:8,  jellyCount:0,  gemTypes:5, holes:[[0,0],[0,1],[0,6],[0,7],[1,0],[1,7],[6,0],[6,7],[7,0],[7,1],[7,6],[7,7]], lockCount:3 },
-
-  // ── Эпизод 5: Мало типов (уровни 65-80) ──────────────────────────────────
-  // Крест (corners отрезаны)
-  { level:51, type:'soda',    target:3,     moves:22, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4, bottleCount:3,
-    holes:[[0,0],[0,1],[0,6],[0,7],[1,0],[1,7],[6,0],[6,7],[7,0],[7,1],[7,6],[7,7]] },
-  { level:52, type:'collect', target:35,    moves:20, gems:[0,2],   iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4,
-    holes:[[0,0],[0,1],[0,6],[0,7],[1,0],[1,7],[6,0],[6,7],[7,0],[7,1],[7,6],[7,7]] },
-  { level:53, type:'ice',     target:10,    moves:22, gems:[],      iceCount:10, stoneCount:0,  jellyCount:0,  gemTypes:5,
-    holes:[[0,0],[0,7],[7,0],[7,7],[0,1],[0,6],[1,0],[6,0],[1,7],[6,7],[7,1],[7,6]] },
-  { level:54, type:'jelly',   target:0,     moves:20, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:14, gemTypes:5,
-    holes:[[0,0],[0,7],[7,0],[7,7],[0,1],[0,6],[1,0],[6,0],[1,7],[6,7],[7,1],[7,6]] },
-  { level:55, type:'stone',   target:8,     moves:20, gems:[],      iceCount:0,  stoneCount:8,  jellyCount:0,  gemTypes:5,
-    holes:[[0,0],[0,7],[7,0],[7,7],[0,1],[0,6],[1,0],[6,0],[1,7],[6,7],[7,1],[7,6]] },
-  // Ромб (углы скошены сильнее)
-  { level:56, type:'score',   target:10000, moves:22, gems:[],      iceCount:4,  stoneCount:4,  jellyCount:0,  gemTypes:5, lockCount:3, licoriceCount:2, licoriceSpawnRate:5, licoriceMax:4,
-    holes:[[0,0],[0,1],[0,2],[0,5],[0,6],[0,7],[1,0],[1,1],[1,6],[1,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,2],[7,5],[7,6],[7,7]] },
-  { level:57, type:'soda',    target:4,     moves:22, gems:[],      iceCount:4,  stoneCount:0,  jellyCount:0,  gemTypes:5, bottleCount:4,
-    holes:[[0,0],[0,1],[0,2],[0,5],[0,6],[0,7],[1,0],[1,1],[1,6],[1,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,2],[7,5],[7,6],[7,7]] },
-  { level:58, type:'jelly',   target:0,     moves:24, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:12, gemTypes:5, licoriceCount:3, licoriceSpawnRate:6, licoriceMax:5,
-    holes:[[0,0],[0,1],[0,2],[0,5],[0,6],[0,7],[1,0],[1,1],[1,6],[1,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,2],[7,5],[7,6],[7,7]] },
-  { level:59, type:'score',   target:12000, moves:18, gems:[],      iceCount:6,  stoneCount:0,  jellyCount:0,  gemTypes:6, lockCount:4,
-    holes:[[0,0],[0,1],[0,2],[0,5],[0,6],[0,7],[1,0],[1,1],[1,6],[1,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,2],[7,5],[7,6],[7,7]] },
-  { level:60, type:'stone',   target:10,    moves:20, gems:[],      iceCount:0,  stoneCount:10, jellyCount:0,  gemTypes:6, mysteryCount:2,
-    holes:[[0,0],[0,1],[0,2],[0,5],[0,6],[0,7],[1,0],[1,1],[1,6],[1,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,2],[7,5],[7,6],[7,7]] },
-
-  // ── Эпизод 6: Ингредиенты (уровни 81-96) ────────────────────────────────
-  { level:61, type:'chocolate', target:0,   moves:24, gems:[],      iceCount:6,  stoneCount:0,  jellyCount:0,  gemTypes:3, holes:[], chocolateCount:8 },
-  { level:62, type:'collect', target:40,    moves:22, gems:[0,1],   iceCount:0,  stoneCount:0,  jellyCount:10, gemTypes:3, licoriceCount:2, licoriceSpawnRate:5, licoriceMax:4,
-    holes:[[3,0],[3,1],[3,6],[3,7],[4,0],[4,1],[4,6],[4,7],[5,0],[5,1],[5,6],[5,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,6],[7,7]] }, // Т-форма
-  { level:63, type:'ice',     target:16,    moves:20, gems:[],      iceCount:16, stoneCount:0,  jellyCount:0,  gemTypes:3,
-    holes:[[0,4],[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,4],[4,5],[4,6],[4,7]] }, // Г-форма
-  { level:64, type:'jelly',   target:0,     moves:18, gems:[],      iceCount:4,  stoneCount:0,  jellyCount:16, gemTypes:3,
-    holes:[[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3],[3,0],[3,1],[3,2],[3,3],[4,0],[4,1],[4,2],[4,3]] }, // Обратная Г
-  { level:65, type:'bears',   target:0,     moves:20, gems:[],      iceCount:4,  stoneCount:0,  jellyCount:0,  gemTypes:3, holes:[], honeyCount:3, bearsTarget:3 },
-  { level:66, type:'chocolate', target:0,   moves:26, gems:[],      iceCount:0,  stoneCount:4,  jellyCount:0,  gemTypes:4, holes:[], chocolateCount:10, marmaladeCount:3 },
-  { level:67, type:'bears',   target:0,     moves:24, gems:[],      iceCount:0,  stoneCount:2,  jellyCount:0,  gemTypes:4,
-    holes:[[3,0],[3,1],[3,6],[3,7],[4,0],[4,1],[4,6],[4,7],[5,0],[5,1],[5,6],[5,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,6],[7,7]], honeyCount:5, bearsTarget:5 }, // Т-форма
-  { level:68, type:'ice',     target:18,    moves:20, gems:[],      iceCount:18, stoneCount:4,  jellyCount:0,  gemTypes:4,
-    holes:[[0,3],[0,4],[1,3],[1,4],[2,3],[2,4],[5,3],[5,4],[6,3],[6,4],[7,3],[7,4]] }, // Н-форма
-  { level:69, type:'jelly',   target:0,     moves:20, gems:[],      iceCount:8,  stoneCount:0,  jellyCount:20, gemTypes:4,
-    holes:[[0,4],[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,4],[4,5],[4,6],[4,7]] }, // Г-форма
-  { level:70, type:'score',   target:12000, moves:20, gems:[],      iceCount:8,  stoneCount:8,  jellyCount:0,  gemTypes:4, mysteryCount:2,
-    holes:[[0,0],[0,7],[7,0],[7,7]] },
-
-  // ── Эпизод 7: Мастер (уровни 97-112) ────────────────────────────────────
-  { level:71, type:'score',   target:9000,  moves:22, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4,
-    holes:[[2,2],[2,3],[2,4],[2,5],[3,2],[3,3],[3,4],[3,5],[4,2],[4,3],[4,4],[4,5],[5,2],[5,3],[5,4],[5,5]] },
-  { level:72, type:'collect', target:38,    moves:20, gems:[0,1,3], iceCount:0,  stoneCount:0,  jellyCount:0,  gemTypes:4,
-    holes:[[2,2],[2,3],[2,4],[2,5],[3,2],[3,3],[3,4],[3,5],[4,2],[4,3],[4,4],[4,5],[5,2],[5,3],[5,4],[5,5]] },
-  { level:73, type:'ice',     target:12,    moves:22, gems:[],      iceCount:12, stoneCount:0,  jellyCount:0,  gemTypes:5,
-    holes:[[2,2],[2,3],[2,4],[2,5],[3,2],[3,3],[3,4],[3,5],[4,2],[4,3],[4,4],[4,5],[5,2],[5,3],[5,4],[5,5]] },
-  { level:74, type:'jelly',   target:0,     moves:20, gems:[],      iceCount:0,  stoneCount:0,  jellyCount:16, gemTypes:5,
-    holes:[[2,2],[2,3],[2,4],[2,5],[3,2],[3,3],[3,4],[3,5],[4,2],[4,3],[4,4],[4,5],[5,2],[5,3],[5,4],[5,5]] },
-  { level:75, type:'stone',   target:8,     moves:20, gems:[],      iceCount:0,  stoneCount:8,  jellyCount:0,  gemTypes:5,
-    holes:[[2,2],[2,3],[2,4],[2,5],[3,2],[3,3],[3,4],[3,5],[4,2],[4,3],[4,4],[4,5],[5,2],[5,3],[5,4],[5,5]] },
-  { level:76, type:'score',   target:11000, moves:22, gems:[],      iceCount:4,  stoneCount:2,  jellyCount:0,  gemTypes:5,
-    holes:[[2,3],[2,4],[3,3],[3,4],[4,3],[4,4],[5,3],[5,4]] },
-  { level:77, type:'collect', target:48,    moves:20, gems:[0,2,4], iceCount:6,  stoneCount:0,  jellyCount:0,  gemTypes:5,
-    holes:[[2,2],[2,3],[2,4],[2,5],[3,2],[3,3],[3,4],[3,5],[4,2],[4,3],[4,4],[4,5],[5,2],[5,3],[5,4],[5,5]] },
-  { level:78, type:'ice',     target:14,    moves:20, gems:[],      iceCount:14, stoneCount:4,  jellyCount:0,  gemTypes:6,
-    holes:[[0,3],[0,4],[1,3],[1,4],[2,3],[2,4],[5,3],[5,4],[6,3],[6,4],[7,3],[7,4]] }, // Н-форма
-  { level:79, type:'jelly',   target:0,     moves:18, gems:[],      iceCount:8,  stoneCount:0,  jellyCount:20, gemTypes:6,
-    holes:[[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3],[3,0],[3,1],[3,2],[3,3],[4,0],[4,1],[4,2],[4,3]] }, // Обратная Г
-  { level:80, type:'score',   target:13000, moves:22, gems:[],      iceCount:10, stoneCount:10, jellyCount:0,  gemTypes:6, mysteryCount:3,
-    holes:[[0,0],[0,7],[7,0],[7,7],[0,1],[1,0],[0,6],[1,7],[6,0],[7,1],[6,7],[7,6]] },
-
-  // ── Эпизод 8: Ингредиенты + лёд ──────────────────────────────────────────
-  { level:81, type:'ingredients', target:4, moves:24, gems:[],      iceCount:6,  stoneCount:0,  jellyCount:0,  gemTypes:5, ingredientCount:4,
-    holes:[[0,4],[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,4],[4,5],[4,6],[4,7]] }, // Г-форма (ингредиенты доходят до низа)
-  { level:82, type:'ingredients', target:5, moves:22, gems:[],      iceCount:8,  stoneCount:0,  jellyCount:0,  gemTypes:5, ingredientCount:5,
-    holes:[[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3],[3,0],[3,1],[3,2],[3,3],[4,0],[4,1],[4,2],[4,3]] }, // Обратная Г
-  { level:83, type:'ingredients', target:4, moves:22, gems:[],      iceCount:10, stoneCount:4,  jellyCount:0,  gemTypes:5, ingredientCount:4, holes:[] },
-  { level:84, type:'score',       target:13000, moves:20, gems:[],  iceCount:10, stoneCount:0,  jellyCount:0,  gemTypes:5,
-    holes:[[3,0],[3,1],[3,6],[3,7],[4,0],[4,1],[4,6],[4,7],[5,0],[5,1],[5,6],[5,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,6],[7,7]] }, // Т-форма
-  { level:85, type:'collect',     target:55, moves:20, gems:[0,2,4],iceCount:8,  stoneCount:0,  jellyCount:0,  gemTypes:5,
-    holes:[[0,3],[0,4],[1,3],[1,4],[2,3],[2,4],[5,3],[5,4],[6,3],[6,4],[7,3],[7,4]] }, // Н-форма
-  { level:86, type:'ingredients', target:6, moves:20, gems:[],      iceCount:12, stoneCount:0,  jellyCount:0,  gemTypes:5, ingredientCount:6,
-    holes:[[0,0],[0,7],[7,0],[7,7]] },
-  { level:87, type:'ice',         target:20, moves:20, gems:[],     iceCount:20, stoneCount:0,  jellyCount:0,  gemTypes:5,
-    holes:[[0,4],[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,4],[4,5],[4,6],[4,7]] }, // Г-форма
-  { level:88, type:'jelly',       target:0,  moves:20, gems:[],     iceCount:8,  stoneCount:0,  jellyCount:22, gemTypes:5,
-    holes:[[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3],[3,0],[3,1],[3,2],[3,3],[4,0],[4,1],[4,2],[4,3]] }, // Обратная Г
-  { level:89, type:'stone',       target:14, moves:18, gems:[],     iceCount:0,  stoneCount:14, jellyCount:0,  gemTypes:6,
-    holes:[[3,0],[3,1],[3,6],[3,7],[4,0],[4,1],[4,6],[4,7],[5,0],[5,1],[5,6],[5,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,6],[7,7]] }, // Т-форма
-  { level:90, type:'chocolate',    target:0,     moves:26, gems:[],  iceCount:6,  stoneCount:4,  jellyCount:0,  gemTypes:6, chocolateCount:12,
-    holes:[[0,0],[0,1],[0,6],[0,7],[1,0],[1,7],[6,0],[6,7],[7,0],[7,1],[7,6],[7,7]] },
-
-  // ── Эпизод 9: Мало ходов — нужна стратегия ──────────────────────────────
-  { level:91,  type:'score',   target:12000, moves:15, gems:[],      iceCount:6,  stoneCount:0,  jellyCount:0,  gemTypes:5,
-    holes:[[0,3],[0,4],[1,3],[1,4],[2,3],[2,4],[5,3],[5,4],[6,3],[6,4],[7,3],[7,4]] }, // Н-форма
-  { level:92,  type:'collect', target:45,    moves:16, gems:[0,2,4], iceCount:0,  stoneCount:0,  jellyCount:10, gemTypes:5,
-    holes:[[3,0],[3,1],[3,6],[3,7],[4,0],[4,1],[4,6],[4,7],[5,0],[5,1],[5,6],[5,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,6],[7,7]] }, // Т-форма
-  { level:93,  type:'jelly',   target:0,     moves:15, gems:[],      iceCount:6,  stoneCount:0,  jellyCount:18, gemTypes:5,
-    holes:[[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3],[3,0],[3,1],[3,2],[3,3],[4,0],[4,1],[4,2],[4,3]] }, // Обратная Г
-  { level:94,  type:'ice',     target:16,    moves:15, gems:[],      iceCount:16, stoneCount:6,  jellyCount:0,  gemTypes:6,
-    holes:[[0,4],[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,4],[4,5],[4,6],[4,7]] }, // Г-форма
-  { level:95,  type:'stone',   target:12,    moves:15, gems:[],      iceCount:8,  stoneCount:12, jellyCount:0,  gemTypes:6,
-    holes:[[0,3],[0,4],[1,3],[1,4],[2,3],[2,4],[5,3],[5,4],[6,3],[6,4],[7,3],[7,4]] }, // Н-форма
-  { level:96,  type:'score',   target:12000, moves:18, gems:[],      iceCount:0,  stoneCount:8,  jellyCount:0,  gemTypes:6,
-    holes:[[0,0],[0,1],[0,6],[0,7],[1,0],[1,7],[6,0],[6,7],[7,0],[7,1],[7,6],[7,7]] },
-  { level:97,  type:'collect', target:60,    moves:16, gems:[0,2,4], iceCount:0,  stoneCount:0,  jellyCount:14, gemTypes:6,
-    holes:[[0,0],[0,1],[0,6],[0,7],[1,0],[1,7],[6,0],[6,7],[7,0],[7,1],[7,6],[7,7]] },
-  { level:98,  type:'jelly',   target:0,     moves:15, gems:[],      iceCount:10, stoneCount:0,  jellyCount:24, gemTypes:6,
-    holes:[[3,0],[3,1],[3,6],[3,7],[4,0],[4,1],[4,6],[4,7],[5,0],[5,1],[5,6],[5,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,6],[7,7]] }, // Т-форма
-  { level:99,  type:'score',   target:14000, moves:18, gems:[],      iceCount:10, stoneCount:10, jellyCount:0,  gemTypes:6,
-    holes:[[2,3],[2,4],[3,3],[3,4],[4,3],[4,4],[5,3],[5,4]] },
-  { level:100, type:'collect', target:50,    moves:15, gems:[0,1,2,3,4,5], iceCount:8, stoneCount:8, jellyCount:0, gemTypes:6,
-    holes:[[0,0],[0,1],[0,2],[0,5],[0,6],[0,7],[1,0],[1,1],[1,6],[1,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,2],[7,5],[7,6],[7,7]] },
-
-  // ── Эпизод 10: Мастер (уровни 101-112) ──────────────────────────────────
-  { level:101, type:'score',   target:12000, moves:16, gems:[],      iceCount:8,  stoneCount:6,  jellyCount:0,  gemTypes:5,
-    holes:[[0,0],[0,7],[7,0],[7,7]] },
-  { level:102, type:'jelly',   target:0,     moves:16, gems:[],      iceCount:6,  stoneCount:0,  jellyCount:24, gemTypes:5,
-    holes:[[0,0],[0,7],[7,0],[7,7]] },
-  { level:103, type:'stone',   target:16,    moves:16, gems:[],      iceCount:0,  stoneCount:16, jellyCount:0,  gemTypes:5,
-    holes:[[0,0],[0,7],[7,0],[7,7]], portals:[[2,2,6,5]] },
-  { level:104, type:'ice',     target:24,    moves:18, gems:[],      iceCount:24, stoneCount:0,  jellyCount:0,  gemTypes:6,
-    holes:[[0,4],[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,4],[4,5],[4,6],[4,7]] }, // Г-форма
-  { level:105, type:'collect', target:65,    moves:15, gems:[0,2,4], iceCount:10, stoneCount:0,  jellyCount:12, gemTypes:6,
-    holes:[[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2],[1,3],[2,0],[2,1],[2,2],[2,3],[3,0],[3,1],[3,2],[3,3],[4,0],[4,1],[4,2],[4,3]] }, // Обратная Г
-  { level:106, type:'score',   target:15000, moves:16, gems:[],      iceCount:12, stoneCount:0,  jellyCount:0,  gemTypes:6,
-    holes:[[2,3],[2,4],[3,3],[3,4],[4,3],[4,4],[5,3],[5,4]], portals:[[1,1,7,6]] },
-  { level:107, type:'ingredients',target:8,  moves:20, gems:[],      iceCount:14, stoneCount:0,  jellyCount:0,  gemTypes:6, ingredientCount:8,
-    holes:[[0,4],[0,5],[0,6],[0,7],[1,4],[1,5],[1,6],[1,7],[2,4],[2,5],[2,6],[2,7],[3,4],[3,5],[3,6],[3,7],[4,4],[4,5],[4,6],[4,7]] }, // Г-форма
-  { level:108, type:'jelly',   target:0,     moves:15, gems:[],      iceCount:12, stoneCount:6,  jellyCount:26, gemTypes:6,
-    holes:[[0,3],[0,4],[1,3],[1,4],[2,3],[2,4],[5,3],[5,4],[6,3],[6,4],[7,3],[7,4]] }, // Н-форма
-  { level:109, type:'stone',   target:18,    moves:15, gems:[],      iceCount:12, stoneCount:18, jellyCount:0,  gemTypes:6,
-    holes:[[0,0],[0,1],[0,6],[0,7],[7,0],[7,1],[7,6],[7,7]], portals:[[2,3,5,4]] },
-  { level:110, type:'ice',     target:28,    moves:16, gems:[],      iceCount:28, stoneCount:0,  jellyCount:0,  gemTypes:6,
-    holes:[[3,0],[3,1],[3,6],[3,7],[4,0],[4,1],[4,6],[4,7],[5,0],[5,1],[5,6],[5,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,6],[7,7]] }, // Т-форма
-  { level:111, type:'collect', target:75,    moves:15, gems:[0,1,2,3,4,5], iceCount:14, stoneCount:10, jellyCount:0, gemTypes:6,
-    holes:[[0,0],[0,1],[0,6],[0,7],[1,0],[1,7],[6,0],[6,7],[7,0],[7,1],[7,6],[7,7]] },
-  { level:112, type:'score',   target:22000, moves:18, gems:[],      iceCount:10, stoneCount:10, jellyCount:0,  gemTypes:6,
-    holes:[[0,0],[0,1],[0,2],[0,5],[0,6],[0,7],[1,0],[1,1],[1,6],[1,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,2],[7,5],[7,6],[7,7]], portals:[[3,1,6,6]] },
-
-  // ── Path Mode (уровни 113-118) ─────────────────────────────────────
-  { level:113, type:'path', target:0, moves:22, pathCells:[[1,1],[1,2],[1,3],[1,4],[2,4],[3,4],[3,3],[3,2],[4,2],[5,2]], gems:[], gemTypes:5 },
-  { level:114, type:'path', target:0, moves:20, pathCells:[[0,0],[1,0],[2,0],[2,1],[2,2],[2,3],[1,3],[0,3],[0,4],[0,5],[1,5],[2,5]], gems:[], gemTypes:5 },
-  { level:115, type:'path', target:0, moves:25, pathCells:[[4,0],[4,1],[4,2],[3,2],[2,2],[1,2],[0,2],[0,3],[0,4],[1,4],[2,4],[3,4],[4,4],[4,5],[4,6]], gems:[], gemTypes:6 },
-];
+// LEVELS array is loaded from levels.js
 
 // ── Миграция 8×8 → 8×10 ──────────────────────────────────────
 (function migrateToRows10() {
-  const OLD_ROWS = 8;
-  LEVELS.forEach(lvl => {
-    // Масштабируем score-цели пропорционально новой площади поля
-    if (lvl.type === 'score') {
-      lvl.target = Math.round(lvl.target * (COLS * ROWS) / (COLS * OLD_ROWS) / 500) * 500;
-    }
-    // Расширяем дыры на строки 8 и 9: берём паттерн нижней строки (row=7) и копируем ниже
-    if (lvl.holes && lvl.holes.length) {
-      const bottomPat = lvl.holes.filter(([r]) => r === OLD_ROWS - 1);
-      for (const [r, c] of bottomPat) {
-        lvl.holes.push([r + 1, c]);
-        lvl.holes.push([r + 2, c]);
-      }
-      // Дедупликация
-      const seen = new Set(lvl.holes.map(([r,c]) => `${r},${c}`));
-      lvl.holes = [...seen].map(k => k.split(',').map(Number));
-    }
-  });
+  // Disabled: levels already in 10-row format
 })();
 
 // ── Постобработка уровней: формула сложности ────────────────
-(function patchLevelBalance() {
+function patchLevelBalance() {
   LEVELS.forEach(lvl => {
     const holes = (lvl.holes||[]).length;
     const obs   = Math.round((lvl.iceCount||0)*0.7 + (lvl.stoneCount||0)*0.5);
@@ -2686,71 +2476,15 @@ const LEVELS = [
     // CCSS-стиль: сложность через препятствия, не ходы. Диапазон 20-40 ходов.
     lvl.moves = Math.max(20, Math.min(40, lvl.moves));
   });
-})();
+}
 
 // ══════════════════════════════════════════
 //  ПЕРЕУПОРЯДОЧИВАНИЕ УРОВНЕЙ (TASK-04)
 // ══════════════════════════════════════════
-(function reorderLevels() {
-  function difficulty(lvl) {
-    let d = 0;
-    switch (lvl.type) {
-      case 'score':       d += lvl.target / 600; break;
-      case 'collect':     d += (lvl.target || 0) * 0.3; break;
-      case 'ice':         d += (lvl.iceCount || lvl.target || 0) * 1.2; break;
-      case 'jelly':       d += (lvl.jellyCount || 0) * 0.8; break;
-      case 'stone':       d += (lvl.stoneCount || lvl.target || 0) * 1.2; break;
-      case 'ingredients': d += (lvl.ingredientCount || lvl.target || 0) * 3; break;
-      case 'chocolate':   d += (lvl.chocolateCount || 0) * 1.5; break;
-    }
-    d += (lvl.iceCount || 0) * 0.5;
-    d += (lvl.stoneCount || 0) * 0.6;
-    d += (lvl.marmaladeCount || 0) * 0.8;
-    d += (lvl.lockCount || 0) * 0.7 + (lvl.mysteryCount || 0) * 0.5 + (lvl.bottleCount || 0) * 0.6;
-    d += (lvl.jellyCount || 0) * 0.15;
-    d += (lvl.chocolateCount || 0) * 0.7;
-    d += (lvl.holes || []).length * 0.3;
-    d += Math.max(0, 25 - (lvl.moves || 20)) * 1.5;
-    d += ((lvl.gemTypes || 4) - 3) * 1.5;
-    return d;
-  }
-
-  const tutMap = {};
-  for (const type of ['ice', 'jelly', 'stone', 'ingredients', 'chocolate']) {
-    const found = LEVELS.filter(l => l.type === type).sort((a, b) => difficulty(a) - difficulty(b))[0];
-    if (found) tutMap[type] = found;
-  }
-
-  const sorted = [...LEVELS].sort((a, b) => difficulty(a) - difficulty(b));
-  const used = new Set();
-  const result = [];
-  const add = lvl => { if (lvl && !used.has(lvl)) { result.push(lvl); used.add(lvl); } };
-
-  // Levels 1-15: score/collect only (tutorial zone)
-  for (const lvl of sorted) { if (result.length >= 15) break; if (lvl.type === 'score' || lvl.type === 'collect') add(lvl); }
-  // Level 16: introduce ice
-  add(tutMap['ice']);
-  // Levels 17-30: score/collect/ice
-  for (const lvl of sorted) { if (result.length >= 30) break; if (['score','collect','ice'].includes(lvl.type)) add(lvl); }
-  // Level 31: introduce jelly
-  add(tutMap['jelly']);
-  // Levels 32-50: score/collect/ice/jelly
-  for (const lvl of sorted) { if (result.length >= 50) break; if (['score','collect','ice','jelly'].includes(lvl.type)) add(lvl); }
-  // Level 51: introduce stone
-  add(tutMap['stone']);
-  // Levels 52-70: all except chocolate/ingredients
-  for (const lvl of sorted) { if (result.length >= 70) break; if (['score','collect','ice','jelly','stone'].includes(lvl.type)) add(lvl); }
-  // Level 71: introduce ingredients
-  add(tutMap['ingredients']);
-  // Levels 72-85: all except chocolate
-  for (const lvl of sorted) { if (result.length >= 85) break; if (lvl.type !== 'chocolate') add(lvl); }
-  // Level 86: introduce chocolate
-  add(tutMap['chocolate']);
-  // Levels 87-112: all remaining
-  for (const lvl of sorted) { if (result.length >= 112) break; add(lvl); }
-
-  result.forEach((lvl, i) => { LEVELS[i] = lvl; lvl.level = i + 1; });
-})();
+function reorderLevels() {
+  // Just renumber — levels.js already has correct progression
+  LEVELS.forEach((lvl, i) => { lvl.level = i + 1; });
+}
 
 // Глобальная функция: тир сложности 0=normal 1=hard 2=super-hard 3=ultra-hard
 function getDifficultyTier(lvl) {
@@ -10740,8 +10474,25 @@ function livesTickLoop() {
 async function loadingScreen() {
   const bar = document.getElementById('loading-bar');
 
-  // Шаг 1: анимация бара до 40% пока инициализируем SDK
-  for (let p=0; p<=40; p+=4) { bar.style.width=p+'%'; await sleep(20); }
+  // Шаг 1: параллельно — анимация бара и загрузка levels.js
+  // (preload начался ещё в <head>, здесь просто исполняем уже скачанный файл)
+  const levelsReady = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'levels.js';
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+
+  // Анимируем бар пока грузится levels.js
+  for (let p=0; p<=40; p+=2) { bar.style.width=p+'%'; await sleep(25); }
+
+  // Дожидаемся levels.js (обычно уже готов из preload-кэша)
+  await levelsReady;
+
+  // Постобработка уровней (ранее были IIFE, теперь вызываются здесь)
+  patchLevelBalance();
+  reorderLevels();
 
   // Шаг 2: инициализация Яндекс SDK
   await SDK.init();
