@@ -2748,7 +2748,7 @@ function generateCampaign(from, to) {
 
 const _levelCache = new Map();
 function getLevel(n) {
-  if (n >= 1 && n <= LEVELS.length) return LEVELS[n-1];
+  if (typeof LEVELS !== 'undefined' && n >= 1 && n <= LEVELS.length) return LEVELS[n-1];
   if (_levelCache.has(n)) return _levelCache.get(n);
   const lvl = generateLevel(n);
   _levelCache.set(n, lvl);
@@ -4201,6 +4201,10 @@ function _epStarsDisplay(epStartLevel) {
 }
 
 function showLevels() {
+  if (typeof LEVELS === 'undefined') {
+    showToast('⏳ Уровни ещё загружаются...');
+    return;
+  }
   showScreen('levels');
   const grid = document.getElementById('level-grid');
   grid.innerHTML = '';
@@ -10474,7 +10478,7 @@ function livesTickLoop() {
 async function loadingScreen() {
   const bar = document.getElementById('loading-bar');
 
-  console.log('[Load] шаг 1: загрузка levels.js');
+  // levels.js грузится в фоне — меню не ждёт его
   const levelsReady = new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.src = 'levels.js';
@@ -10482,54 +10486,39 @@ async function loadingScreen() {
     s.onerror = reject;
     document.head.appendChild(s);
   });
+  levelsReady.then(() => {
+    if (typeof LEVELS !== 'undefined') {
+      patchLevelBalance();
+      reorderLevels();
+      _scheduleBackgroundBalance();
+    }
+  }).catch(() => {});
 
-  for (let p=0; p<=40; p+=2) { bar.style.width=p+'%'; await sleep(25); }
+  // Инициализация SDK и игровых данных — не блокируется levels.js
+  for (let p=0; p<=40; p+=4) { bar.style.width=p+'%'; await sleep(20); }
 
-  try {
-    await levelsReady;
-    console.log('[Load] levels.js загружен, LEVELS:', typeof LEVELS, Array.isArray(LEVELS) ? LEVELS.length : '?');
-  } catch(e) {
-    console.error('[Load] levels.js не загрузился:', e);
-  }
-
-  if (typeof LEVELS !== 'undefined') {
-    patchLevelBalance();
-    reorderLevels();
-    console.log('[Load] postprocess done');
-  }
-
-  console.log('[Load] шаг 2: SDK.init');
   await SDK.init();
 
   for (let p=40; p<=70; p+=3) { bar.style.width=p+'%'; await sleep(20); }
 
-  console.log('[Load] шаг 3: loadGame');
   loadGame();
   applyLang();
 
-  console.log('[Load] шаг 4: syncCloud');
   await syncCloud();
 
   for (let p=70; p<=90; p+=4) { bar.style.width=p+'%'; await sleep(20); }
 
-  console.log('[Load] шаг 5: restorePaidItems');
   await restorePaidItems();
 
   for (let p=90; p<=100; p+=2) { bar.style.width=p+'%'; await sleep(20); }
 
-  console.log('[Load] шаг 6: streaks + quests');
   processLoginStreak();
   generateDailyQuests();
   renderQuestsRow();
 
-  console.log('[Load] showScreen menu');
   showScreen('menu');
 
-  // Шаг 7: сезон, турнир, пуши (асинхронно)
   postLoadInit();
-
-  // Авто-баланс: запускается после того как LEVELS загружен
-  _scheduleBackgroundBalance();
 
   if (shouldShowDailyReward()) {
     setTimeout(openDailyPopup, 500);
@@ -10537,7 +10526,6 @@ async function loadingScreen() {
     setTimeout(openStreakPopup, 500);
   }
 
-  // показать ежедневный сундук через 2s при запуске (если не показан сегодня)
   if (shouldShowDailyChest()) {
     setTimeout(showDailyChest, 2000);
   }
