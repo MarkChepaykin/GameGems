@@ -94,7 +94,7 @@ body::before {
 /* Горизонт-полоска убрана — слив цветов плавный, без артефакта */
 #app { isolation: isolate; }
 canvas { display: block; touch-action: none; }
-/* CC43: Rainbow Round canvas animation */
+/* Rainbow Round canvas animation */
 @keyframes rainbowHue { 0%{filter:hue-rotate(0deg) saturate(1.4)} 100%{filter:hue-rotate(360deg) saturate(1.4)} }
 #game-canvas.rainbow-round { animation: rainbowHue 2.5s linear infinite; }
 
@@ -429,7 +429,7 @@ canvas { display: block; touch-action: none; }
 #goal-bar { display: none; }
 #hud-level-row { display: none; }
 
-/* CC25: Sidekick HUD bar */
+/* Sidekick HUD bar */
 #hud-sidekick {
   display: flex; align-items: center; gap: 6px;
   padding: 2px 12px 5px;
@@ -601,7 +601,7 @@ canvas { display: block; touch-action: none; }
 
 /* ── победа / поражение ── */
 .result-screen { gap: 10px; text-align: center; }
-/* CC80: lose screen bottom-sheet minimized state */
+/* lose screen bottom-sheet minimized state */
 #screen-lose { transition: transform 0.3s cubic-bezier(.25,.8,.25,1); }
 #screen-lose.minimized { transform: translateY(calc(100% - 60px)) !important; border-radius: 20px 20px 0 0; }
 #win-glow-canvas { position:fixed;inset:0;z-index:-1;pointer-events:none; }
@@ -716,7 +716,7 @@ canvas { display: block; touch-action: none; }
 .shop-wide-card .swc-body   { flex: 1; }
 .shop-wide-card .swc-title  { font-size: 16px; font-weight: bold; color: #fff; }
 .shop-wide-card .swc-desc   { font-size: 12px; color: #f9a8d4; margin-top: 2px; }
-/* CC74: timed offers */
+/* timed offers */
 .timed-offer-card {
   background: linear-gradient(135deg,rgba(245,158,11,.18),rgba(239,68,68,.18));
   border: 2px solid #f59e0b; border-radius: 16px; padding: 14px 12px;
@@ -1082,7 +1082,7 @@ canvas { display: block; touch-action: none; }
   .hud-row1 { padding: 3px 10px 2px; }
   .hud-row2 { padding: 1px 10px 3px; }
 }
-/* CC56: Широкий экран (планшет/десктоп) */
+/* Широкий экран (планшет/десктоп) */
 @media (min-width: 900px) {
   #app { max-width: 520px; margin: 0 auto; }
 }
@@ -1123,7 +1123,7 @@ canvas { display: block; touch-action: none; }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ── Остров (CC24) ── */
+/* ── Остров  ── */
 #screen-island { justify-content: flex-start; }
 .island-wrap { width: 100%; max-width: 440px; padding: 12px 16px 32px; box-sizing: border-box; }
 .island-progress-bar-bg {
@@ -1252,7 +1252,7 @@ canvas { display: block; touch-action: none; }
     </div>
   </div>
 
-  <!-- Последний трофей (CC73) -->
+  <!-- Последний трофей  -->
   <div id="m-last-trophy" style="display:none;font-size:12px;color:#4a0f33;text-align:center;font-weight:700;cursor:pointer;margin:-4px 0 4px;animation:winStarBounce .5s ease-out;" onclick="showScreen('achievements')"></div>
 
   <!-- Пигги-банк -->
@@ -1324,7 +1324,7 @@ canvas { display: block; touch-action: none; }
   </div>
 </div>
 
-<!-- ══ ОСТРОВ (CC24) ══ -->
+<!-- ══ ОСТРОВ  ══ -->
 <div id="screen-island" class="screen hidden" style="justify-content:flex-start;">
   <div class="top-bar">
     <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
@@ -1417,11 +1417,11 @@ canvas { display: block; touch-action: none; }
       <div id="goal-text"></div>
       <div class="hud-score-inline" id="hud-score">0</div>
     </div>
-    <!-- CC54: secondary objective counter -->
+    <!-- secondary objective counter -->
     <div id="hud-obj-row" style="display:none;justify-content:center;align-items:center;gap:6px;padding:0 12px 3px;font-size:12px;font-weight:700;color:#f9a8d4;">
       <span id="hud-obj-text"></span>
     </div>
-    <!-- Buff Buddies bar (CC82) -->
+    <!-- Buff Buddies bar  -->
     <div id="buff-bar-row" style="display:none;align-items:center;gap:6px;padding:2px 12px 4px;">
       <span style="font-size:12px;">💥</span>
       <div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden;">
@@ -1429,7 +1429,7 @@ canvas { display: block; touch-action: none; }
       </div>
       <button id="buff-nuke-btn" onclick="activateBuffNuke()" style="display:none;font-size:14px;background:linear-gradient(135deg,#f59e0b,#ef4444);border:none;border-radius:8px;padding:2px 8px;color:#fff;font-weight:bold;cursor:pointer;pointer-events:all;">НЮК!</button>
     </div>
-    <!-- CC25: Sidekick bar -->
+    <!-- Sidekick bar -->
     <div id="hud-sidekick" style="display:none;">
       <span id="hud-sk-icon">🐢</span>
       <div id="hud-sk-bar-wrap"><div id="hud-sk-bar"></div></div>
@@ -1499,7 +1499,7 @@ canvas { display: block; touch-action: none; }
   </div>
 </div>
 
-<!-- ══ UNLOCK SCREEN (CC50) ══ -->
+<!-- ══ UNLOCK SCREEN  ══ -->
 <div class="popup-overlay hidden" id="unlock-screen-overlay" onclick="if(event.target===this)hideUnlockScreen()">
   <div id="unlock-screen-box" style="background:linear-gradient(160deg,var(--bg-mid),var(--bg-deep));border-radius:24px;padding:32px 24px;max-width:340px;width:90%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 0 60px rgba(255,95,158,.4);">
     <div id="us-icon" style="font-size:64px;opacity:0;transform:scale(0);transition:none;">🎁</div>
@@ -1559,9 +1559,9 @@ canvas { display: block; touch-action: none; }
 
 <!-- ══ ПОРАЖЕНИЕ ══ -->
 <div id="screen-lose" class="screen result-screen hidden">
-  <!-- CC80: drag handle для bottom-sheet свайпа -->
+  <!-- drag handle для bottom-sheet свайпа -->
   <div id="lose-drag-handle" style="width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.3);margin:0 auto 12px;cursor:grab;touch-action:none;"></div>
-  <!-- CC71: lives remaining -->
+  <!-- lives remaining -->
   <div id="lose-lives-row" style="font-size:13px;color:#f9a8d4;font-weight:700;margin-bottom:4px;"></div>
   <div id="lose-heart" class="result-title" style="font-size:64px;line-height:1;">💔</div>
   <div class="result-title" id="lose-title" style="font-size:28px;margin-top:4px;">Почти!</div>
@@ -1719,7 +1719,7 @@ canvas { display: block; touch-action: none; }
 
     <!-- Вкладка особое -->
     <div id="tab-special" class="tab-content">
-      <!-- CC74: timed offers section -->
+      <!-- timed offers section -->
       <div id="timed-offers-section"></div>
       <div class="shop-wide-card">
         <div class="swc-icon">🚫</div>
@@ -1983,7 +1983,7 @@ canvas { display: block; touch-action: none; }
   </div>
 </div>
 
-<!-- CC44: Ежедневный URM-сундук -->
+<!-- Ежедневный URM-сундук -->
 <div class="popup-overlay hidden" id="popup-daily-chest" onclick="if(event.target===this)closeDailyChestPopup()">
   <div class="popup-box">
     <div class="popup-title">🎁 Ежедневный сундук</div>
@@ -2206,8 +2206,8 @@ const MENU_BGM = _makeMp3Bgm('audio/menu.mp3');
 // ── Музыка для уровней ────────────────────────────────────────────
 const BGM = _makeMp3Bgm('audio/menu.mp3');
 
-// ── CC64+CC31: 3-слойная адаптивная музыка + тональные переходы ──────────────
-// CC64+CC31 stub: MIDI-layered adaptive BGM disabled (was producing oscillator-based cascade music)
+// ── 3-слойная адаптивная музыка + тональные переходы ──────────────
+// stub: MIDI-layered adaptive BGM disabled (was producing oscillator-based cascade music)
 // Original implementation kept in git history; this stub keeps the public API intact.
 const BGM_LAYERS = {
   onMovesChange() {},
@@ -2569,7 +2569,7 @@ const LEVELS = [
   { level:112, type:'score',   target:22000, moves:18, gems:[],      iceCount:10, stoneCount:10, jellyCount:0,  gemTypes:6,
     holes:[[0,0],[0,1],[0,2],[0,5],[0,6],[0,7],[1,0],[1,1],[1,6],[1,7],[6,0],[6,1],[6,6],[6,7],[7,0],[7,1],[7,2],[7,5],[7,6],[7,7]], portals:[[3,1,6,6]] },
 
-  // ── CC18: Path Mode (уровни 113-118) ─────────────────────────────────────
+  // ── Path Mode (уровни 113-118) ─────────────────────────────────────
   { level:113, type:'path', target:0, moves:22, pathCells:[[1,1],[1,2],[1,3],[1,4],[2,4],[3,4],[3,3],[3,2],[4,2],[5,2]], gems:[], gemTypes:5 },
   { level:114, type:'path', target:0, moves:20, pathCells:[[0,0],[1,0],[2,0],[2,1],[2,2],[2,3],[1,3],[0,3],[0,4],[0,5],[1,5],[2,5]], gems:[], gemTypes:5 },
   { level:115, type:'path', target:0, moves:25, pathCells:[[4,0],[4,1],[4,2],[3,2],[2,2],[1,2],[0,2],[0,3],[0,4],[1,4],[2,4],[3,4],[4,4],[4,5],[4,6]], gems:[], gemTypes:6 },
@@ -2614,7 +2614,7 @@ const LEVELS = [
     } else {
       delete lvl.starlevel; // fallback: 33/66/100% прогресса
     }
-    // Трекинг ревизий (TASK-CC15)
+    // Трекинг ревизий 
     if (lvl.revision === undefined) lvl.revision = 0;
 
     if (lvl.type === 'score' && lvl.target > 6000) {
@@ -2774,7 +2774,7 @@ function getDifficultyTier(lvl) {
   return 0;              // normal
 }
 
-// CC45: Динамическая сложность
+// Динамическая сложность
 let _currentDynDiff = 1.0;
 function getDynamicDifficulty() {
   const r = state.recentResults || [];
@@ -3064,7 +3064,7 @@ const BOOSTERS = [
   { id:'color',     icon:'🌈', name:'Радуга',    desc:'Убирает 1 цвет',   cost:300 },
 ];
 
-// ── CC25: Компаньоны-помощники (Sidekick) ──
+// ── Компаньоны-помощники (Sidekick) ──
 const SIDEKICKS = {
   turtle: { id:'turtle', icon:'🐢', name:'Черепаха', desc:'Ломает 3 случайных льда',           maxCharge:20 },
   bird:   { id:'bird',   icon:'🐦', name:'Птичка',   desc:'Создаёт горизонтальную молнию',      maxCharge:15 },
@@ -3147,10 +3147,10 @@ const state = {
   bottlesBroken: 0,         // сколько бутылок лопнуло
   lastSwap: null,           // {r1,c1,r2,c2,board,score,moves} — для undo
   undoUsedThisLevel: false, // первый undo бесплатный
-  buffPieces: 0,            // CC82: Buff Buddies собранные кусочки (сбрасываются за уровень)
+  buffPieces: 0,            // Buff Buddies собранные кусочки (сбрасываются за уровень)
   buffNukeReady: false,     // нюк готов к применению
   buffNukeActive: false,    // режим выбора цели
-  supersonicActive: false,  // CC85: Supersonic Mode
+  supersonicActive: false,  // Supersonic Mode
   supersonicMovesLeft: 0,   // ходы оставшиеся в supersonic
 
   // Серия побед
@@ -3185,7 +3185,7 @@ const state = {
 
   // Достижения
   achievements: [],        // массив разблокированных id
-  trophies: [],            // CC73: массив полученных трофеев
+  trophies: [],            // массив полученных трофеев
   totalWins: 0,            // счётчик побед всего
 
   // Пигги-банк
@@ -3199,20 +3199,20 @@ const state = {
   specialOfferShown: {},   // {levelNum: timestamp}
   lastPlayedAt: 0,         // timestamp последней игровой сессии
 
-  // CC45: Динамическая сложность
+  // Динамическая сложность
   recentResults: [],       // последние 5 результатов: 'win'|'lose'
 
   // Скины
   activeSkin: 'classic',
   unlockedSkins: ['classic','candy','animals','fruits','fire','ice_pal','space'],  // все бесплатные скины открыты сразу
 
-  // CC24: Острова — набор купленных тайлов {[tileId]: true}
+  // Острова — набор купленных тайлов {[tileId]: true}
   islandTiles: {},
 
-  // CC25: Sidekick (компаньон-помощник)
+  // Sidekick (компаньон-помощник)
   sidekick: { id: null, charge: 0, maxCharge: 20 },
 
-  // CC44: Ежедневный URM-сундук
+  // Ежедневный URM-сундук
   chestStreak:    0,    // дни подряд открытия сундука (0..7)
   lastChestDate:  '',   // 'YYYY-MM-DD'
 };
@@ -3308,7 +3308,7 @@ function applySaveObj(s) {
   FREE_SKINS.forEach(s => { if (!state.unlockedSkins.includes(s)) state.unlockedSkins.push(s); });
   if (!state.unlockedSkins.includes('classic')) state.unlockedSkins.unshift('classic');
   if (!SKINS[state.activeSkin]) state.activeSkin = 'classic';
-  // CC25: restore sidekick id
+  // restore sidekick id
   if (s.sidekickId !== undefined) {
     const skDef = SIDEKICKS[s.sidekickId];
     if (skDef) { state.sidekick.id = s.sidekickId; state.sidekick.maxCharge = skDef.maxCharge; }
@@ -3540,7 +3540,7 @@ function getTotalStars() {
 }
 
 // ══════════════════════════════════════════
-//  CC24: ОСТРОВА (мета-прогрессия)
+//  ОСТРОВА (мета-прогрессия)
 // ══════════════════════════════════════════
 const ISLAND_TILES = [
   { id: 'tree',       emoji: '🌳',  cost: 1  },
@@ -3664,7 +3664,7 @@ function refreshMenu() {
       evtTimer.style.display = 'none';
     }
   }
-  // CC73: show last earned trophy on main menu
+  // show last earned trophy on main menu
   const ltEl = document.getElementById('m-last-trophy');
   if (ltEl) {
     const earned = (state.trophies || []);
@@ -3679,7 +3679,7 @@ function refreshMenu() {
 function refreshLevelsCurrency() {
   const lc = document.getElementById('lvl-coins');  if (lc) lc.textContent = state.coins;
   const ll = document.getElementById('lvl-lives');  if (ll) ll.textContent = livesDisplay();
-  // CC24: Island mini-bar
+  // Island mini-bar
   const unlockedCount = Object.keys(state.islandTiles || {}).length;
   const totalCount = ISLAND_TILES.length;
   const pct = totalCount > 0 ? Math.round(unlockedCount / totalCount * 100) : 0;
@@ -3689,7 +3689,7 @@ function refreshLevelsCurrency() {
   if (pctEl) pctEl.textContent = pct + '%';
 }
 
-// CC74: Timed Shop Offers
+// Timed Shop Offers
 const SHOP_OFFERS = [
   { id: 'offer_hints', icon: '💡', title: '5 подсказок', desc: '5× авто-подсказка активирует нюк', price: '49 💎', oldPrice: '99 💎', discount: '50%', duration: 6 * 3600 },
   { id: 'offer_mega',  icon: '💣', title: 'Мега-пак бустеров', desc: '3× Молоток + 2× Радуга + 1× Суперсоник', price: '79 💎', oldPrice: '149 💎', discount: '47%', duration: 4 * 3600 },
@@ -3994,7 +3994,7 @@ function updateNoLivesTimer() {
   el.textContent = formatMs(nextLifeMs());
 }
 
-// CC71: 5-second fake ad progress, then fires onComplete
+// 5-second fake ad progress, then fires onComplete
 function simulateAd(onComplete) {
   const bar = document.getElementById('no-lives-ad-bar');
   const fill = document.getElementById('no-lives-ad-fill');
@@ -4089,7 +4089,7 @@ function getCurrentDailyReward() {
 
 function shouldShowDailyReward() {
   if (state.dailyLastClaim === todayStr()) return false;
-  // CC70: показывать если прошло >20ч с последнего получения
+  // показывать если прошло >20ч с последнего получения
   const ms = state.dailyLastClaimTs ? Date.now() - state.dailyLastClaimTs : Infinity;
   return ms > 20 * 3600 * 1000;
 }
@@ -4125,7 +4125,7 @@ function _flyRewardAnim(text) {
 }
 
 // ══════════════════════════════════════════
-//  CC44: Ежедневный URM-сундук
+//  Ежедневный URM-сундук
 // ══════════════════════════════════════════
 
 function shouldShowDailyChest() {
@@ -4206,7 +4206,7 @@ function openDailyChest() {
     setTimeout(() => _doRevealChest(rarity, reward), 800);
   }
 
-  // CC65: play chest sound immediately
+  // play chest sound immediately
   openChest(rarity);
 }
 
@@ -4245,7 +4245,7 @@ function _doRevealChest(rarity, reward) {
 }
 
 // ══════════════════════════════════════════
-//  CC65: Звуки сундука по редкости
+//  Звуки сундука по редкости
 // ══════════════════════════════════════════
 function openChest(rarity) {
   if (!state.soundOn) return;
@@ -4668,10 +4668,10 @@ function createIngredient() {
 }
 let _activeGemTypes = GEM_TYPES;
 let _matchEpoch = 0; // инкрементируется при старте нового уровня — прерывает зависшие async-цепочки
-let _currentColorWeights = null;   // CC27: per-level gem color weights
-let _currentSpecialWeights = null; // CC27: per-level special spawn weights
+let _currentColorWeights = null;   // per-level gem color weights
+let _currentSpecialWeights = null; // per-level special spawn weights
 
-// CC27: pick index proportional to weights array
+// pick index proportional to weights array
 function weightedRandom(weights) {
   let sum = 0;
   for (const w of weights) sum += w;
@@ -4697,17 +4697,17 @@ function initBoard(lvl) {
   if (lvl.type==='ingredients' && (lvl.ingredientCount||0)===0) console.warn(`Level ${lvl.level}: type=ingredients but ingredientCount=0`);
   // Устанавливаем количество типов фишек для уровня
   _activeGemTypes = lvl.gemTypes || GEM_TYPES;
-  // CC27: load per-level gem/special weights
+  // load per-level gem/special weights
   _currentColorWeights = lvl.colorWeights || null;
   _currentSpecialWeights = lvl.specialSpawnWeights || null;
-  // CC45: Dynamic difficulty — fewer colors when player is struggling
+  // Dynamic difficulty — fewer colors when player is struggling
   _currentDynDiff = getDynamicDifficulty();
   if (_currentDynDiff < 1.0) _activeGemTypes = Math.max(3, _activeGemTypes - 1);
   // Инициализируем дыры
   const holeSet = new Set((lvl.holes || []).map(([r,c]) => `${r},${c}`));
   state.holes = holeSet;
 
-  // CC18: Path Mode — сброс прогресса пути
+  // Path Mode — сброс прогресса пути
   if (lvl.type === 'path') {
     state.pathProgress = 0;
   }
@@ -4774,7 +4774,7 @@ function initBoard(lvl) {
     }));
     mystPool.slice(0, lvl.mysteryCount).forEach(([r,c]) => { board[r][c].mystery = true; board[r][c].special = SPECIAL.NONE; });
   }
-  // CC17: Лакрица — N слоёв, снимается матчем рядом, BOMB/STRIPE снимает все
+  // Лакрица — N слоёв, снимается матчем рядом, BOMB/STRIPE снимает все
   if ((lvl.licoriceCount || 0) > 0) {
     const licPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
       const cell = board[r][c];
@@ -4785,7 +4785,7 @@ function initBoard(lvl) {
   }
   state.licoriceSpawnRate = lvl.licoriceSpawnRate || 0;
   state.licoriceMax       = lvl.licoriceMax || 0;
-  // CC29: Мёд — покрывает клетки медовыми слоями, скрывает медведей
+  // Мёд — покрывает клетки медовыми слоями, скрывает медведей
   if ((lvl.honeyCount || 0) > 0) {
     const hPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
       const cell = board[r][c];
@@ -4946,7 +4946,7 @@ function initCanvas() {
   window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 150));
 }
 
-// CC56: Responsive layout — portrait_narrow/portrait_square/landscape aware
+// Responsive layout — portrait_narrow/portrait_square/landscape aware
 function resizeCanvas() {
   const appEl = document.getElementById('app');
   const W = appEl ? appEl.clientWidth : window.innerWidth;
@@ -5135,7 +5135,7 @@ function drawBoard() {
     ctx.stroke(); ctx.globalAlpha=1;
   }
 
-  // CC18: Path Mode overlay
+  // Path Mode overlay
   { const _pLvl = getLevel(state.currentLevel);
     if (_pLvl && _pLvl.type === 'path' && _pLvl.pathCells) {
       drawPathOverlay(_pLvl.pathCells, state.pathProgress || 0);
@@ -5145,7 +5145,7 @@ function drawBoard() {
   if (_hasEntryAnim) ctx.restore();
 }
 
-// CC18: Path Mode — отрисовка дорожки поверх гемов
+// Path Mode — отрисовка дорожки поверх гемов
 function drawPathOverlay(cells, progress) {
   if (!cells || !cells.length) return;
   const cs = cellSize;
@@ -5197,7 +5197,7 @@ function drawPathOverlay(cells, progress) {
   // 4. Персонаж 🧙 на текущей позиции
   const charIdx = Math.min(progress, cells.length - 1);
   const [cr, cc2] = cells[charIdx];
-  const charX = boardOffX + cc2 * cs + cs / 2;
+  const charX = boardOffX + * cs + cs / 2;
   const charY = boardOffY + cr * cs + cs / 2;
   ctx.font = `${Math.round(cs * 0.7)}px Arial`;
   ctx.textAlign = 'center';
@@ -5536,7 +5536,7 @@ function drawCellGem(r,c,cell) {
     ctx.font=`${cs*.32}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('🔒',x+cs/2,y+cs/2);
   }
-  // CC17: Лакрица — N концентрических эллипсов поверх гема
+  // Лакрица — N концентрических эллипсов поверх гема
   if (cell.licorice > 0) {
     const n = cell.licorice;
     ctx.fillStyle=`rgba(120,40,10,${0.25+n*0.08})`;
@@ -5554,7 +5554,7 @@ function drawCellGem(r,c,cell) {
     ctx.font=`${cs*.26}px Arial`; ctx.textAlign='right'; ctx.textBaseline='top';
     ctx.fillText('🍬',x+cs-3,y+3);
   }
-  // CC29: Мёд/Медведи — N слоёв мёда поверх гема
+  // Мёд/Медведи — N слоёв мёда поверх гема
   if (cell.honey > 0) {
     const n = cell.honey;
     const t2 = Date.now() / 1200;
@@ -6029,9 +6029,9 @@ function updateParticles() {
       pCtx.beginPath(); pCtx.arc(p.x,p.y,p.r,0,Math.PI*2); pCtx.fill();
     }
   }
-  // CC52: Gesture hint overlay
+  // Gesture hint overlay
   drawGestureHint(pCtx);
-  // Floating score texts (CC49 elastic animation)
+  // Floating score texts
   floatingTexts=floatingTexts.filter(t=>t.t<1);
   for (const ft of floatingTexts) {
     ft.t = Math.min(1, ft.t + 0.018); // ~1.0s at 60fps
@@ -6184,7 +6184,7 @@ async function processMatches(hintR, hintC) {
     const cascMult  = state.comboCount > 1 ? Math.min(3.0, 1 + (state.comboCount - 1) * 0.3) : 1.0;
     const pts = Math.floor(matchSize * PHYSICS.BASE_SCORE * sizeMult * cascMult * streakBonus);
     state.score += pts;
-    // CC25: Sidekick charge accumulation
+    // Sidekick charge accumulation
     if (state.sidekick.id) {
       let skCharge = 1; // +1 за матч 3
       if (sizeMult > 1.0) skCharge = 3;          // +3 за спешл (матч 4+)
@@ -6372,7 +6372,7 @@ async function processMatches(hintR, hintC) {
     if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
     updateGoalProgress(); updateHUD();
 
-    // CC18: Path Mode — проверяем продвижение по дорожке
+    // Path Mode — проверяем продвижение по дорожке
     { const _pathLvl = getLevel(state.currentLevel);
       if (_pathLvl && _pathLvl.type === 'path' && _pathLvl.pathCells && state.pathProgress !== undefined) {
         const _pathTarget = _pathLvl.pathCells[state.pathProgress];
@@ -6574,9 +6574,9 @@ function fillFromTop() {
         let _ft = randGem();
         for (let _fa=0; _fa<_activeGemTypes && wouldMatch(state.board,r,c,_ft); _fa++) _ft=(_ft+1)%_activeGemTypes;
         const g=createGem(_ft); g.anim={oy:-emptyCount*cellSize,alpha:1};
-        // CC43: Rainbow Round — 30% chance to spawn RAINBOW gem
+        // Rainbow Round — 30% chance to spawn RAINBOW gem
         if (state.rainbowRound?.active && Math.random()<0.30) { g.special=SPECIAL.RAINBOW; g.type=-1; }
-        // CC45: Dynamic difficulty — bonus specials when player is struggling
+        // Dynamic difficulty — bonus specials when player is struggling
         else if (_currentDynDiff < 1.0 && Math.random() < 0.08) {
           if (_currentSpecialWeights) {
             const sw = _currentSpecialWeights;
@@ -8100,7 +8100,7 @@ function spendMove() {
   updateHUD();
   updateQuestProgress('moves', 1);
   resetHintTimer();
-  // CC43: Rainbow Round moves countdown
+  // Rainbow Round moves countdown
   if (state.rainbowRound?.active) {
     state.rainbowRound.movesLeft--;
     updateRainbowRoundHUD();
@@ -8110,7 +8110,7 @@ function spendMove() {
       updateRainbowRoundHUD();
     }
   }
-  // CC17: Licorice auto-spawn
+  // Licorice auto-spawn
   if (state.licoriceSpawnRate > 0 && state.moves > 0) {
     const lvl = getLevel(state.currentLevel);
     const spent = (lvl?.moves || 20) - state.moves;
@@ -8118,7 +8118,7 @@ function spendMove() {
   }
 }
 
-// CC29: Мёд/Медведи
+// Мёд/Медведи
 function freeBear(r, c) {
   state.bearsFreed = (state.bearsFreed || 0) + 1;
   spawnParticles(r, c, '#fde68a', 8);
@@ -8128,7 +8128,7 @@ function freeBear(r, c) {
   updateGoalProgress();
 }
 
-// CC43: Rainbow Round — banner + HUD sync
+// Rainbow Round — banner + HUD sync
 function showRainbowRoundBanner() {
   if (!state.rainbowRound?.active) return;
   SFX.match(7); SFX.match(8);
@@ -8211,7 +8211,7 @@ function animateShuffleEffect() {
 }
 
 // ══════════════════════════════════════════
-//  CC52: GESTURE HINT OVERLAY
+//  GESTURE HINT OVERLAY
 // ══════════════════════════════════════════
 let _gestureHint = null; // { x1,y1, x2,y2, t, active }
 let _gestureHintRaf = null; // cancelAnimationFrame handle
@@ -8431,11 +8431,11 @@ function updateHUD() {
       btn.disabled = isLocked;
     }
   });
-  // CC25: sidekick HUD
+  // sidekick HUD
   updateSidekickHUD();
 }
 
-// ── CC25: Sidekick HUD + logic ──────────────────────────────────────────────
+// ── Sidekick HUD + logic ──────────────────────────────────────────────
 function updateSidekickHUD() {
   const sk = state.sidekick;
   const el = document.getElementById('hud-sidekick');
@@ -8517,7 +8517,7 @@ const BOOSTER_META = {
   striped:    { icon:'⚡', name:'Молния',     desc:'Ставит молнию на случайную клетку', price:40 },
 };
 
-// CC30: уровни разблокировки бустеров
+// уровни разблокировки бустеров
 const BOOSTER_UNLOCK_LEVELS = { hammer:5, striped:10, colorbomb:16 };
 
 function checkBoosterUnlocks(prevMax, newMax) {
@@ -8532,7 +8532,7 @@ function checkBoosterUnlocks(prevMax, newMax) {
 }
 let _pendingBoosterType = null;
 
-// ── CC82: Buff Buddies ─────────────────────────────────────────────────────────
+// ── Buff Buddies ─────────────────────────────────────────────────────────
 const BUFF_PIECES_TARGET = 10;
 function updateBuffBar() {
   const row = document.getElementById('buff-bar-row');
@@ -8597,7 +8597,7 @@ async function fireBuffNuke(r, c) {
   updateHUD();
 }
 
-// ── CC85: Supersonic Mode ─────────────────────────────────────────────────────
+// ── Supersonic Mode ─────────────────────────────────────────────────────
 function activateSupersonic() {
   if (state.supersonicActive || state.busy || state.paused) return;
   state.supersonicActive = true;
@@ -8954,7 +8954,7 @@ function updateGoalProgress() {
   }
   if(goalEl) { goalEl.innerHTML=html; goalEl.classList.toggle('completed', prog>=1); }
 
-  // CC54: secondary objective counter
+  // secondary objective counter
   const objRow = document.getElementById('hud-obj-row');
   const objTxt = document.getElementById('hud-obj-text');
   if (objRow && objTxt && lvl.objective) {
@@ -8993,7 +8993,7 @@ function checkWin() {
     case 'bears':        mainWin = (state.bearsFreed||0) >= (lvl.bearsTarget||lvl.honeyCount||1); break;
     case 'path':         mainWin = (state.pathProgress||0) >= (lvl.pathCells?.length||1); break;
   }
-  // CC54: secondary objective must also be met
+  // secondary objective must also be met
   if (mainWin && lvl.objective) {
     const obj = lvl.objective;
     let cur = 0;
@@ -9079,7 +9079,7 @@ const CANDY_WORDS = {
 const CANDY_COLORS = ['','','#ffe066','#f59e0b','#ef4444','#a855f7','#38bdf8','#4ade80'];
 let candyCommentTO = null;
 
-// CC81: советы при повторной попытке
+// советы при повторной попытке
 const RETRY_TIPS = [
   '💡 Создавай полосатые фишки — они убирают целый ряд!',
   '💡 Комбо из 5 в ряд → Радуга убивает все фишки одного цвета!',
@@ -9099,7 +9099,7 @@ function getNextTip() {
   return RETRY_TIPS[idx];
 }
 
-// CC67: восклицательные баннеры
+// восклицательные баннеры
 const EXCLAMATIONS = {
   rainbow:   { ru:'🌈 РАДУГА!',       en:'🌈 RAINBOW!',   color:'#a855f7' },
   shuffle:   { ru:'🔀 ПЕРЕМЕШАЛОСЬ!', en:'🔀 SHUFFLED!',  color:'#38bdf8' },
@@ -9276,7 +9276,7 @@ function _doShowWin() {
   state.totalStonesBroken = (state.totalStonesBroken || 0) + (state.stonesBroken || 0);
   // Достижения
   state.totalWins = (state.totalWins || 0) + 1;
-  // CC43: Rainbow Round — activate once every 20 wins, lasts 3 moves
+  // Rainbow Round — activate once every 20 wins, lasts 3 moves
   if (state.totalWins > 0 && state.totalWins % 20 === 0) {
     if (!state.rainbowRound) state.rainbowRound = {};
     state.rainbowRound.active = true;
@@ -9318,7 +9318,7 @@ function _doShowWin() {
       ? sl.map(v=>`<span>${v.toLocaleString()}</span>`).join('')
       : '';
   }
-  // CC53: Mode-specific win screen theming
+  // Mode-specific win screen theming
   const _winLvl = getLevel(state.currentLevel);
   const _winTier = getDifficultyTier(_winLvl);
   const winScr = document.getElementById('screen-win');
@@ -9517,7 +9517,7 @@ function animateWinStars(stars) {
     })(i);
   }
 
-  // CC77: Звёзды летят к счётчику после приземления (задержка: последняя звезда ~1800ms)
+  // Звёзды летят к счётчику после приземления (задержка: последняя звезда ~1800ms)
   setTimeout(() => flyStarsToCounter(stars), 100 + (stars - 1) * 550 + 820);
 
   // Разблокировать кнопки через 3500ms
@@ -9529,7 +9529,7 @@ function animateWinStars(stars) {
   }, 3500);
 }
 
-// CC77: летящие звёзды от win-звёзд к счётчику
+// летящие звёзды от win-звёзд к счётчику
 function flyStarsToCounter(numStars) {
   const counterEl = document.getElementById('win-total-stars');
   if (!counterEl) return;
@@ -9575,7 +9575,7 @@ function flyStarsToCounter(numStars) {
   }
 }
 
-// CC80: bottom-sheet swipe for lose screen
+// bottom-sheet swipe for lose screen
 function _setupLoseSwipe() {
   const el = document.getElementById('screen-lose');
   const handle = document.getElementById('lose-drag-handle');
@@ -9624,7 +9624,7 @@ function showLose() {
   const nearMiss = getNearMissProgress();
   const close = isCloseToWin();
 
-  // CC71: lives remaining row
+  // lives remaining row
   const livesRow = document.getElementById('lose-lives-row');
   if (livesRow) {
     if (!hasInfiniteLives()) {
@@ -9845,7 +9845,7 @@ function playLevel(n, fresh) {
     state.lastSwap=null; state.undoUsedThisLevel=false; hideGestureHint();
     state.buffPieces=0; state.buffNukeReady=false; state.buffNukeActive=false;
     state.supersonicActive=false; state.supersonicMovesLeft=0;
-    // CC25: reset sidekick charge on new level
+    // reset sidekick charge on new level
     if (state.sidekick.id) { state.sidekick.charge = 0; }
     setTimeout(updateRainbowRoundHUD, 50);
     setTimeout(updateBuffBar, 100);
@@ -10673,7 +10673,7 @@ const _origShowWin  = showWin;
 showWin = function() {
   SFX.win();
   _origShowWin();
-  // CC44: показать ежедневный сундук через 4.5s после победы
+  // показать ежедневный сундук через 4.5s после победы
   if (shouldShowDailyChest()) {
     setTimeout(showDailyChest, 4500);
   }
@@ -10780,7 +10780,7 @@ async function loadingScreen() {
     setTimeout(openStreakPopup, 500);
   }
 
-  // CC44: показать ежедневный сундук через 2s при запуске (если не показан сегодня)
+  // показать ежедневный сундук через 2s при запуске (если не показан сегодня)
   if (shouldShowDailyChest()) {
     setTimeout(showDailyChest, 2000);
   }
@@ -11275,7 +11275,7 @@ function initDevPanel() {
       <button onclick="startTestLevel()" style="${devBtnStyle('#134e4a')};width:100%;margin-bottom:4px;">🧪 Тест-уровень</button>
       <button onclick="(()=>{state.questsDate='';state.weeklyQuestDate='';generateDailyQuests();renderQuestsRow();showToast('Квесты сброшены!')})()" style="${devBtnStyle('#1e3a5f')};width:100%;margin-bottom:4px;">🔄 Сбросить квесты</button>
       <button onclick="generateCampaign(113,612);showToast('Готово!')" style="${devBtnStyle('#1e3a5f')};width:100%;margin-bottom:4px;">🏭 +500 уровней</button>
-      <div style="margin-top:6px;margin-bottom:3px;font-size:10px;color:#64748b;">🐾 Компаньон (CC25):</div>
+      <div style="margin-top:6px;margin-bottom:3px;font-size:10px;color:#64748b;">🐾 Компаньон :</div>
       <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px;">
         <button onclick="devSetSidekick('turtle')" style="${devBtnStyle('#064e3b')}">🐢 Черепаха</button>
         <button onclick="devSetSidekick('bird')"   style="${devBtnStyle('#1e3a5f')}">🐦 Птичка</button>
@@ -11753,7 +11753,7 @@ const ACHIEVEMENT_LIST = [
   { id:'perfect_level', icon:'💯', title:'Идеальный уровень',   desc:'Пройди уровень без промахов (≥3 звезды)' },
 ];
 
-// CC73: Trophy Collection
+// Trophy Collection
 const TROPHIES = [
   { id:'trophy_rookie',  icon:'🏆', name:'Новичок',       desc:'Победи 5 раз',          condition: s => (s.totalWins||0) >= 5 },
   { id:'trophy_veteran', icon:'🥇', name:'Ветеран',        desc:'Победи 25 раз',         condition: s => (s.totalWins||0) >= 25 },
