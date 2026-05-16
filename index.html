@@ -6250,7 +6250,11 @@ async function processMatches(hintR, hintC) {
     let bestPri=-1;
     for (const [tp,cells] of Object.entries(typeMap)) {
       const res=analyzeMatch(cells);
-      if (res) { const p=spPriority[res.special]||0; if(p>bestPri){bestPri=p;specialResult=res;matchType=parseInt(tp);specialGroupCells=cells;} }
+      if (res) {
+        // CC rule: cascade matches (loopGuard>1) can't create COLORING — downgrade to BOMB
+        if (_loopGuard > 1 && res.special === SPECIAL.COLORING) res.special = SPECIAL.BOMB;
+        const p=spPriority[res.special]||0; if(p>bestPri){bestPri=p;specialResult=res;matchType=parseInt(tp);specialGroupCells=cells;}
+      }
     }
     if (!specialResult && cellsArr.length>0) {
       // нет спешла — берём тип первой ячейки для других нужд
@@ -6319,9 +6323,27 @@ async function processMatches(hintR, hintC) {
       }
     }
     // Спешлы из матча всегда взрываются (даже если создан новый спешл)
-    for (const {r,c,special,type} of specialsInMatch) {
-      if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
+    // Бомбы: все первая фаза сразу → гравитация → все вторая фаза сразу
+    const _bombsInMatch = specialsInMatch.filter(s => s.special === SPECIAL.BOMB);
+    const _othersInMatch = specialsInMatch.filter(s => s.special !== SPECIAL.BOMB);
+    for (const {r,c,special,type} of _othersInMatch) {
+      if (_matchEpoch !== _myEpoch) return;
       await triggerSpecial(r,c,special,type);
+    }
+    if (_bombsInMatch.length) {
+      if (_matchEpoch !== _myEpoch) return;
+      const _bombData = _bombsInMatch.map(({r,c}) => ({cell: state.board[r]?.[c], r, c}));
+      await Promise.all(_bombData.map(({r,c}) => _bombPhase1(r, c)));
+      if (_matchEpoch !== _myEpoch) return;
+      applyGravity(); fillFromTop(); await animateDrop();
+      if (_matchEpoch !== _myEpoch) return;
+      await Promise.all(_bombData.map(async ({cell, r: origR, c: origC}) => {
+        let _br=origR, _bc=origC;
+        if(cell){let _found=false;for(let rr=0;rr<ROWS&&!_found;rr++)for(let cc=0;cc<COLS&&!_found;cc++){if(state.board[rr]?.[cc]===cell){_br=rr;_bc=cc;_found=true;}}}
+        if(state.board[_br]?.[_bc]) state.board[_br][_bc]=null;
+        await _bombBlast3x3(_br, _bc);
+      }));
+      if (_matchEpoch !== _myEpoch) return;
     }
     if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
     // Если цепные спешлы (RAINBOW/BOMB) потребили только что созданный спешл — возрождаем его
@@ -7239,6 +7261,38 @@ function animateRainbowBurst(targetType) {
   });
 }
 
+async function _bombPhase1(r, c) {
+  const _myEpoch = _matchEpoch;
+  const _td1=[];
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+    if(dr===0&&dc===0)continue;
+    const nr=r+dr,nc=c+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)_td1.push([nr,nc]);
+  }
+  const _cells1=_td1.map(([nr,nc])=>({r:nr,c:nc}));
+  _cells1.forEach(({r:rr,c:cc})=>{const cl=state.board[rr]?.[cc];if(cl&&!cl.stone){const g=GEMS[cl.type];if(g)spawnParticles(rr,cc,getSkinColor(cl.type),8);}});
+  spawnExplosionSparks(r,c,14,'#ec4899');spawnBombBeams(r,c,1,'rgba(236,72,153,0.9)');
+  await animateBombBlast(r,c);spawnScreenShake(10);
+  await animateDestroyWave(_cells1,r,c);
+  const _ch1=[];let _pts1=0;
+  for(const[nr,nc]of _td1){
+    const cl=state.board[nr]?.[nc];if(!cl)continue;
+    if(state.iceGrid[nr]?.[nc]){state.iceGrid[nr][nc]=0;state.iceBroken++;updateQuestProgress('ice',1);}
+    if(cl.ingredient){}
+    else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(nr,nc,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(nr,nc);}
+    else if(cl.chocolate){destroyChocolate(nr,nc);breakAdjacentChocolate(nr,nc);}
+    else if(cl.marmalade){cl.marmalade=false;}
+    else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(nr,nc,'#a78bfa',4);}
+    else if(cl.licorice>0){cl.licorice=0;spawnParticles(nr,nc,'#b45309',6);}
+    else if(cl.honey>0){cl.honey=0;freeBear(nr,nc);}
+    else if(cl.mystery){}
+    else{if(cl.special!==SPECIAL.NONE)_ch1.push({r:nr,c:nc,special:cl.special,type:cl.type});state.board[nr][nc]=null;_pts1+=30;breakAdjacentChocolate(nr,nc);}
+    if(!cl.ingredient){clearJellyAt(nr,nc);clearCarpetAt(nr,nc,false);}
+    if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
+  }
+  if(_pts1>0){state.score+=_pts1;spawnFloatingScore(r,c,_pts1,'#ec4899');updateGoalProgress();}
+  for(const{r:cr,c:cc,special:sp,type:tp}of _ch1){if(_matchEpoch!==_myEpoch)return;await triggerSpecial(cr,cc,sp,tp);}
+}
+
 async function _bombBlast3x3(cr, cc) {
   const td=[];
   for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){const nr=cr+dr,nc=cc+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)td.push([nr,nc]);}
@@ -7317,8 +7371,18 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
     // srcColor: if cell has a real color use it; otherwise use partnerType; else random
     const srcColor = (cellOnBoard?.type >= 0) ? cellOnBoard.type
       : (partnerType >= 0 ? partnerType : Math.floor(Math.random()*_activeGemTypes));
+    // Pick least-common color to avoid creating massive same-color clusters after recoloring
+    function _leastCommonColor(exclude) {
+      const counts = new Array(_activeGemTypes).fill(0);
+      for (let rr=0;rr<ROWS;rr++) for (let cc=0;cc<COLS;cc++) {
+        const t=state.board[rr]?.[cc]?.type; if(t>=0&&t<_activeGemTypes) counts[t]++;
+      }
+      let best=-1, bestN=Infinity;
+      for (let i=0;i<_activeGemTypes;i++) { if(i!==exclude&&counts[i]<bestN){bestN=counts[i];best=i;} }
+      return best>=0?best:(exclude===0?1:0);
+    }
     const tgtColor = (partnerType >= 0 && partnerType !== srcColor) ? partnerType
-      : Math.floor(Math.random()*_activeGemTypes);
+      : _leastCommonColor(srcColor);
     let painted=0;
     for (let rr=0;rr<ROWS;rr++) for (let cc=0;cc<COLS;cc++) {
       const cl=state.board[rr]?.[cc];
@@ -7333,35 +7397,7 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
   // BOMB — Candy Crush style: first blast around bomb (bomb stays), bomb falls, second blast at landing
   if (special===SPECIAL.BOMB) {
     const bombCell = state.board[r]?.[c];
-    // Phase 1: blast 3×3 around bomb WITHOUT removing the bomb
-    const _td1=[];
-    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
-      if(dr===0&&dc===0)continue;
-      const nr=r+dr,nc=c+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)_td1.push([nr,nc]);
-    }
-    const _cells1=_td1.map(([nr,nc])=>({r:nr,c:nc}));
-    _cells1.forEach(({r:rr,c:cc})=>{const cl=state.board[rr]?.[cc];if(cl&&!cl.stone){const g=GEMS[cl.type];if(g)spawnParticles(rr,cc,getSkinColor(cl.type),8);}});
-    spawnExplosionSparks(r,c,14,'#ec4899');spawnBombBeams(r,c,1,'rgba(236,72,153,0.9)');
-    await animateBombBlast(r,c);spawnScreenShake(10);
-    await animateDestroyWave(_cells1,r,c);
-    const _ch1=[];let _pts1=0;
-    for(const[nr,nc]of _td1){
-      const cl=state.board[nr]?.[nc];if(!cl)continue;
-      if(state.iceGrid[nr]?.[nc]){state.iceGrid[nr][nc]=0;state.iceBroken++;updateQuestProgress('ice',1);}
-      if(cl.ingredient){}
-      else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(nr,nc,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(nr,nc);}
-      else if(cl.chocolate){destroyChocolate(nr,nc);breakAdjacentChocolate(nr,nc);}
-      else if(cl.marmalade){cl.marmalade=false;}
-      else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(nr,nc,'#a78bfa',4);}
-      else if(cl.licorice>0){cl.licorice=0;spawnParticles(nr,nc,'#b45309',6);}
-      else if(cl.honey>0){cl.honey=0;freeBear(nr,nc);}
-      else if(cl.mystery){}
-      else{if(cl.special!==SPECIAL.NONE)_ch1.push({r:nr,c:nc,special:cl.special,type:cl.type});state.board[nr][nc]=null;_pts1+=30;breakAdjacentChocolate(nr,nc);}
-      if(!cl.ingredient){clearJellyAt(nr,nc);clearCarpetAt(nr,nc,false);}
-      if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
-    }
-    if(_pts1>0){state.score+=_pts1;spawnFloatingScore(r,c,_pts1,'#ec4899');updateGoalProgress();}
-    for(const{r:cr,c:cc,special:sp,type:tp}of _ch1)await triggerSpecial(cr,cc,sp,tp);
+    await _bombPhase1(r, c);
     if(_matchEpoch!==_myEpoch)return;
     // Bomb falls to new position
     applyGravity();fillFromTop();await animateDrop();
@@ -7719,19 +7755,33 @@ function spawnExplosionSparks(r, c, count=18, color='#ff8800') {
 }
 
 function animateDrop() {
-  const drops=[];
-  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
-    const cl=state.board[r]?.[c];
-    if (cl?.anim?.oy) drops.push({cl, startOy:cl.anim.oy});
+  // Per-column animation: each column uses duration proportional to its max fall distance
+  const colData=[];
+  for (let c=0;c<COLS;c++) {
+    const drops=[];
+    let maxAbs=0;
+    for (let r=0;r<ROWS;r++) {
+      const cl=state.board[r]?.[c];
+      if (cl?.anim?.oy) { drops.push({cl,startOy:cl.anim.oy}); maxAbs=Math.max(maxAbs,Math.abs(cl.anim.oy)); }
+    }
+    if (drops.length) {
+      const scale=Math.min(1, 0.35+maxAbs/(cellSize*ROWS*0.55));
+      colData.push({drops, dur:Math.round(PHYSICS.DROP_MS*scale)});
+    }
   }
-  if (!drops.length) return Promise.resolve();
-  return new Promise(res => {
-    const dur=PHYSICS.DROP_MS, t0=performance.now();
-    function f(now) {
-      const t=Math.min((now-t0)/dur,1);
-      const ease=EASE.outBounce(t);
-      drops.forEach(({cl,startOy})=>{ if(cl.anim) cl.anim.oy=startOy*(1-ease); });
-      t<1?requestAnimationFrame(f):(drops.forEach(({cl})=>{if(cl.anim)cl.anim.oy=0;}),res());
+  if (!colData.length) return Promise.resolve();
+  const t0=performance.now();
+  return new Promise(res=>{
+    function f(now){
+      let allDone=true;
+      for (const {drops,dur} of colData){
+        const t=Math.min((now-t0)/dur,1);
+        if(t<1) allDone=false;
+        const ease=EASE.outBounce(t);
+        drops.forEach(({cl,startOy})=>{ if(cl.anim) cl.anim.oy=startOy*(1-ease); });
+      }
+      if(!allDone) requestAnimationFrame(f);
+      else { colData.forEach(({drops})=>drops.forEach(({cl})=>{if(cl.anim)cl.anim.oy=0;})); res(); }
     }
     requestAnimationFrame(f);
   });
