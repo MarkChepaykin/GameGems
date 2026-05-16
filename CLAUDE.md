@@ -116,18 +116,18 @@ Read index.html offset:<LINE-1> limit:150
 
 | Функция | Строка |
 |---------|--------|
-| processMatches | 5607 |
-| triggerCombinedSpecial | 6044 |
-| activateSpecials | 6006 |
-| applyGravity | 5892 |
-| fillFromTop | 5942 |
-| triggerSpecial | 6541 |
-| animateRocketFlight | 6808 |
-| findRocketTarget | 6783 |
-| animateDestroy | 6931 |
-| animateDrop | 7044 |
-| animateSwap | 7064 |
-| trySwap | 7146 |
+| processMatches | 6159 |
+| triggerCombinedSpecial | 6651 |
+| activateSpecials | 6618 |
+| applyGravity | 6500 |
+| fillFromTop | 6552 |
+| triggerSpecial | 7321 |
+| _bombPhase1 | 7260 |
+| _bombBlast3x3 | 7292 |
+| animateDestroy | 7634 |
+| animateDrop | 7743 |
+| animateSwap | 7776 |
+| trySwap | 7857 |
 | canSwap | 9250 |
 | findBestHint | 9258 |
 | checkWin | 8172 |
@@ -218,6 +218,11 @@ SFX.win/lose/reward/winJingle/loseJingle()  // osc+noise2 — финальные
 
 ## Известные баги и их исправления
 
+### Устаревшие спешлы (FISH, WRAPPED) — исторический артефакт
+В ранних коммитах (`6b68e31`, `0d3e651`, `079ed32`) упоминаются спешлы **FISH** и **WRAPPED**.
+Они были удалены и заменены. В текущем коде их **нет** — вместо них `BOMB` (7) и `COLORING` (8).
+При чтении старых коммитов игнорировать упоминания FISH/WRAPPED.
+
 ### Пустые ячейки после комбо-спешла
 **Причина:** `trySwap` обнулял ячейки r1,c1 и r2,c2 ПОСЛЕ `triggerCombinedSpecial`,
 которая уже применяла гравитацию внутри → удалялись гемы, упавшие сверху.  
@@ -267,6 +272,12 @@ STRIPE → собрать все строки/столбцы в один Set, `P
 - `processMatches`, `triggerSpecial` **и `triggerCombinedSpecial`** захватывают `_myEpoch = _matchEpoch` при старте
   и после каждого `await` делают `if (_matchEpoch !== _myEpoch) return`.
 - Лимит итераций снижен с 120 до **25** (`_loopGuard > 25`).
+
+### Несколько бомб взрывались по одному (медленно)
+**Причина:** в `processMatches` `specialsInMatch` обрабатывался циклом `for...await` — каждая бомба ждала полного завершения (фаза1 + гравитация + дым + фаза2) перед следующей.  
+**Исправление:** `_bombPhase1(r,c)` — выделена отдельная функция для первого взрыва бомбы (без гравитации).
+В `processMatches`: все бомбы из матча делают фазу1 одновременно (`Promise.all`), затем одна гравитация, затем фаза2 одновременно.  
+`triggerSpecial(BOMB)` (для одиночных бомб вне `specialsInMatch`) по-прежнему использует `_bombPhase1` + гравитация + фаза2.
 
 ---
 
