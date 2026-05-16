@@ -11,8 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ══════════════════════════════════
-   GEM BLAST — Bubblegum Edition
-   Тема: Розовая газировка, мармелад, глянцевые пузыри
+   GEM BLAST — Crystal Edition
+   Тема: Кристаллы, самоцветы, волшебный свет
    ══════════════════════════════════ */
 :root {
   --bg-deep:    #5b0a3a;
@@ -915,7 +915,7 @@ canvas { display: block; touch-action: none; }
 /* ══ Попап: конец турнира ══ */
 .tourn-end-rank { font-size: 52px; font-weight: 900; color: #ffe066; }
 
-/* ── Bubblegum overrides ── */
+/* ── Crystal overrides ── */
 .menu-title, .result-title, .pg-title, .logo, .popup-title,
 .levels-title, .shop-title, .settings-title, .season-title, .tourn-title,
 #pause-overlay h2 {
@@ -2366,7 +2366,7 @@ const SKINS = {
 };
 // Emoji для тематических скинов
 const SKIN_EMOJI = {
-  candy:      ['🍬','🍭','🍫','🍡','🍦','🍩'],
+  candy:      ['💎','🔮','💠','✨','🔷','💫'],
   animals:    ['🐶','🐱','🐸','🦊','🐼','🦁'],
   fruits:     ['🍎','🍊','🍋','🍇','🍓','🍑'],
   planets:    ['🌍','🪐','⭐','🌙','☄️','🌟'],
@@ -2381,7 +2381,7 @@ const SKIN_EMOJI = {
   cats:       ['🐱','😺','😸','🙀','😹','😻'],
 };
 const SKIN_DISPLAY = {
-  classic:'Классика', candy:'Конфеты', animals:'Зверюшки',
+  classic:'Классика', candy:'Кристаллы', animals:'Зверюшки',
   fruits:'Фрукты', fire:'Огонь', ice_pal:'Лёд', space:'Космос',
   planets:'Планеты', halloween:'Хэллоуин', christmas:'Новый год',
   ocean:'Океан', robots:'Роботы', dinos:'Динозавры', flowers:'Цветы',
@@ -2806,10 +2806,10 @@ const LEVEL_DESC = {
   collect:     lvl => `Собери ${lvl.target} ${lvl.gems.map(g => GEMS[g]?.name).join('/')}`,
   ice:         lvl => `Разбей ${lvl.target} льдинок`,
   stone:       lvl => `Убери ${lvl.target} камней`,
-  jelly:       lvl => `Расчисти всё желе`,
-  ingredients: lvl => `Доставь ${lvl.target} ингредиентов`,
-  chocolate:   lvl => `Рассей всю тьму ✕`,
-  soda:        lvl => `Лопни ${lvl.target} бутылок`,
+  jelly:       lvl => `Расчисти все гелевые ячейки`,
+  ingredients: lvl => `Доставь ${lvl.target} артефактов`,
+  chocolate:   lvl => `Рассей всю тьму`,
+  soda:        lvl => `Разбей ${lvl.target} кристальных колб`,
   carpet:      lvl => `Покрась всё поле 🎨`,
   path:        lvl => `Проведи волшебника по пути из ${lvl.pathCells?.length||0} клеток 🧙`,
 };
@@ -4215,8 +4215,8 @@ function closeStarterPopup() {
 let _currentEpisodeId = 1;
 
 const TYPE_ICON = {
-  bears:'🐻', collect:'🍬', soda:'🥤', ingredients:'🍒',
-  jelly:'🟩', chocolate:'🍫', carpet:'🎨',
+  bears:'🐻', collect:'💎', soda:'🫧', ingredients:'🌿',
+  jelly:'🟦', chocolate:'🌑', carpet:'🎨',
 };
 
 function goBackToLevels() {
@@ -4337,15 +4337,15 @@ function selectLevel(n) {
       return `<span style="color:${gem.color};font-size:22px;">●</span> ${gem.name}`;
     }).join('  ');
   } else if (lvl.type === 'ingredients') {
-    pgDesc.innerHTML = '🍒 🌰 🍋 🍓 — опускай до низа поля';
+    pgDesc.innerHTML = '🌿 🔮 🌟 💫 — опускай артефакты вниз';
   } else if (lvl.type === 'jelly') {
-    pgDesc.innerHTML = '🟩 Разбивай фишки на желе';
+    pgDesc.innerHTML = '🟦 Разбивай гемы на гелевых ячейках';
   } else if (lvl.type === 'ice') {
     pgDesc.innerHTML = '❄️ Разбивай соседние фишки';
   } else if (lvl.type === 'stone') {
     pgDesc.innerHTML = '🪨 Разбивай соседние фишки';
   } else if (lvl.type === 'soda') {
-    pgDesc.innerHTML = '🥤 Делай матчи рядом с бутылками';
+    pgDesc.innerHTML = '🫧 Делай матчи рядом с колбами';
   } else if (lvl.type === 'carpet') {
     pgDesc.innerHTML = '🎨 Собирай матчи, чтобы покрасить всё поле';
   } else {
@@ -5486,7 +5486,7 @@ function _gemPath(ctx,shape,cx,cy,r) {
   }
 }
 
-// ─── Bubblegum gem sprite cache (perf) ──────────────────────
+// ─── Crystal gem sprite cache (perf) ──────────────────────
 const _gemSpriteCache = new Map();
 let _gemCacheGen = 0;
 // ─── Кеши статичных клеток ───────────────────────────────────────────────
@@ -8684,7 +8684,7 @@ function updateGoalProgress() {
     case 'jelly': {
       const rem=countJellyRemaining();
       prog=state.jellyTotal>0?Math.max(0,1-rem/state.jellyTotal):1;
-      html=`🩷 Желе: ${state.jellyTotal-rem} / ${state.jellyTotal}`; break;
+      html=`🟦 Гель: ${state.jellyTotal-rem} / ${state.jellyTotal}`; break;
     }
     case 'ingredients':
       prog=Math.min(state.ingredientsDelivered/lvl.target,1);
@@ -8697,7 +8697,7 @@ function updateGoalProgress() {
     }
     case 'soda':
       prog=Math.min(state.bottlesBroken/lvl.target,1);
-      html=`🥤 Бутылки: ${Math.min(state.bottlesBroken,lvl.target)} / ${lvl.target}`; break;
+      html=`🫧 Колбы: ${Math.min(state.bottlesBroken,lvl.target)} / ${lvl.target}`; break;
     case 'carpet': {
       const remC=countCarpetRemaining();
       const tot=state.carpetTotal||1;
