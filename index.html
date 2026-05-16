@@ -236,10 +236,34 @@ canvas { display: block; touch-action: none; }
   text-transform:uppercase; padding:12px 0 6px;
 }
 
-/* ── уровни ── */
-#screen-levels { justify-content: flex-start; }
+/* ── уровни / эпизоды ── */
+#screen-levels, #screen-episode { justify-content: flex-start; }
 .levels-title { font-size: 22px; color: #fff; font-weight: 800; text-align: center; padding: 16px 0 8px; text-shadow: 0 2px 0 #c0185f; }
 .level-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 4px 16px 16px; max-width: 380px; width: 100%; }
+
+/* ── карта эпизодов ── */
+.episode-map {
+  display: grid; grid-template-columns: repeat(2,1fr);
+  gap: 10px; padding: 8px 12px 80px;
+  width: 100%; max-width: 380px; overflow-y: auto;
+}
+.ep-card {
+  border-radius: 16px; border: none; cursor: pointer;
+  padding: 10px 12px 28px; text-align: left;
+  display: flex; flex-direction: column; gap: 3px;
+  background: linear-gradient(155deg,#ff5a9d 0%,#e62a7d 100%);
+  box-shadow: 0 3px 0 rgba(74,15,51,.45);
+  transition: transform .1s, box-shadow .1s;
+  min-height: 90px; position: relative;
+}
+.ep-card:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(74,15,51,.45); }
+.ep-card.locked  { background: linear-gradient(155deg,#5a3a4e 0%,#3a2434 100%); cursor: default; opacity:.7; }
+.ep-card.partial { background: linear-gradient(155deg,#a855f7 0%,#7c3aed 100%); }
+.ep-card.complete { background: linear-gradient(155deg,#3ed28d 0%,#13975b 100%); }
+.ep-num  { font-size: 10px; color: rgba(255,255,255,.65); font-weight: 700; }
+.ep-name { font-size: 13px; color: #fff; font-weight: 800; line-height: 1.25; }
+.ep-types { font-size: 13px; margin-top: 2px; }
+.ep-stars { font-size: 10px; color: #fff5b0; position: absolute; bottom: 7px; right: 10px; font-weight: 700; }
 .level-btn {
   aspect-ratio: 1; border-radius: 18px; border: none; cursor: pointer;
   font-size: 20px; font-weight: 800; position: relative; overflow: hidden;
@@ -1005,7 +1029,7 @@ canvas { display: block; touch-action: none; }
 .skin-swatch.active { border-color: #ffd75a; }
 
 /* Pre-game responsive */
-#screen-pregame, #screen-menu, #screen-levels, #screen-quests,
+#screen-pregame, #screen-menu, #screen-levels, #screen-episode, #screen-quests,
 #screen-achievements, #screen-shop, #screen-settings,
 #screen-season, #screen-tournament, #screen-island { padding-bottom: 60px; }
 
@@ -1358,13 +1382,24 @@ canvas { display: block; touch-action: none; }
     </div>
     <span id="lvl-island-pct">0%</span>
   </div>
-  <div class="level-grid" id="level-grid" style="margin-top:4px;"></div>
+  <div class="episode-map" id="episode-map" style="margin-top:4px;"></div>
+</div>
+
+<!-- ══ ЭКРАН ЭПИЗОДА ══ -->
+<div id="screen-episode" class="screen hidden" style="justify-content:flex-start;">
+  <div class="top-bar">
+    <button class="btn btn-gray btn-sm" onclick="showLevels()" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
+    <div id="ep-title" style="font-size:16px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #b1226a;">Эпизод</div>
+    <div class="cur-pill">🪙 <span id="ep-coins">0</span></div>
+    <div class="cur-pill">❤️ <span id="ep-lives">5</span></div>
+  </div>
+  <div class="level-grid" id="episode-level-grid" style="margin-top:8px;"></div>
 </div>
 
 <!-- ══ ПРЕ-ГЕЙМПЛЕЙ ══ -->
 <div id="screen-pregame" class="screen hidden">
   <div class="top-bar">
-    <button class="btn btn-gray btn-sm" onclick="showLevels()" style="margin:0;padding:5px 12px;font-size:13px;" data-i18n="back">← Назад</button>
+    <button class="btn btn-gray btn-sm" onclick="goBackToLevels()" style="margin:0;padding:5px 12px;font-size:13px;" data-i18n="back">← Назад</button>
     <div style="flex:1;"></div>
     <div class="cur-pill">🪙 <span id="pg-coins">0</span></div>
     <div class="cur-pill">💎 <span id="pg-crystals">0</span></div>
@@ -3202,11 +3237,12 @@ function applyLang() {
 // ══════════════════════════════════════════
 //  ЭКРАНЫ
 // ══════════════════════════════════════════
-const ALL_SCREENS = ['loading','menu','quests','achievements','island','levels','pregame','game','win','lose','shop','settings','season','tournament'];
+const ALL_SCREENS = ['loading','menu','quests','achievements','island','levels','episode','pregame','game','win','lose','shop','settings','season','tournament'];
 
 const _SCREEN_ANIM = {
   menu:    'screen-slide-down',
   levels:  'screen-slide-up',
+  episode: 'screen-slide-left',
   pregame: 'screen-slide-left',
   game:    'screen-slide-up',
   win:     'screen-pop-in',
@@ -3260,6 +3296,7 @@ function showScreen(name) {
   if (name === 'quests')       renderQuestsFull();
   if (name === 'achievements') renderAchievements();
   if (name === 'levels')     refreshLevelsCurrency();
+  if (name === 'episode')    refreshLevelsCurrency();
   if (name === 'shop')       refreshShop();
   if (name === 'settings')   refreshSettings();
   if (name === 'season')     refreshSeason();
@@ -3412,6 +3449,8 @@ function refreshMenu() {
 function refreshLevelsCurrency() {
   const lc = document.getElementById('lvl-coins');  if (lc) lc.textContent = state.coins;
   const ll = document.getElementById('lvl-lives');  if (ll) ll.textContent = livesDisplay();
+  const ec = document.getElementById('ep-coins');   if (ec) ec.textContent = state.coins;
+  const el = document.getElementById('ep-lives');   if (el) el.textContent = livesDisplay();
   // Island mini-bar
   const unlockedCount = Object.keys(state.islandTiles || {}).length;
   const totalCount = ISLAND_TILES.length;
@@ -4171,72 +4210,93 @@ function closeStarterPopup() {
 }
 
 // ══════════════════════════════════════════
-//  КАРТА УРОВНЕЙ
+//  КАРТА ЭПИЗОДОВ
 // ══════════════════════════════════════════
-const EPISODE_LABELS = {
-  1:  '✨ Пробуждение Кристаллов',
-  17: '❄️ Ледяные Испытания',
-  31: '🍬 Желейный Лабиринт',
-  51: '🪨 Каменный Рубеж',
-  71: '🥗 Сбор Урожая',
-  86: '🍫 Шоколадный Хаос',
-  101:'🏆 Вершина Мастера',
+let _currentEpisodeId = 1;
+
+const TYPE_ICON = {
+  bears:'🐻', collect:'🍬', soda:'🥤', ingredients:'🍒',
+  jelly:'🟩', chocolate:'🍫', carpet:'🎨',
 };
 
-function _epStarsDisplay(epStartLevel) {
-  // Звёзды эпизода: если хоть один пройденный уровень < 3★ → показываем 2★ макс
-  const epLevels = LEVELS.filter(l => {
-    const starts = Object.keys(EPISODE_LABELS).map(Number).sort((a,b)=>a-b);
-    const idx = starts.indexOf(epStartLevel);
-    const nextStart = starts[idx+1] || 9999;
-    return l.level >= epStartLevel && l.level < nextStart;
-  });
-  const played = epLevels.filter(l => (state.levelStars[l.level]||0) > 0);
-  if (!played.length) return '';
-  const allThree = played.every(l => (state.levelStars[l.level]||0) === 3);
-  const avg = played.reduce((s,l)=>s+(state.levelStars[l.level]||0),0)/played.length;
-  const show = allThree ? 3 : Math.min(2, Math.round(avg));
-  return show > 0 ? ' ' + '⭐'.repeat(show) : '';
+function goBackToLevels() {
+  showEpisode(_currentEpisodeId);
 }
 
 function showLevels() {
-  if (typeof LEVELS === 'undefined') {
+  if (typeof LEVELS === 'undefined' || typeof EPISODES === 'undefined') {
     showToast('⏳ Уровни ещё загружаются...');
     return;
   }
   showScreen('levels');
-  const grid = document.getElementById('level-grid');
+  const map = document.getElementById('episode-map');
+  map.innerHTML = '';
+
+  for (const ep of EPISODES) {
+    const epLvls = LEVELS.filter(l => l.level >= ep.start && l.level <= ep.end);
+    if (!epLvls.length) continue;
+
+    const locked = epLvls[0].level > state.maxUnlocked;
+    const played = epLvls.filter(l => (state.levelStars[l.level] || 0) > 0);
+    const allDone = played.length === epLvls.length;
+    const types = [...new Set(epLvls.map(l => l.type))];
+    const typeIcons = types.map(t => TYPE_ICON[t] || '').join('');
+
+    let cardClass = 'ep-card';
+    if (locked)          cardClass += ' locked';
+    else if (allDone && played.length) cardClass += ' complete';
+    else if (played.length)            cardClass += ' partial';
+
+    const card = document.createElement('button');
+    card.className = cardClass;
+    if (!locked) card.onclick = () => showEpisode(ep.id);
+    else card.disabled = true;
+
+    card.innerHTML =
+      `<div class="ep-num">#${ep.id}</div>` +
+      `<div class="ep-name">${ep.name}</div>` +
+      `<div class="ep-types">${typeIcons}</div>` +
+      `<div class="ep-stars">${played.length}/${epLvls.length} ⭐</div>`;
+
+    map.appendChild(card);
+  }
+
+  // Scroll to the last partially-played episode
+  setTimeout(() => {
+    const cards = map.querySelectorAll('.ep-card.partial, .ep-card:not(.locked):not(.complete)');
+    const target = [...cards].pop() || map.querySelector('.ep-card:not(.locked)');
+    if (target) target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 80);
+}
+
+function showEpisode(epId) {
+  if (typeof LEVELS === 'undefined') {
+    showToast('⏳ Уровни ещё загружаются...');
+    return;
+  }
+  _currentEpisodeId = epId;
+  const ep = EPISODES.find(e => e.id === epId);
+  if (!ep) return;
+
+  showScreen('episode');
+  document.getElementById('ep-title').textContent = ep.name;
+
+  const grid = document.getElementById('episode-level-grid');
   grid.innerHTML = '';
 
-  const epStarts = Object.keys(EPISODE_LABELS).map(Number).sort((a,b) => a-b);
-  // Для каждого уровня определяем начало его главы
-  function levelEpStart(n) {
-    let ep = epStarts[0];
-    for (const s of epStarts) { if (s <= n) ep = s; }
-    return ep;
-  }
-  const lastLvlNum = LEVELS[LEVELS.length - 1].level;
+  const epLvls = LEVELS.filter(l => l.level >= ep.start && l.level <= ep.end);
 
-  // Строим снизу вверх (L112 первым) — без DOM-реверса
-  for (let i = LEVELS.length - 1; i >= 0; i--) {
-    const lvl = LEVELS[i];
-    // Заголовок главы над старшим уровнем этой главы
-    const isEpTop = (lvl.level === lastLvlNum) || !!EPISODE_LABELS[lvl.level + 1];
-    if (isEpTop) {
-      const ep = document.createElement('div');
-      const epStart = levelEpStart(lvl.level);
-      ep.style.cssText = 'grid-column:1/-1;text-align:center;font-size:12px;font-weight:700;color:#a78bfa;letter-spacing:0.5px;padding:6px 0 2px;text-transform:uppercase;border-top:1px solid rgba(167,139,250,0.2);margin-top:4px;';
-      ep.textContent = EPISODE_LABELS[epStart] + _epStarsDisplay(epStart);
-      grid.appendChild(ep);
-    }
-    const btn    = document.createElement('button');
-    const stars  = state.levelStars[lvl.level] || 0;
-    const locked = lvl.level > state.maxUnlocked;
-    const tier   = getDifficultyTier(lvl);
-    const tierClass = tier>=3 ? 'tier-ultrahard' : tier>=2 ? 'tier-superhard' : tier>=1 ? 'tier-hard' : '';
-    const badgeIcon = tier>=3 ? '☠️' : tier>=2 ? '💥' : tier>=1 ? '🔥' : '';
+  for (const lvl of epLvls) {
+    const stars   = state.levelStars[lvl.level] || 0;
+    const locked  = lvl.level > state.maxUnlocked;
+    const tier    = getDifficultyTier(lvl);
+    const tierClass  = tier>=3 ? 'tier-ultrahard' : tier>=2 ? 'tier-superhard' : tier>=1 ? 'tier-hard' : '';
+    const badgeIcon  = tier>=3 ? '☠️' : tier>=2 ? '💥' : tier>=1 ? '🔥' : '';
+
+    const btn = document.createElement('button');
     btn.dataset.level = lvl.level;
-    btn.className = 'level-btn ' + (locked ? 'locked' : stars > 0 ? 'complete' : 'unlocked') + (tierClass ? ' ' + tierClass : '');
+    btn.className = 'level-btn ' + (locked ? 'locked' : stars > 0 ? 'complete' : 'unlocked') + (tierClass ? ' '+tierClass : '');
+
     if (locked) {
       btn.innerHTML = `<span>🔒</span><span style="font-size:11px">${lvl.level}</span>`;
     } else {
@@ -4247,17 +4307,9 @@ function showLevels() {
     }
     grid.appendChild(btn);
   }
-  // EOC gate — shown when all LEVELS[] are unlocked
-  if ((state.maxUnlocked || 1) > LEVELS.length) {
-    const gate = document.createElement('button');
-    gate.className = 'level-btn eoc-gate';
-    gate.innerHTML = '🔒<span style="font-size:10px;margin-top:2px;">Скоро...</span>';
-    gate.onclick = () => showToast('🔒 Больше уровней уже скоро!');
-    grid.insertBefore(gate, grid.firstChild);
-  }
-  // Фокус на последнем доступном уровне
+
   const lastBtn = grid.querySelector(`[data-level="${state.maxUnlocked}"]`);
-  if (lastBtn) setTimeout(() => lastBtn.scrollIntoView({block:'center', behavior:'smooth'}), 80);
+  if (lastBtn) setTimeout(() => lastBtn.scrollIntoView({ block:'center', behavior:'smooth' }), 80);
 }
 
 function selectLevel(n) {
