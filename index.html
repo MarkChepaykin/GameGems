@@ -714,24 +714,6 @@ canvas { display: block; touch-action: none; }
 .shop-wide-card .swc-body   { flex: 1; }
 .shop-wide-card .swc-title  { font-size: 16px; font-weight: bold; color: #fff; }
 .shop-wide-card .swc-desc   { font-size: 12px; color: #f9a8d4; margin-top: 2px; }
-/* CC75: activity hub tiles */
-.act-tile {
-  background: rgba(255,255,255,.82); border: 1.5px solid rgba(255,255,255,.6);
-  border-radius: 18px; padding: 18px 12px; display: flex; flex-direction: column;
-  align-items: center; gap: 8px; cursor: pointer; position: relative;
-  transition: transform .15s, border-color .2s;
-  box-shadow: 0 3px 12px rgba(74,15,51,.15);
-}
-.act-tile:active { transform: scale(.95); }
-.act-tile.claim  { border-color: #4ade80; box-shadow: 0 0 14px rgba(74,222,128,.4); animation: nearMissPulse .9s ease-in-out infinite alternate; }
-.act-tile.inactive { opacity: .45; cursor: default; }
-.act-tile-icon { font-size: 40px; line-height: 1; }
-.act-tile-title { font-size: 13px; font-weight: 800; color: #2d1048; text-align: center; }
-.act-tile-sub   { font-size: 11px; color: #6b3a5c; text-align: center; }
-.act-tile-badge { position: absolute; top: 8px; right: 10px; min-width: 18px; height: 18px;
-  background: #ef4444; color: #fff; font-size: 10px; font-weight: 900;
-  border-radius: 9px; line-height: 18px; text-align: center; padding: 0 4px;
-  border: 2px solid #1e0828; box-sizing: content-box; }
 /* CC74: timed offers */
 .timed-offer-card {
   background: linear-gradient(135deg,rgba(245,158,11,.18),rgba(239,68,68,.18));
@@ -1022,7 +1004,7 @@ canvas { display: block; touch-action: none; }
 
 /* Pre-game responsive */
 #screen-pregame, #screen-menu, #screen-levels, #screen-quests,
-#screen-activity, #screen-achievements, #screen-shop, #screen-settings,
+#screen-achievements, #screen-shop, #screen-settings,
 #screen-season, #screen-tournament, #screen-island { padding-bottom: 60px; }
 
 /* Win / Lose — dark overlay so all secondary text (pink, gold, green) is readable */
@@ -1324,16 +1306,6 @@ canvas { display: block; touch-action: none; }
     <div id="quests-weekly-full"></div>
     <div id="quests-timer" style="text-align:center;padding:16px 0 4px;color:#fff;font-size:13px;text-shadow:0 1px 2px rgba(74,15,51,.50);"></div>
   </div>
-</div>
-
-<!-- ══ АКТИВИТИ ХАБ (CC75) ══ -->
-<div id="screen-activity" class="screen hidden" style="justify-content:flex-start;">
-  <div class="top-bar">
-    <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
-    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #b1226a,0 0 8px rgba(255,170,210,.4);">🎯 Активности</div>
-    <div class="cur-pill">🪙 <span id="act-coins">0</span></div>
-  </div>
-  <div id="activity-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;width:100%;max-width:420px;box-sizing:border-box;"></div>
 </div>
 
 <!-- ══ ДОСТИЖЕНИЯ ══ -->
@@ -3557,7 +3529,6 @@ function showScreen(name) {
   if (name === 'island')       renderIslandScreen();
   if (name === 'quests')       renderQuestsFull();
   if (name === 'achievements') renderAchievements();
-  if (name === 'activity') renderActivityHub();
   if (name === 'levels')     refreshLevelsCurrency();
   if (name === 'shop')       refreshShop();
   if (name === 'settings')   refreshSettings();
@@ -3695,13 +3666,6 @@ function refreshMenu() {
     } else {
       evtTimer.style.display = 'none';
     }
-  }
-  // CC75: activity hub badge on main menu button
-  const actBadge = document.getElementById('activity-badge');
-  if (actBadge) {
-    const n = _activityBadgeCount();
-    actBadge.textContent = n;
-    actBadge.style.display = n > 0 ? '' : 'none';
   }
   // CC73: show last earned trophy on main menu
   const ltEl = document.getElementById('m-last-trophy');
@@ -5679,15 +5643,15 @@ function _gemPath(ctx,shape,cx,cy,r) {
       ctx.closePath();
       break;
     }
-    // ── CLOVER — 4-лепестковый клевер (квадрат с круглыми углами-выпуклостями) ──
+    // ── CLOVER — 3-лепестковый шэмрок (три круга треугольником) ─────────────
     case 'clover': {
-      const a = r*0.55;
-      ctx.moveTo(cx, cy - a);
-      ctx.arc(cx - a*0.5, cy - a*0.5, a*0.6, -Math.PI*0.5, Math.PI, false);
-      ctx.arc(cx - a*0.5, cy + a*0.5, a*0.6, Math.PI, Math.PI*0.5, false);
-      ctx.arc(cx + a*0.5, cy + a*0.5, a*0.6, Math.PI*0.5, 0, false);
-      ctx.arc(cx + a*0.5, cy - a*0.5, a*0.6, 0, -Math.PI*0.5, false);
-      ctx.closePath();
+      const leafR = r * 0.52, d = r * 0.35;
+      for (let i = 0; i < 3; i++) {
+        const ang = (i / 3) * Math.PI * 2 - Math.PI * 0.5;
+        const lx = cx + Math.cos(ang) * d, ly = cy + Math.sin(ang) * d;
+        ctx.moveTo(lx + leafR, ly);
+        ctx.arc(lx, ly, leafR, 0, Math.PI * 2);
+      }
       break;
     }
     // ── STAR — крупная 5-конечная звезда ─────────────────────────
@@ -6900,6 +6864,7 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     addRow(hRow); addCol(vCol);
     spawnLightning(hRow,hC,true); spawnLightning(vR,vCol,false);
     await Promise.all([animateStripeBeam(hRow,hC,true),animateStripeBeam(vR,vCol,false)]);
+    if (_matchEpoch !== _myEpoch) return;
     spawnScreenShake(12);
   } else if ((sp1===SPECIAL.STRIPE_H||sp1===SPECIAL.STRIPE_V)&&sp2===SPECIAL.MEGA) {
     // Молния + Мега: строка/столбец + 3×3 вокруг меги
@@ -6908,15 +6873,18 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     addArea(bomR,bomC,1);
     spawnLightning(strR,strC,strSp===SPECIAL.STRIPE_H);
     await animateStripeBeam(strR,strC,strSp===SPECIAL.STRIPE_H);
+    if (_matchEpoch !== _myEpoch) return;
     spawnBombBeams(bomR,bomC,1,'rgba(255,180,40,0.95)');
     spawnExplosionSparks(bomR,bomC,18,'#ff8800');
     await animateBombBlast(bomR,bomC); spawnScreenShake(12);
+    if (_matchEpoch !== _myEpoch) return;
   } else if ((sp2===SPECIAL.STRIPE_H||sp2===SPECIAL.STRIPE_V)&&sp1===SPECIAL.MEGA) {
     const strSp=sp2,strR=r2,strC=c2,bomR=r1,bomC=c1;
     if (strSp===SPECIAL.STRIPE_H) addRow(strR); else addCol(strC);
     addArea(bomR,bomC,1);
     spawnLightning(strR,strC,strSp===SPECIAL.STRIPE_H);
     await animateStripeBeam(strR,strC,strSp===SPECIAL.STRIPE_H);
+    if (_matchEpoch !== _myEpoch) return;
     spawnBombBeams(bomR,bomC,1,'rgba(255,180,40,0.95)');
     spawnExplosionSparks(bomR,bomC,18,'#ff8800');
     await animateBombBlast(bomR,bomC); spawnScreenShake(12);
@@ -6924,11 +6892,13 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     // МЕГА+МЕГА: взрыв 7×7 с супер-анимацией
     addArea(r1,c1,3);
     await animateSuperMegaBlast(r1,c1); spawnScreenShake(22);
+    if (_matchEpoch !== _myEpoch) return;
     spawnExplosionSparks(r1,c1,40,'#ff6600'); spawnExplosionSparks(r1,c1,20,'#ffe066');
   } else if ((sp1===SPECIAL.BOMB||sp1===SPECIAL.MEGA)&&(sp2===SPECIAL.BOMB||sp2===SPECIAL.MEGA)&&!(sp1===SPECIAL.BOMB&&sp2===SPECIAL.BOMB)) {
     // Bomb+Mega или Mega+Wrapped: 5×5
     addArea(r1,c1,2);
     await animateMegaBlast(r1,c1); spawnScreenShake(14);
+    if (_matchEpoch !== _myEpoch) return;
     spawnExplosionSparks(r1,c1,24,'#ff8800');
   } else if (sp1===SPECIAL.BOMB&&sp2===SPECIAL.BOMB) {
     // Bomb+Bomb: 5×5 twice (early return — manages own blast sequence)
@@ -6944,7 +6914,9 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
       if(pts>0){state.score+=pts;spawnFloatingScore(wr,wc,pts,'#ec4899');updateGoalProgress();}
     };
     await animateBombBlast(wr,wc); spawnScreenShake(14); await blast5x5();
+    if (_matchEpoch !== _myEpoch) return;
     applyGravity(); fillFromTop(); await animateDrop();
+    if (_matchEpoch !== _myEpoch) return;
     await animateBombBlast(wr,wc); spawnScreenShake(14); await blast5x5();
     return;
   } else if ((sp1===SPECIAL.BOMB&&(sp2===SPECIAL.STRIPE_H||sp2===SPECIAL.STRIPE_V))||
@@ -6959,15 +6931,19 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
       animateStripeBeam(wr-1,wc,true), animateStripeBeam(wr,wc,true), animateStripeBeam(wr+1,wc,true),
       animateStripeBeam(wr,wc-1,false), animateStripeBeam(wr,wc,false), animateStripeBeam(wr,wc+1,false)
     ]);
+    if (_matchEpoch !== _myEpoch) return;
     spawnScreenShake(14);
   } else if (sp1===SPECIAL.ROCKET&&sp2===SPECIAL.ROCKET) {
     // Rocket+Rocket: destroy 3 priority targets
     for (let i=0;i<3;i++) {
       const t=findRocketTarget(); if(!t) break;
       await animateRocketFlight(r1,c1,t.r,t.c);
+      if (_matchEpoch !== _myEpoch) return;
       spawnExplosionSparks(t.r,t.c,12,'#00e5ff');
       await animateBombBlast(t.r,t.c);
+      if (_matchEpoch !== _myEpoch) return;
       await explodeCell(t.r,t.c);
+      if (_matchEpoch !== _myEpoch) return;
     }
     return;
   } else if ((sp1===SPECIAL.ROCKET&&sp2===SPECIAL.MEGA)||(sp1===SPECIAL.MEGA&&sp2===SPECIAL.ROCKET)) {
@@ -6977,14 +6953,17 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     const rad=bomSp===SPECIAL.MEGA?2:1;
     const tgt=findRocketTarget()||{r:r1,c:c1};
     await animateRocketFlight(rocketR,rocketC,tgt.r,tgt.c);
+    if (_matchEpoch !== _myEpoch) return;
     spawnBombBeams(tgt.r,tgt.c,rad,'rgba(255,180,40,0.95)');
     spawnExplosionSparks(tgt.r,tgt.c,20,'#ff8800');
     if (bomSp===SPECIAL.MEGA) { await animateMegaBlast(tgt.r,tgt.c); spawnScreenShake(14); }
     else { await animateBombBlast(tgt.r,tgt.c); spawnScreenShake(10); }
+    if (_matchEpoch !== _myEpoch) return;
     const bCells=[];
     for(let dr=-rad;dr<=rad;dr++) for(let dc=-rad;dc<=rad;dc++){const nr=tgt.r+dr,nc=tgt.c+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)bCells.push({r:nr,c:nc});}
     bCells.forEach(({r,c})=>{const cl=state.board[r]?.[c];if(cl&&!cl.stone){const g=GEMS[cl.type];if(g)spawnParticles(r,c,getSkinColor(cl.type),6);}});
     await animateDestroyWave(bCells,tgt.r,tgt.c);
+    if (_matchEpoch !== _myEpoch) return;
     let bPts=0;
     for(const{r,c}of bCells){const cl=state.board[r]?.[c];if(!cl)continue;if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]=0;state.iceBroken++;updateQuestProgress('ice',1);}if(cl.ingredient){}else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(r,c,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(r,c);}else if(cl.chocolate){destroyChocolate(r,c);breakAdjacentChocolate(r,c);}else if(cl.marmalade){cl.marmalade=false;}else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}else if(cl.honey>0){cl.honey=0;freeBear(r,c);}else if(cl.mystery){}else{state.board[r][c]=null;bPts+=50;breakAdjacentChocolate(r,c);}if(!cl.ingredient){clearJellyAt(r,c);clearCarpetAt(r,c,false);}if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;}
     if(bPts>0){state.score+=bPts;spawnFloatingScore(tgt.r,tgt.c,bPts,'#ff8800');updateGoalProgress();}
@@ -6997,15 +6976,18 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     const rocketR=sp1===SPECIAL.ROCKET?r1:r2, rocketC=sp1===SPECIAL.ROCKET?c1:c2;
     const tgt=findRocketTarget()||{r:r1,c:c1};
     await animateRocketFlight(rocketR,rocketC,tgt.r,tgt.c);
+    if (_matchEpoch !== _myEpoch) return;
     spawnExplosionSparks(tgt.r,tgt.c,10,'#00e5ff');
     spawnLightning(tgt.r,tgt.c,strSp===SPECIAL.STRIPE_H);
     await animateStripeBeam(tgt.r,tgt.c,strSp===SPECIAL.STRIPE_H);
+    if (_matchEpoch !== _myEpoch) return;
     spawnScreenShake(8);
     const sCells=[];
     if(strSp===SPECIAL.STRIPE_H) for(let cc=0;cc<COLS;cc++) sCells.push({r:tgt.r,c:cc});
     else for(let rr=0;rr<ROWS;rr++) sCells.push({r:rr,c:tgt.c});
     sCells.forEach(({r,c})=>{const cl=state.board[r]?.[c];if(cl&&!cl.stone){const g=GEMS[cl.type];if(g)spawnParticles(r,c,getSkinColor(cl.type),6);}});
     await animateDestroyWave(sCells,tgt.r,tgt.c);
+    if (_matchEpoch !== _myEpoch) return;
     let sPts=0;
     for(const{r,c}of sCells){const cl=state.board[r]?.[c];if(!cl)continue;if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]=0;state.iceBroken++;updateQuestProgress('ice',1);}if(cl.ingredient){}else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(r,c,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(r,c);}else if(cl.chocolate){destroyChocolate(r,c);breakAdjacentChocolate(r,c);}else if(cl.marmalade){cl.marmalade=false;}else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}else if(cl.honey>0){cl.honey=0;freeBear(r,c);}else if(cl.mystery){}else{state.board[r][c]=null;sPts+=30;breakAdjacentChocolate(r,c);}if(!cl.ingredient){clearJellyAt(r,c);clearCarpetAt(r,c,false);}if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;}
     if(sPts>0){state.score+=sPts;spawnFloatingScore(tgt.r,tgt.c,sPts,'#60a5fa');updateGoalProgress();}
@@ -7016,12 +6998,15 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     const rocketR=sp1===SPECIAL.ROCKET?r1:r2, rocketC=sp1===SPECIAL.ROCKET?c1:c2;
     const tgt=findRocketTarget()||{r:r1,c:c1};
     await animateRocketFlight(rocketR,rocketC,tgt.r,tgt.c);
+    if (_matchEpoch !== _myEpoch) return;
     spawnExplosionSparks(tgt.r,tgt.c,16,'#7c3aed');
     await animateBombBlast(tgt.r,tgt.c); spawnScreenShake(12);
+    if (_matchEpoch !== _myEpoch) return;
     const wCells=[];
     for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){const nr=tgt.r+dr,nc=tgt.c+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)wCells.push({r:nr,c:nc});}
     wCells.forEach(({r,c})=>{const cl=state.board[r]?.[c];if(cl&&!cl.stone){const g=GEMS[cl.type];if(g)spawnParticles(r,c,getSkinColor(cl.type),6);}});
     await animateDestroyWave(wCells,tgt.r,tgt.c);
+    if (_matchEpoch !== _myEpoch) return;
     let wPts=0;
     for(const{r,c}of wCells){const cl=state.board[r]?.[c];if(!cl)continue;if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]=0;state.iceBroken++;updateQuestProgress('ice',1);}if(cl.ingredient){}else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(r,c,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(r,c);}else if(cl.chocolate){destroyChocolate(r,c);breakAdjacentChocolate(r,c);}else if(cl.marmalade){cl.marmalade=false;}else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}else if(cl.honey>0){cl.honey=0;freeBear(r,c);}else if(cl.mystery){}else{state.board[r][c]=null;wPts+=50;breakAdjacentChocolate(r,c);}if(!cl.ingredient){clearJellyAt(r,c);clearCarpetAt(r,c,false);}if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;}
     if(wPts>0){state.score+=wPts;spawnFloatingScore(tgt.r,tgt.c,wPts,'#7c3aed');updateGoalProgress();}
@@ -7029,14 +7014,17 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     return;
   } else {
     await triggerSpecial(r1,c1,sp1);
+    if (_matchEpoch !== _myEpoch) return;
     await triggerSpecial(r2,c2,sp2);
     return;
   }
+  if (_matchEpoch !== _myEpoch) return;
   const cells=[...td].map(k=>{const [r,c]=k.split(',').map(Number);return{r,c};});
   spawnScreenShake();
   cells.forEach(({r,c})=>{const cl=state.board[r]?.[c];if(cl&&!cl.stone){const g=GEMS[cl.type];if(g)spawnParticles(r,c,getSkinColor(cl.type),5);}});
   spawnExplosionSparks(r1,c1,20,'#a855f7');
   await animateDestroyWave(cells,r1,c1);
+  if (_matchEpoch !== _myEpoch) return;
   let comboPts=0;
   for(const{r,c}of cells){
     const cl=state.board[r]?.[c];if(!cl)continue;
@@ -7345,16 +7333,50 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
     if (painted>0) { showToast('🎨 Перекрашено!'); drawBoard(); }
     return;
   }
-  // BOMB — double 3×3 blast at original position (no falling)
+  // BOMB — Candy Crush style: first blast around bomb (bomb stays), bomb falls, second blast at landing
   if (special===SPECIAL.BOMB) {
-    if (state.board[r]?.[c]) state.board[r][c]=null;
-    await _bombBlast3x3(r, c);
-    if (_matchEpoch !== _myEpoch) return;
-    spawnExplosionSparks(r,c,10,'#ec4899');
-    applyGravity(); fillFromTop(); await animateDrop();
-    if (_matchEpoch !== _myEpoch) return;
-    await new Promise(res=>setTimeout(res,80));
-    await _bombBlast3x3(r, c);
+    const bombCell = state.board[r]?.[c];
+    // Phase 1: blast 3×3 around bomb WITHOUT removing the bomb
+    const _td1=[];
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      if(dr===0&&dc===0)continue;
+      const nr=r+dr,nc=c+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)_td1.push([nr,nc]);
+    }
+    const _cells1=_td1.map(([nr,nc])=>({r:nr,c:nc}));
+    _cells1.forEach(({r:rr,c:cc})=>{const cl=state.board[rr]?.[cc];if(cl&&!cl.stone){const g=GEMS[cl.type];if(g)spawnParticles(rr,cc,getSkinColor(cl.type),8);}});
+    spawnExplosionSparks(r,c,14,'#ec4899');spawnBombBeams(r,c,1,'rgba(236,72,153,0.9)');
+    await animateBombBlast(r,c);spawnScreenShake(10);
+    await animateDestroyWave(_cells1,r,c);
+    const _ch1=[];let _pts1=0;
+    for(const[nr,nc]of _td1){
+      const cl=state.board[nr]?.[nc];if(!cl)continue;
+      if(state.iceGrid[nr]?.[nc]){state.iceGrid[nr][nc]=0;state.iceBroken++;updateQuestProgress('ice',1);}
+      if(cl.ingredient){}
+      else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(nr,nc,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(nr,nc);}
+      else if(cl.chocolate){destroyChocolate(nr,nc);breakAdjacentChocolate(nr,nc);}
+      else if(cl.marmalade){cl.marmalade=false;}
+      else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(nr,nc,'#a78bfa',4);}
+      else if(cl.licorice>0){cl.licorice=0;spawnParticles(nr,nc,'#b45309',6);}
+      else if(cl.honey>0){cl.honey=0;freeBear(nr,nc);}
+      else if(cl.mystery){}
+      else{if(cl.special!==SPECIAL.NONE)_ch1.push({r:nr,c:nc,special:cl.special,type:cl.type});state.board[nr][nc]=null;_pts1+=30;breakAdjacentChocolate(nr,nc);}
+      if(!cl.ingredient){clearJellyAt(nr,nc);clearCarpetAt(nr,nc,false);}
+      if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
+    }
+    if(_pts1>0){state.score+=_pts1;spawnFloatingScore(r,c,_pts1,'#ec4899');updateGoalProgress();}
+    for(const{r:cr,c:cc,special:sp,type:tp}of _ch1)await triggerSpecial(cr,cc,sp,tp);
+    if(_matchEpoch!==_myEpoch)return;
+    // Bomb falls to new position
+    applyGravity();fillFromTop();await animateDrop();
+    if(_matchEpoch!==_myEpoch)return;
+    // Find where bomb landed (track by object reference)
+    let _br=r,_bc=c;
+    if(bombCell){let _found=false;for(let rr=0;rr<ROWS&&!_found;rr++)for(let cc=0;cc<COLS&&!_found;cc++){if(state.board[rr]?.[cc]===bombCell){_br=rr;_bc=cc;_found=true;}}}
+    // Smoke while waiting for second blast
+    for(let i=0;i<3;i++){spawnParticles(_br,_bc,'#cccccc',2);await new Promise(res=>setTimeout(res,150));if(_matchEpoch!==_myEpoch)return;}
+    // Phase 2: remove bomb and blast 3×3 at landed position
+    state.board[_br][_bc]=null;
+    await _bombBlast3x3(_br,_bc);
     return;
   }
   // Rocket — flies to highest-priority target and destroys it
@@ -11671,75 +11693,6 @@ function unlockAchievement(id) {
   const def = ACHIEVEMENT_LIST.find(a => a.id === id);
   if (def) showAchievementToast(def.icon, def.title);
   updateQuestProgress('achievements', 1);
-}
-
-// CC75: Activity Hub
-function _activityBadgeCount() {
-  let n = 0;
-  if (shouldShowDailyReward()) n++;
-  const activeOffers = SHOP_OFFERS.filter(o => (state.shopOfferExpiry?.[o.id] || 0) > Date.now());
-  if (activeOffers.length) n += activeOffers.length;
-  return n;
-}
-
-function renderActivityHub() {
-  const grid = document.getElementById('activity-grid');
-  const coinsEl = document.getElementById('act-coins');
-  if (coinsEl) coinsEl.textContent = state.coins;
-  if (!grid) return;
-
-  const dailyAvail = shouldShowDailyReward();
-  const activeOffers = SHOP_OFFERS.filter(o => (state.shopOfferExpiry?.[o.id] || 0) > Date.now());
-  const earnedTrophies = (state.trophies || []).length;
-  const newTrophies = TROPHIES.filter(t => !state.trophies?.includes(t.id) && t.condition(state)).length;
-
-  const tiles = [
-    {
-      icon: '🎁', title: 'Ежедневная', sub: dailyAvail ? 'Доступно!' : 'Забрано',
-      cls: dailyAvail ? 'claim' : '',
-      badge: dailyAvail ? '1' : '',
-      action: "showScreen('menu'); setTimeout(()=>openDailyReward(),200);"
-    },
-    {
-      icon: '🏆', title: 'Трофеи', sub: `${earnedTrophies} / ${TROPHIES.length}`,
-      cls: newTrophies > 0 ? 'claim' : '',
-      badge: newTrophies > 0 ? String(newTrophies) : '',
-      action: "showScreen('achievements');"
-    },
-    {
-      icon: '🛒', title: 'Магазин', sub: activeOffers.length ? `${activeOffers.length} предложений` : 'Открыт',
-      cls: activeOffers.length ? 'claim' : '',
-      badge: activeOffers.length ? String(activeOffers.length) : '',
-      action: "showScreen('shop');"
-    },
-    {
-      icon: '🏅', title: 'Достижения', sub: `${(state.achievements||[]).length} разблокировано`,
-      cls: '',
-      badge: '',
-      action: "showScreen('achievements');"
-    },
-    {
-      icon: '📋', title: 'Задания', sub: 'Ежедневные цели',
-      cls: '',
-      badge: document.getElementById('quest-notif-badge')?.textContent || '',
-      action: "showScreen('quests');"
-    },
-    {
-      icon: '🏆', title: 'Турнир', sub: 'Лидерборд',
-      cls: '',
-      badge: '',
-      action: "showScreen('tournament');"
-    },
-  ];
-
-  grid.innerHTML = tiles.map(t => `
-    <div class="act-tile${t.cls?' '+t.cls:''}" onclick="${t.action}">
-      ${t.badge ? `<div class="act-tile-badge">${t.badge}</div>` : ''}
-      <div class="act-tile-icon">${t.icon}</div>
-      <div class="act-tile-title">${t.title}</div>
-      <div class="act-tile-sub">${t.sub}</div>
-    </div>
-  `).join('');
 }
 
 function renderAchievements() {
