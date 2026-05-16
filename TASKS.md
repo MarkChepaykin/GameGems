@@ -1,4 +1,4 @@
-# GameGems — Dev Backlog
+﻿# GameGems — Dev Backlog
 
 > **Для разработчика (новый чат):** Прочитай этот файл. Используй карту секций
 > и функций из `CLAUDE.md` для точечного чтения `index.html`:
@@ -20,8 +20,8 @@
 **Ключевые константы:**
 ```
 COLS=8, ROWS=10
-SPECIAL={NONE:0,STRIPE_H:1,STRIPE_V:2,BOMB:3,RAINBOW:4,MEGA:5,FISH:6,WRAPPED:7,COLORING:8}
-PHYSICS={SWAP_MS:75,DROP_MS:320,DESTROY_MS:200,COLORBOMB_MS:500,FISH_MS:1000,BASE_SCORE:20}
+SPECIAL={NONE:0,STRIPE_H:1,STRIPE_V:2,RAINBOW:4,MEGA:5,ROCKET:6,BOMB:7,COLORING:8}
+PHYSICS={SWAP_MS:75,DROP_MS:320,DESTROY_MS:200,COLORBOMB_MS:500,BASE_SCORE:20}
 EASE={linear,outQuad,outCubic,outQuart,inOutCubic,outBack,inBack,outElastic,outBounce}
 LEVELS[] — хардкод 112 уровней; getLevel(n) → n≤112:LEVELS[], n>112:generateLevel(n)
 state — глобальный объект (localStorage); SKINS, SKIN_EMOJI, EPISODE_LABELS={1,17,31,51,71,86,101}
@@ -73,214 +73,208 @@ ROWS 8→10. `migrateToRows10` IIFE масштабирует score ×1.25, ра�
 ### TASK-04 — Переработка порядка уровней
 IIFE `reorderLevels()`. `difficulty(lvl)` сводной балл. Тематические уровни на слотах L16/31/51/71/86.
 
-### CC01 — Fish спецфишка
-`SPECIAL.FISH=6`. 2×2 матч → FISH. `findFishTarget()` (желе>лёд>камень>случайный). `animateFishFlight()`. Fish+Fish → 3 цели.
-
-### CC02 — Wrapped спецфишка
-`SPECIAL.WRAPPED=7`. 5 нелинейный (Г/Т/+) → WRAPPED. Двойной `blast3x3` с settle. Wrapped+Wrapped 5×5 дважды. Wrapped+Stripe: 3 полосы.
-
-### CC03 — Экран "+5 ходов" при поражении
+### Экран "+5 ходов" при поражении
 `state.extraMovesUsed`. Блок при прогрессе ≥60%. `buyMoreMoves()` -30💎+5 ходов. `watchAdMoves()` +5 ходов.
 
-### CC04 — Gum Lock (замок на геме)
+### Gum Lock (замок на геме)
 `cell.locked=true`. `canSwap/_simCanSwap` блокируют. Матч рядом снимает замок. L47/50/56/59 с lockCount.
 
-### CC05 — Coloring спецфишка
+### Coloring спецфишка
 `SPECIAL.COLORING=8`. Матч 6+ → COLORING. Перекрашивает все гемы своего цвета в targetColor. Coloring+Coloring меняет два цвета.
 
-### CC11 — Тайминги win/lose анимаций
+### Тайминги win/lose анимаций
 3 `<span>` звезды, `starLand` CSS (100/700/1300ms). Кнопки заблокированы 3.5с. Lose: `heartBreak` 1.4с, кнопки 1.8с.
 
-### CC12 — Три уровня звёзд
+### Три уровня звёзд
 `starlevel=[target, ×2.5, ×4.0]` в `patchLevelBalance`. `calcStars()` по starlevel. `#win-star-labels` числовые пороги.
 
-### CC13 — Индикаторы сложности
+### Индикаторы сложности
 `getDifficultyTier(lvl)` → 0-3. Черепа 💀/💀💀/💀💀💀 на карте. Тир-метка в `selectLevel()`. Фон поля темнее на super/ultra.
 
-### CC14 — Бонус за первую попытку
+### Бонус за первую попытку
 `state.firstAttemptWins`, `_firstAttemptLevel`. Win с первой → +5💎 через 3.6с. 🏆 значок на кнопке.
 
-### CC15 — Балансировка стиль CCSS
+### Балансировка стиль авто-балансировщика
 `lvl.revision=0`. Ходы 20-35. `runBalanceReport` + колонка revision. `autoBalanceLevels` меняет target. Кнопка «Revision +1».
 
-### CC20 — On Fire эффект
+### On Fire эффект
 `#on-fire-beam` с `onFirePulse`. `showCombo(n)` при n≥3 → beam 1.2s. `stopOnFire()` при сбросе comboCount.
 
-### CC21 — Звёзды летят к HUD
+### Звёзды летят к HUD
 CSS `@keyframes starFlight` (translateY 80px, scale 2.4x, -180°→0°). `SFX.reward()` при приземлении. Задержка 550ms.
 
-### CC22 — Маскот с эмоциями
+### Маскот с эмоциями
 `#hud-mascot` 💎 с `mascotBob`. `_updateMascot()`: 😄/😬/😰/🤩. `mascotPop` при смене.
 
-### CC23 — Полировка UI анимаций
+### Полировка UI анимаций
 `@keyframes floatIdle` на бустерах (delay 0–1.6s). Shine `barShine` на `#star-bar`. `btnBounce`, `mascotBob`, `mascotPop`.
 
-### CC26 — Тактильная обратная связь
+### Тактильная обратная связь
 `HAPTIC={tap:[10],match:[20],special:[30,10,30],explode:[50,10,50,10,50],win,lose}`. `haptic(pattern)`. `state.vibroOn`.
 
-### CC32 — Многоуровневые звуки комбо
+### Многоуровневые звуки комбо
 `state.matchSoundLvl` (0-7). `SFX.match(lvl)` 440→790 Hz. Уровень 8 — триумфальный аккорд.
 
-### CC33 — Туториал с жестами
+### Туториал с жестами
 `TUTORIAL_STEPS[]` с `handFrom/handTo`. 👆 на particle canvas. L1:[4,3]→[4,4], L2:[3,2]→[3,3], L4:[5,1]→[5,2].
 
-### CC35 — Анимация часов
+### Анимация часов
 `@keyframes clockShake/clockShakeStrong` (±3.4°/±5°). secs≤2 → strong + красный.
 
-### CC37 — Библиотека easing
+### Библиотека easing
 `EASE` объект (8 функций: outBack, outElastic и др.). `animateDrop()` → `EASE.outBounce`. `animateBoardEntry()` → `EASE.outBack`.
 
-### CC38 — Свечение спецфишек
+### Свечение спецфишек
 Idle glow с `globalCompositeOperation='lighter'`. Radial gradient пульсирует `sin(Date.now()/700)` alpha 0.15-0.25.
 
-### CC39 — Переходы между экранами
+### Переходы между экранами
 `_SCREEN_ANIM` маппинг. CSS `screenSlideUp/Down/Left` (60px→0, 0.32s). `screenPopIn` (overshoot 1.56).
 
-### CC40 — Win-celebration glow + sparkle
+### Win-celebration glow + sparkle
 `startWinGlow()` на `#win-glow-canvas`. Жёлтый glow (280→80px, lighter). Sparkle каждые 140ms.
 
-### CC41 — Score-pop частицы
+### Score-pop частицы
 `spawnScorePop(r,c,gemColor)` — 4-5 частиц addBlend. Из `processMatches()`.
 
-### CC42 — Множители очков
+### Множители очков
 `sizeMult` (5+→2.0, 4→1.5). `cascMult` 1+(comboCount-1)×0.3 (cap 3.0). `×1.5`/`×2.0` поп.
 
-### CC46 — Отмена хода (Undo)
+### Отмена хода (Undo)
 `state.lastSwap` снапшот. Кнопка `#hud-undo-btn` ↩️. Первый undo бесплатный, следующие 10💎.
 
-### CC48 — Размытый фон
+### Размытый фон
 `.result-screen::before` backdrop-filter blur(6px). `#pause-overlay` blur(8px).
 
-### CC49 — Score Pop упругая анимация
+### Score Pop упругая анимация
 Scale 0.2→1.224 `EASE.outElastic` (30%). Damped spring. Fade только t>0.8s.
 
-### CC50 — Экран разблокировки
+### Экран разблокировки
 `showUnlockScreen(title,icon,description)`. Каскад: иконка 150ms, заголовок 350ms, описание 550ms, кнопка 750ms.
 
-### CC51 — Toast slide-from-top
+### Toast slide-from-top
 `showToast()` slide `top:-60px→20px` 0.3s. Очередь `_toastQueue`. `max(2000,msg.length×60)`.
 
-### CC52 — Gesture hint оверлей
+### Gesture hint оверлей
 `showGestureHint(fromR,fromC,toR,toC)`. 👆 на particle canvas. Движение 0.7s easeInOut.
 
-### CC53 — Win-экран по сложности
+### Win-экран по сложности
 CSS `.win-tier-hard/super/ultra`. Баннер `#win-hard-cleared`. Через `getDifficultyTier()`.
 
-### CC55 — Loss aversion quit dialog
+### Loss aversion quit dialog
 `confirmQuitLevel()` с backdrop-blur + rainbowStreak предупреждение. "Продолжить" визуально больше "Выйти".
 
-### CC57 — Difficulty badges
+### Difficulty badges
 CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ верхний левый угол кнопки.
 
-### CC60 — Rainbow Streak
+### Rainbow Streak
 `state.rainbowStreak` (0-4). `#pg-rainbow-streak` 5 иконок 🌈/⬜. При 5 → +colorbomb + тост.
 
-### CC63 — 12-шаговая мелодия матчей
+### 12-шаговая мелодия матчей
 `state.matchSequenceStep` (0-11). `freq=440×2^(step/12)`. При step=11: аккорд [440,554,659,880].
 
-### CC64 — 3-слойная адаптивная музыка
+### 3-слойная адаптивная музыка
 `BGM_LAYERS` с `hiGain/egpGain`. HighIntensity при moves<5. EGP при спешле (1.4s fade-in, hold 3s).
 
-### CC66 — Стерео-пан матчей
+### Стерео-пан матчей
 `StereoPannerNode`. `SFX.match(lvl)` пан нарастает с lvl. При lvl=7: три ноты [0,-0.4,0.4].
 
-### CC67 — Восклицательные баннеры
+### Восклицательные баннеры
 `EXCLAMATIONS` {combo5:'ОТЛИЧНО!', combo8:'НЕВЕРОЯТНО!', combo12:'ШИКАРНО!', rainbow:'РАДУГА!'}. Очередь max 1.
 
-### CC68 — Difficulty announcement
+### Difficulty announcement
 `_showDifficultyBanner(tier)` slide-up снизу. hard(оранж,660Hz), superhard(красн,784Hz), ultrahard(фиолет,440+880Hz).
 
-### CC76 — Точная физика (PHYSICS объект)
-`PHYSICS={SWAP_MS:75,DROP_MS:320,DESTROY_MS:200,COLORBOMB_MS:500,FISH_MS:1000,BASE_SCORE:20}`.
+### Точная физика (PHYSICS объект)
+`PHYSICS={SWAP_MS:75,DROP_MS:320,DESTROY_MS:200,COLORBOMB_MS:500,BASE_SCORE:20}`.
 
-### CC78 — Stars cap и счётчик
+### Stars cap и счётчик
 `getTotalStars()`. `⭐ N` в `#m-total-stars`. `refreshMenu()` обновляет.
 
-### CC79 — "ТАК БЛИЗКО!" на lose-экране
+### "ТАК БЛИЗКО!" на lose-экране
 `#lose-progress-bar-wrap`. Тег при nearMiss≥70%. Bar при ≥40%. Анимация `width 0→X%` 0.5s.
 
-### CC81 — Retry Tips
+### Retry Tips
 `RETRY_TIPS` (10 советов). `getNextTip()` без повторов. `#lose-retry-tip` со 2-й попытки.
 
-### CC82 — Buff Buddies нюк
+### Buff Buddies нюк
 `state.buffPieces/buffNukeReady`. `BUFF_PIECES_TARGET=10`. `addBuffPiece()` при матче 5+. `fireBuffNuke(r,c)` каскадный 3×3.
 
-### CC43 — Rainbow Round
+### Rainbow Round
 `state.rainbowRound={active,movesLeft}`. Раз в 20 побед → 3 хода. `fillFromTop()` 30% шанс RAINBOW gem. `#game-canvas.rainbow-round` CSS `hue-rotate` анимация. `showRainbowRoundBanner()` поп-баннер + SFX. `updateRainbowRoundHUD()` синхронизирует класс. Сброс при retry.
 
-### CC17 — Лакрица-слои (Licorice)
+### Лакрица-слои (Licorice)
 `cell.licorice=N` (1-3). `canSwap()` блокирует. Матч рядом → `licorice--`. BOMB/STRIPE/MEGA → `licorice=0`. `applyGravity()` блокирует падение. `spawnLicorice()` автоспавн в `spendMove()` по `licoriceSpawnRate`. Рендер: N концентрических эллипсов + 🍬. L56/58/62 хардкод, generateLevel difficulty>50.
 
-### CC16 — Порталы на поле
+### Порталы на поле
 `state.portalGrid[r][c]={id,exitR,exitC,color}`. `initBoard()` читает `lvl.portals[[r1,c1,r2,c2]]`. Матч у входа → exit-клетка добавляется в `cellsArr`. STRIPE_H/V продолжает всю exit-строку/колонку. BOMB/MEGA добавляют exit в множество. Визуал: пульсирующие кольца + дуга-безье + 🌀. L103/106/109/112 хардкод, generateLevel difficulty>70 детерминировано.
 
-### CC07 — Экран пре-уровневых бустеров
+### Экран пре-уровневых бустеров
 `screen-pregame` между levels и game. `PRE_BOOSTERS[]` (💎-бустеры). `BOOSTERS[]` (🪙-бустеры). `togglePreBooster/toggleBooster`. С L10+: кристалл-бустеры. `buildBoostersUI()`. Кнопка "▶ Начать!".
 
-### CC08 — Ежедневный календарь наград
+### Ежедневный календарь наград
 7-дневный цикл `DAILY_REWARDS[]`. `state.loginStreak/lastLoginDate/streakRewardsClaimed`. Модал `claimDailyReward()`. Рамки по редкости. Стрик сбрасывается при пропуске.
 
-### CC10 — Газировка (Soda Mechanic)
+### Газировка (Soda Mechanic)
 `state.sodaLevel` (0..ROWS). `cell.bottle=true` — матч рядом → `popBottle()` → `sodaLevel++`. Синий оверлей + пузырьки в drawBoard. Обратная гравитация в soda-зоне (`fillFromTop` skip).
 
-### CC34 — Система жизней
+### Система жизней
 `state.lives/livesTimestamp/lives24hUntil`. `MAX_LIVES=5`, рег. каждые 30 мин. `spendLife()`. Экран "Нет жизней". Таймер MM:SS. "Безлимит" за 50💎.
 
-### CC06 — Мистический контейнер
+### Мистический контейнер
 `cell.mystery=true`. `canSwap()` блокирует. BOMB/STRIPE/MEGA иммунен. Матч рядом → `popMystery()`: STRIPE_H(30%), STRIPE_V(30%), BOMB(25%), RAINBOW(10%), MEGA(5%). Рендер: ❓ фиолетовый. L60/70/80 хардкод, generateLevel difficulty>55.
 
 ### TASK-MP3 — Интеграция MP3 треков
 `_makeMp3Bgm(src)` — HTML5 Audio wrapper. `MENU_BGM=_makeMp3Bgm('audio/menu.mp3')`, `BGM=_makeMp3Bgm('audio/bgm.mp3')`. `state.musicVol` (0-100) + слайдер в настройках. `state.musicOn` тоггл. `BGM_LAYERS` Web Audio поверх mp3. audio/menu.mp3 и audio/bgm.mp3 в репозитории.
 
-### CC56 — Responsive layout
+### Responsive layout
 `resizeCanvas()` portrait_narrow/portrait_square/landscape detection. `boardOffX/Y` как % viewport. HUD относительно board bounds. Landscape — board максимум высоты. `orientationchange` listener.
 
-### CC58 — Bronze/Silver/Gold targets
+### Bronze/Silver/Gold targets
 `starlevel=[t, ×2.5, ×4.0]` в `patchLevelBalance()`. `calcStars()` по starlevel. `win-star-labels` показывает пороги. Уже реализовано в базовом коде.
 
-### CC72 — First Attempt бейдж
+### First Attempt бейдж
 `firstAttemptWins[n]` + `_firstAttemptLevel`. При победе с первой попытки: `#win-first-attempt` показывает "⚡ С первого раза! ⭐" (normal) или "HARD: С ПЕРВОГО РАЗА! 🏆" (hard+). +5💎 тост. Маркер 🏆 на кнопке уровня.
 
-### CC70 — Login Calendar
+### Login Calendar
 `dailyDayClaimed/dailyLastClaim/dailyLastClaimTs` в state. `shouldShowDailyReward()` — 20ч + calendar day check. 7-day grid в `popup-daily`: `past/claimed/today/rarity-*` классы. `claimDailyReward()` → coins/crystals/lives/booster + `_flyRewardAnim()`. День 7 = legendary reward. Цикл: `dailyDayClaimed%7+1`.
 
-### CC77 — Stars fly-to-HUD
+### Stars fly-to-HUD
 `flyStarsToCounter(numStars)`: JS bezier quadratic path per star, fixed-position overlay ⭐ elements. Задержки 0/400/800ms. При прилёте: `counterEl` текст +1, `@keyframes winStarBounce` bounce-анимация, `SFX._tone` 440/523/659 Hz. `#win-total-stars` div показывается в win-экране.
 
-### CC45 — Динамическая сложность
+### Динамическая сложность
 `state.recentResults[]` последние 5. `getDynamicDifficulty()` → 0.75/1.0/1.15. 3+ потерь → 0.75: `_activeGemTypes-1` + 8% шанс STRIPE/BOMB в `fillFromTop()`. 3 победы подряд → 1.15 (норм). `_currentDynDiff` отображается в dev-панели. Результаты пишутся в `showWin/showLose`, сохраняются в `SAVE_FIELDS`.
 
-### CC30 — Замки бустеров
+### Замки бустеров
 `BOOSTER_UNLOCK_LEVELS={hammer:5,striped:10,colorbomb:16}`. `updateHUD()` показывает 🔒/cnt, `disabled=true`, tooltip "Откроется на LN". `activateInGameBooster()` блокирует с тостом. `checkBoosterUnlocks(prevMax,newMax)` при победе: toast + +1 free если разблокировался.
 
-### CC31 — Адаптивная музыка (тональность)
+### Адаптивная музыка (тональность)
 `_musicState='calm'|'tense'|'critical'` внутри BGM_LAYERS. moves>10→calm, ≤10→tense (playbackRate→1.15 за 2s), ≤5→critical (+percGain kick/snare паттерн за 2s). `_smoothRate(target,ms)` через rAF. `getMusicState()` для dev-панели. `_makeMp3Bgm.getEl()` добавлен.
 
-### CC29 — Мёд/Медведи (Honey Layers)
+### Мёд/Медведи (Honey Layers)
 `cell.honey=N` (1-3). `canSwap/_simCanSwap` блокируют. Матч рядом → `honey--`; при 0 → `freeBear(r,c)` → `bearsFreed++`. BOMB/STRIPE/MEGA → `honey=0`. `applyGravity()` фиксирует. Рендер: жёлтый градиент + капли + 🐻 + счётчик слоёв. `type:'bears'`, `level.bearsTarget`. `updateGoalProgress/calcStars/isCloseToWin` — bears case. `initBoard()` расставляет из `lvl.honeyCount`. `generateLevel()` difficulty>45. L65/L67 хардкод.
 
-### CC62 — EOC gate
+### EOC gate
 `showLevels()` — после постройки сетки: если `maxUnlocked > LEVELS.length`, вставляет `.level-btn.eoc-gate` с 🔒 + "Скоро..." через `insertBefore(gate, grid.firstChild)`. Нажатие → `showToast('🔒 Больше уровней уже скоро!')`. CSS `@keyframes eocPulse` + gradient фон.
 
-### CC80 — Lose-screen swipe-to-minimize
+### Lose-screen swipe-to-minimize
 `_setupLoseSwipe()` в `showLose()`. Handle bar (`#lose-drag-handle`) + drag вниз >30% → `.minimized` class (`translateY(calc(100%-60px))`). Snap-back при коротком свайпе. Tap на свёрнутый → разворачивает. Touch + Mouse events.
 
-### CC27 — Вероятности гемов на уровень
+### Вероятности гемов на уровень
 `weightedRandom(weights)` хелпер. `_currentColorWeights`/`_currentSpecialWeights` из `lvl.colorWeights`/`lvl.specialSpawnWeights`. `randGem()` использует colorWeights если есть. DD-бонус спешлов в `fillFromTop()` использует specialSpawnWeights. Dev-панель: `CW:[...]` и `SW:{...}`. Демо: L2 `colorWeights:[3,1,1]`, L5 `[1,3,1,1]`, L8 `[1,1,2,2]`.
 
-### CC73 — Коллекция трофеев
+### Коллекция трофеев
 `TROPHIES[]` 6 штук (rookie/veteran/legend/streak/hard/ultra) + `checkTrophies()` при победе + раздел в `renderAchievements()`. `#m-last-trophy` на главном — последний полученный трофей. Клик → переход к достижениям.
 
-### CC54 — HUD objective counter
+### HUD objective counter
 `level.objective={type,gem,count}` — опциональная вторичная цель. `#hud-obj-row` + `#hud-obj-text` в HUD. `updateGoalProgress()` рендерит `💎/⭐/🧊 X/Y ✅`. При выполнении: `@keyframes objPop` + SFX 880 Hz. `checkWin()` проверяет objective после основной цели. Демо: L22 `objective:{type:'score',count:8000}`.
 
-### CC71 — Экран 0 жизней
+### Экран 0 жизней
 `#lose-lives-row` "❤️ Осталось: X/5" на lose-экране. `simulateAd(onComplete)` — 5s прогресс-бар → callback. `askFriendsForLife()` — 3 рандомных имени + "отправлено". `#no-lives-ad-bar`/`#no-lives-friends` в no-lives попапе. Таймер уже был.
 
-### CC74 — Shop offer с таймером
+### Shop offer с таймером
 `SHOP_OFFERS[]` 3 предложения с `duration`. `state.shopOfferExpiry[id]`. `.timed-offer-card` золотой градиент + `barShine`. `.toc-badge` скидка. `.toc-timer.last-chance` (красный+пульс при <1ч). `_renderTimedOffers()` каждые 10с. `buyTimedOffer(id)` → удаляет expiry.
 
-### CC75 — Activity Hub
+### Activity Hub
 `screen-activity` с 2×N сеткой `.act-tile`. Плитки: Daily/Trophies/Shop/Achievements/Quests/Tournament. `.claim` = зелёный glow+пульс. Badge = нотификации. `renderActivityHub()` при открытии. `_activityBadgeCount()` для кнопки на главном. Кнопка "🎯 Активности" в меню с badge.
 
 ---
@@ -289,7 +283,7 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC18 · Режим пути (Path Mode)
+### TASK-18 · Режим пути (Path Mode)
 **Приоритет: средний | ~5-6 часов**
 
 `type:'path'`. `level.pathCells=[[r,c],...]`. `state.pathProgress` (0..N). Матч на pathCells[progress] или рядом → `progress++`. Дорожка + персонаж на Canvas. `checkWin()`: progress>=length. Хардкодные L80-L100.
@@ -298,7 +292,7 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC19 · Территориальный захват
+### TASK-19 · Территориальный захват
 **Приоритет: низкий | ~6-8 часов**
 
 `type:'territory'`. `state.territoryGrid[r][c]` = 0|1|2. `level.enemyStartCells`. Матч → уничтоженные+соседи → `territory=1`. Каждые `enemyExpandRate` ходов враг расширяется. `checkWin()`: playerCells/total >= targetPercent. Полупрозрачный тинт по faction.
@@ -307,7 +301,7 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC24 · Острова — мета-прогрессия
+### TASK-24 · Острова — мета-прогрессия
 **Приоритет: высокий | ~8-10 часов**
 
 Экран "Остров" между меню и картой. `state.islandTiles[id]` (localStorage). 12-16 тайлов: 🌳(1⭐), 🏠(2⭐), ⛲(4⭐), 🏰(6⭐) и др. `state.totalStars`. На карте уровней — % прогресса острова.
@@ -316,7 +310,7 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC25 · Компаньон-помощник (Sidekick)
+### TASK-25 · Компаньон-помощник (Sidekick)
 **Приоритет: средний | ~4-5 часов**
 
 `state.sidekick={id,charge,maxCharge}`. Разблокируется L25. `SIDEKICKS`: 🐢(ломает 3 льда), 🐦(создаёт STRIPE), 🐻(+3 хода). Заряд: +1 матч, +3 спешл, +5 каскад 3+. Шкала в HUD. `activateSidekick()` автоматически.
@@ -325,7 +319,7 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC28 · Гача-капсула
+### TASK-28 · Гача-капсула
 **Приоритет: низкий | ~3-4 часа**
 
 Экран `capsule` раз в 5 побед. Бесплатно раз в 24ч. 🎁 трясётся 1.5с → лопается. Награды: 60%+15💎, 20% бустер, 15%+1жизнь, 5% скин. "Открыть" за 10💎 или "Пропустить".
@@ -334,7 +328,7 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC36 · Диорама — анимированный хаб
+### TASK-36 · Диорама — анимированный хаб
 **Приоритет: низкий | ~8-10 часов**
 
 Экран 'menu' → "живой" хаб: остров (правый угол), события (левый), маскот (центр). 5 состояний: `hub_idle` (float), `hub_level_unlocked` (pop), `hub_reward_ready` (пульс), `hub_no_lives` (разбитое сердце), `hub_event_active` (баннер). CSS classes + JS state machine.
@@ -343,7 +337,7 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC44 · Ежедневный URM сундук
+### TASK-44 · Ежедневный URM сундук
 **Приоритет: низкий | ~3 часа**
 
 Экран `daily_chest` раз в сутки. `state.chestStreak` — дни подряд. При streak 7 → Legendary гарантирован. Награды: Common(50%)+5💎, Uncommon(25%), Rare(15%), Epic(8%), Legendary(2%)+100💎+скин. Анимация ≥1.5с. Тултип `?` → шансы.
@@ -353,7 +347,7 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 ---
 
 
-### TASK-CC59 · Scrolling Board
+### TASK-59 · Scrolling Board
 **Приоритет: низкий | ~5 часов**
 
 `level.boardCols/boardRows`. `drawBoard()` рендерит видимую часть (`viewOffsetY/X`). Touch drag не на гем → скроллинг. `cameraTargets` → плавный pan. `cellSize` auto (min 32px). Мини-скролл-бар.
@@ -362,28 +356,28 @@ CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ в�
 
 ---
 
-### TASK-CC61 · Сезонные скины
+### TASK-61 · Сезонные скины
 **Приоритет: низкий | ~3 часа**
 
-`SEASONS` по `getMonth()`. CSS-переменные `--season-bg-top/bottom/particle`. Spring: зел+розов; Summer: жёлт+голуб; Autumn: оранж+бордов; Winter: синий+белый. Партиклы по сезону (CC40). Fade 2s при смене месяца.
+`SEASONS` по `getMonth()`. CSS-переменные `--season-bg-top/bottom/particle`. Spring: зел+розов; Summer: жёлт+голуб; Autumn: оранж+бордов; Winter: синий+белый. Партиклы по сезону . Fade 2s при смене месяца.
 
 **AC:** Хаб выглядит по-разному зимой и летом.
 
 ---
 
-### TASK-CC65 · Звуки сундука по редкости
+### TASK-65 · Звуки сундука по редкости
 **Приоритет: средний | ~2 часа**
 
 В `openChest(rarity)` — аудио-цепочка: Common(pip→click→jingle 440-523-659), Rare(+0.15s reverb), Epic(harmonics+пан±0.3), Legendary(C major arpeggio 523-659-784-1047, 0.5s reverb). Фоновый 60-80Hz во время анимации.
 
-**AC:** Common и Legendary звучат принципиально по-разному. Синхронизировано с CC44.
+**AC:** Common и Legendary звучат принципиально по-разному. Синхронизировано с .
 
 ---
 
-### TASK-CC69 · Island hex-map
+### TASK-69 · Island hex-map
 **Приоритет: низкий | ~8 часов**
 
-`ISLAND_MAP={tiles:[...],chapter:1}`. Гекс-сетка на Canvas/CSS grid. Тайлы за `totalStars`. Landmark → mini-chest (CC44). Полоса прогресса главы.
+`ISLAND_MAP={tiles:[...],chapter:1}`. Гекс-сетка на Canvas/CSS grid. Тайлы за `totalStars`. Landmark → mini-chest . Полоса прогресса главы.
 
 **AC:** Гекс-карта отображается. Разблокировка за ⭐. Landmark дают награды.
 
