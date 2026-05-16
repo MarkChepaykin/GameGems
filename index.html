@@ -6438,12 +6438,7 @@ async function processMatches(hintR, hintC) {
   if (state.moves<=0) {
     state.busy=true;
     clearTimeout(_hintTimer);
-    const _endLvl=getLevel(state.currentLevel);
-    if (_endLvl.type==='score' && state.score>=_endLvl.target) {
-      setTimeout(showWin, 400);
-    } else {
-      setTimeout(showLose, 400);
-    }
+    setTimeout(showLose, 400);
     return;
   }
   state.busy=false;
@@ -8981,7 +8976,7 @@ function checkWin() {
   const lvl=getLevel(state.currentLevel);
   let mainWin = false;
   switch(lvl.type) {
-    case 'score':   mainWin = false; break; // score levels play out all moves; win checked at moves===0
+    case 'score':   mainWin = state.score >= lvl.target; break;
     case 'collect': { let t=0; lvl.gems.forEach(g=>t+=(state.collectedGems[g]||0)); mainWin = t>=lvl.target; break; }
     case 'ice':     mainWin = state.iceBroken>=lvl.target; break;
     case 'stone':   mainWin = state.stonesBroken>=lvl.target; break;
@@ -9017,7 +9012,10 @@ function calcStars() {
   // Fallback: прогресс-процент для уровней без starlevel
   let prog=0;
   switch(lvl.type) {
-    case 'score': prog=Math.min(state.score/lvl.target,1); break;
+    case 'score':
+      if (state.score >= lvl.target * 2.0) return 3;
+      if (state.score >= lvl.target * 1.5) return 2;
+      return 1;
     case 'collect': { let t=0; lvl.gems.forEach(g=>t+=(state.collectedGems[g]||0)); prog=Math.min(t/lvl.target,1); break; }
     case 'ice': prog=Math.min(state.iceBroken/lvl.target,1); break;
     case 'stone': prog=Math.min(state.stonesBroken/lvl.target,1); break;
