@@ -6405,7 +6405,7 @@ async function processMatches(hintR, hintC) {
       const cl=state.board[r]?.[c];
       if (cl===null||cl===undefined) { hadEmpty=true; break; }
     }
-    if (hadEmpty) { applyGravity(); fillFromTop(); await animateDrop(); }
+    if (hadEmpty) { applyGravity(); fillFromTop(); await animateDrop(); updateGoalProgress(); updateHUD(); }
   }
   if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
   // Тьма (шоколад) распространяется каждый ход если не была уничтожена в этот ход
@@ -7882,16 +7882,8 @@ async function trySwap(r1,c1,r2,c2) {
   const cl1=state.board[r1][c1], cl2=state.board[r2][c2];
   if (!cl1||!cl2||cl1.stone||cl2.stone||cl1.chocolate||cl2.chocolate||cl1.marmalade||cl2.marmalade||cl1.locked||cl2.locked||cl1.mystery||cl2.mystery||cl1.bottle||cl2.bottle) return;
   haptic('tap');
-  // Ингредиент можно двигать (но не два ингредиента между собой)
-  if (cl1.ingredient && cl2.ingredient) return;
-  if (cl1.ingredient || cl2.ingredient) {
-    state.busy=true;
-    await animateSwap(r1,c1,r2,c2); doSwap(r1,c1,r2,c2);
-    spendMove();
-    applyGravity(); await animateDrop(); fillFromTop(); await animateDrop();
-    await processMatches();
-    state.busy=false; return;
-  }
+  if (cl1.ingredient || cl2.ingredient) return;
+
   // Лёд: замороженная клетка не двигается ни как источник, ни как цель свапа.
   // Матч с ней образуется только когда соседние незамёрзшие создают 3+ в ряд.
   if (state.iceGrid[r1]?.[c1]) { shakeCell(r1,c1); return; }
