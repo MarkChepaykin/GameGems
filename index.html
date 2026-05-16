@@ -10828,34 +10828,62 @@ function _scheduleBackgroundBalance() {
     } catch(e) {}
     return;
   }
-  // Первый запуск: симулируем по одному уровню в idle-время браузера
-  const patches = [];
-  let idx = 0;
-  function processOne() {
-    if (idx >= LEVELS.length) {
-      try { localStorage.setItem(KEY, JSON.stringify(patches)); } catch(e) {}
-      return;
-    }
-    const i = idx++;
-    const lvl = LEVELS[i];
-    const r = simulateLevelObj(lvl, 30);
-    if (r) {
-      const ep = Math.ceil(lvl.level / 16);
-      const minWR = ep <= 2 ? 0.30 : ep <= 5 ? 0.18 : 0.08;
-      const maxWR = ep <= 2 ? 0.90 : ep <= 5 ? 0.88 : 0.82;
-      if (r.winRate < minWR) {
-        if (lvl.type === 'score') { lvl.target = Math.round(lvl.target * 0.82 / 500) * 500; patches.push({i, target: lvl.target}); }
-        else { lvl.moves = Math.min(40, lvl.moves + 2); patches.push({i, moves: lvl.moves}); }
-      } else if (r.winRate > maxWR) {
-        if (lvl.type === 'score') { lvl.target = Math.round(lvl.target * 1.18 / 500) * 500; patches.push({i, target: lvl.target}); }
-        else { lvl.moves = Math.max(20, lvl.moves - 1); patches.push({i, moves: lvl.moves}); }
+  // Первый запуск: переносим симуляцию в Web Worker — не трогает main thread вообще
+  try {
+    const workerSrc = `
+      const ROWS=${ROWS},COLS=${COLS},GEM_TYPES=${GEM_TYPES};
+      ${_simWouldMatch.toString()}
+      ${_simInitBoard.toString()}
+      ${_simFindMatches.toString()}
+      ${_simCanSwap.toString()}
+      ${_simFindAllMoves.toString()}
+      ${_simApplyGravity.toString()}
+      ${_simFillFromTop.toString()}
+      ${_simCheckWin.toString()}
+      ${_simProcessMatches.toString()}
+      ${_simPickBestMove.toString()}
+      ${simulateLevelObj.toString()}
+      self.onmessage = function(e) {
+        const levels = e.data;
+        const patches = [];
+        levels.forEach(function(lvl, i) {
+          const r = simulateLevelObj(lvl, 30);
+          if (!r) return;
+          const ep = Math.ceil(lvl.level / 16);
+          const minWR = ep <= 2 ? 0.30 : ep <= 5 ? 0.18 : 0.08;
+          const maxWR = ep <= 2 ? 0.90 : ep <= 5 ? 0.88 : 0.82;
+          if (r.winRate < minWR) {
+            if (lvl.type === 'score') { lvl.target = Math.round(lvl.target * 0.82 / 500) * 500; patches.push({i, target: lvl.target}); }
+            else { lvl.moves = Math.min(40, lvl.moves + 2); patches.push({i, moves: lvl.moves}); }
+          } else if (r.winRate > maxWR) {
+            if (lvl.type === 'score') { lvl.target = Math.round(lvl.target * 1.18 / 500) * 500; patches.push({i, target: lvl.target}); }
+            else { lvl.moves = Math.max(20, lvl.moves - 1); patches.push({i, moves: lvl.moves}); }
+          }
+        });
+        self.postMessage(patches);
+      };
+    `;
+    const blob = new Blob([workerSrc], {type: 'application/javascript'});
+    const url = URL.createObjectURL(blob);
+    const worker = new Worker(url);
+    worker.onmessage = function(e) {
+      const patches = e.data;
+      for (const {i, moves, target} of patches) {
+        if (LEVELS[i]) {
+          if (moves  != null) LEVELS[i].moves  = moves;
+          if (target != null) LEVELS[i].target = target;
+        }
       }
-    }
-    // requestIdleCallback — только во время простоя браузера; setTimeout как fallback
-    if (window.requestIdleCallback) requestIdleCallback(processOne, {timeout: 500});
-    else setTimeout(processOne, 50);
+      try { localStorage.setItem(KEY, JSON.stringify(patches)); } catch(ex) {}
+      worker.terminate();
+      URL.revokeObjectURL(url);
+    };
+    worker.onerror = function() { worker.terminate(); URL.revokeObjectURL(url); };
+    // Запускаем Worker через 4с — к этому времени игра уже отображена
+    setTimeout(() => worker.postMessage(LEVELS.map(lvl => Object.assign({}, lvl))), 4000);
+  } catch(e) {
+    // Fallback: если Worker недоступен (file://) — пропускаем баланс в этой сессии
   }
-  setTimeout(processOne, 6000); // старт через 6 с — после того как игра полностью инициализирована
 }
 
 // ══════════════════════════════════════════
