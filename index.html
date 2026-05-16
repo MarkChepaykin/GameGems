@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Gem Blast — Match-3</title>
+<link rel="preload" as="audio" href="audio/menu.mp3">
+<link rel="preload" as="audio" href="audio/bgm.mp3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -2178,28 +2180,23 @@ function getBgmAC(){
 }
 // ── MP3-плеер для BGM (factory) ──────────────────────────────────
 function _makeMp3Bgm(src) {
-  let _el = null;
-  function _init() {
-    if (_el) return;
-    _el = new Audio(src);
-    _el.loop = true;
-    _el.preload = 'auto';
-    _el.volume = (state && state.musicVol != null) ? state.musicVol / 100 : 0.8;
-  }
+  const _el = new Audio(src);
+  _el.loop = true;
+  _el.preload = 'auto';
+  _el.volume = 0.8;
   return {
     start() {
-      _init();
+      _el.volume = (state && state.musicVol != null) ? state.musicVol / 100 : 0.8;
       _el.play().catch(() => {});
     },
     stop() {
-      if (!_el) return;
       _el.pause();
       _el.currentTime = 0;
     },
     set(on) { on ? this.start() : this.stop(); },
-    isPlaying() { return !!_el && !_el.paused; },
-    _setVol(v) { if (_el) _el.volume = Math.max(0, Math.min(1, v)); },
-    getEl() { _init(); return _el; },
+    isPlaying() { return !_el.paused; },
+    _setVol(v) { _el.volume = Math.max(0, Math.min(1, v)); },
+    getEl() { return _el; },
   };
 }
 
