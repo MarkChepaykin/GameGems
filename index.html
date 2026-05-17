@@ -6729,7 +6729,7 @@ async function processMatches(hintR, hintC) {
 
   if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
   state.comboCount=0; state.matchSoundLvl=0; state.matchSequenceStep=0; stopOnFire();
-  if (_cascadeWon) { if (!state._inBonusExplosion) { state.busy=false; setTimeout(showWin, 600); } return; }
+  if (_cascadeWon) { if (!state._inBonusExplosion) { state.busy=false; const _ep=_myEpoch; setTimeout(()=>{ if (_matchEpoch===_ep) showWin(); }, 600); } return; }
   // Финальный sweep — гарантируем отсутствие пустых клеток (баг с дырками после бонусов)
   { let hadEmpty=false;
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
@@ -9672,7 +9672,8 @@ function showWin() {
   state.movesAtWin = state.moves;
   if (state.moves === 0) showExclamation('closecall'); // победа на последнем ходу
   if (state.moves > 0) {
-    bonusMovesExplosion().then(()=>_doShowWin());
+    const _winEpoch = _matchEpoch;
+    bonusMovesExplosion().then(()=>{ if (_matchEpoch === _winEpoch) _doShowWin(); });
     return;
   }
   _doShowWin();
@@ -11767,7 +11768,9 @@ function initDevPanel() {
         <button onclick="devSpawnZone(4)" style="${devBtnStyle('#065f46')}" title="Ракета">🎆</button>
         <button onclick="devSpawnZone(5)" style="${devBtnStyle('#1e3a5f')}" title="Радуга">🌈</button>
         <button onclick="devSpawnZone(6)" style="${devBtnStyle('#064e3b')}" title="Красящий">🎨</button>
-        <button onclick="devSpawnZone(7)" style="${devBtnStyle('#4a1d96')}" title="Комбо (бомба+молния)">🎁⚡</button>
+        <button onclick="devSpawnZone(7)" style="${devBtnStyle('#9d174d')}" title="Str+Bomb комбо">⚡🎁</button>
+        <button onclick="devSpawnZone(8)" style="${devBtnStyle('#4a1d96')}" title="Rain+Mega комбо">🌈💥</button>
+        <button onclick="TEST_ZONES.forEach((_,i)=>devSpawnZone(i))" style="${devBtnStyle('#14532d')};width:100%;margin-top:2px;">♻️ Все зоны</button>
       </div>
       <div style="margin-top:4px;margin-bottom:3px;font-size:10px;color:#64748b;">⏩ Скорость анимации: <span id="dev-speed-val">1×</span></div>
       <input type="range" min="0.1" max="5" step="0.1" value="1"
@@ -11852,36 +11855,52 @@ function devBtnStyle(bg) {
   return `background:${bg};color:#fff;border:none;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:11px;`;
 }
 
-// ── Тестовый уровень: зоны для каждого бонуса ─────────────────────────────
-// Колонка 0=⚡H 1=⚡V 2=🎁Бомба 3=💥Мега 4=🎆Ракета 5=🌈Радуга 6=🎨Красящий 7=🎁+⚡(комбо)
-const TEST_ZONE_SPECIALS = [
-  SPECIAL.STRIPE_H, SPECIAL.STRIPE_V, SPECIAL.BOMB, SPECIAL.MEGA,
-  SPECIAL.ROCKET, SPECIAL.RAINBOW, SPECIAL.COLORING, SPECIAL.BOMB,
+// ── Тестовый уровень: островки 3×3 на сетке 11×11 ────────────────────────
+// 3×3 зоны разделены hole-стенками col 3, col 7, row 3, row 7
+const TEST_ZONES = [
+  { gr:0, gc:0, label:'⚡H',        sp: SPECIAL.STRIPE_H },
+  { gr:0, gc:1, label:'⚡V',        sp: SPECIAL.STRIPE_V },
+  { gr:0, gc:2, label:'Бомба',      sp: SPECIAL.BOMB },
+  { gr:1, gc:0, label:'Мега',       sp: SPECIAL.MEGA },
+  { gr:1, gc:1, label:'Ракета',     sp: SPECIAL.ROCKET },
+  { gr:1, gc:2, label:'Радуга',     sp: SPECIAL.RAINBOW },
+  { gr:2, gc:0, label:'Красящий',   sp: SPECIAL.COLORING },
+  { gr:2, gc:1, label:'Str+Bomb',   sp: [SPECIAL.STRIPE_H, SPECIAL.BOMB] },
+  { gr:2, gc:2, label:'Rain+Mega',  sp: [SPECIAL.RAINBOW, SPECIAL.MEGA] },
 ];
-const TEST_ZONE_LABELS = ['⚡H','⚡V','🎁','💥','🎆','🌈','🎨','🎁+⚡'];
 
-function _fillTestColumn(board, col) {
-  for (let r = ROWS - 1; r >= 0; r--) {
-    let type;
-    do { type = Math.floor(Math.random() * 5); }
-    while (r >= 2 && board[r-1][col]?.type === type && board[r-2][col]?.type === type);
-    board[r][col] = createGem(type);
+function _fillTestZone(board, zoneIdx) {
+  const z = TEST_ZONES[zoneIdx]; if (!z) return;
+  const r0 = z.gr * 4, c0 = z.gc * 4;
+  for (let r = r0; r < r0 + 3; r++) {
+    for (let c = c0; c < c0 + 3; c++) {
+      let type;
+      do { type = Math.floor(Math.random() * 5); }
+      while (
+        (r > r0+1 && board[r-1]?.[c]?.type === type && board[r-2]?.[c]?.type === type) ||
+        (c > c0+1 && board[r]?.[c-1]?.type === type && board[r]?.[c-2]?.type === type)
+      );
+      board[r][c] = createGem(type);
+    }
   }
-  // Спецфишка зоны в ряд 0
-  const sp = TEST_ZONE_SPECIALS[col] ?? SPECIAL.BOMB;
-  board[0][col] = createGem(col % 5);
-  board[0][col].special = sp;
-  if (sp === SPECIAL.RAINBOW) board[0][col].type = -1;
-  // Для комбо-зоны (col 7): вторая спецфишка в ряду 1 — STRIPE_H рядом с BOMB
-  if (col === 7 && ROWS > 1) {
-    board[1][col] = createGem(1);
-    board[1][col].special = SPECIAL.STRIPE_H;
+  const sp = z.sp;
+  if (Array.isArray(sp)) {
+    board[r0+1][c0+1] = createGem(0); board[r0+1][c0+1].special = sp[0];
+    if (sp[0] === SPECIAL.RAINBOW) board[r0+1][c0+1].type = -1;
+    board[r0+1][c0+2] = createGem(1); board[r0+1][c0+2].special = sp[1];
+    if (sp[1] === SPECIAL.RAINBOW) board[r0+1][c0+2].type = -1;
+  } else {
+    board[r0+1][c0+1] = createGem(zoneIdx % 5);
+    board[r0+1][c0+1].special = sp;
+    if (sp === SPECIAL.RAINBOW) board[r0+1][c0+1].type = -1;
   }
 }
 
 function startTestLevel() {
+  COLS = 11; ROWS = 11;
   const fakeLevel = { level:999, type:'score', target:999999999, moves:999, gems:[], iceCount:0,
     stoneCount:0, jellyCount:0, gemTypes:5, holes:[], chocolateCount:0 };
+  _levelCache.set(999, fakeLevel);
   state.currentLevel = 999;
   state._firstAttemptLevel = -1;
   state.moves = 999; state.score = 0;
@@ -11890,48 +11909,40 @@ function startTestLevel() {
   state.adMovesUsed = false; state.extraMovesUsed = false;
   state.ingredientsDelivered = 0; state.chocolateInitial = 0;
   state.sodaLevel = 0; state.bottlesBroken = 0; state._winShowing = false; state._inBonusExplosion = false;
-  state.lastSwap = null; state.undoUsedThisLevel = false;
+  state.lastSwap = null; state.undoUsedThisLevel = false; state.bearsFreed = 0;
   state.buffPieces = 0; state.buffNukeReady = false; state.buffNukeActive = false;
   state.supersonicActive = false; state.supersonicMovesLeft = 0;
   _activeGemTypes = 5;
+  _matchEpoch++;
+
   state.holes = new Set();
+  for (let r = 0; r < ROWS; r++) { state.holes.add(`${r},3`); state.holes.add(`${r},7`); }
+  for (let c = 0; c < COLS; c++) { state.holes.add(`3,${c}`); state.holes.add(`7,${c}`); }
+
   state.jellyGrid  = Array.from({length:ROWS},()=>new Array(COLS).fill(0));
   state.carpetGrid = Array.from({length:ROWS},()=>new Array(COLS).fill(false));
   state.carpetTotal = 0;
   state.iceGrid    = Array.from({length:ROWS},()=>new Array(COLS).fill(0));
-  state.jellyTotal = 0; state.carpetTotal = 0;
+  state.jellyTotal = 0;
   state._testLevel = true;
 
-  // Базовое заполнение без матчей
-  const board = [];
-  for (let r=0;r<ROWS;r++) {
-    board[r]=[];
-    for (let c=0;c<COLS;c++) {
-      let type; do { type=Math.floor(Math.random()*5); } while (r>0 && (
-        (board[r-1][c]?.type===type && (r<2||board[r-2][c]?.type===type)) ||
-        (c>1 && board[r][c-1]?.type===type && board[r][c-2]?.type===type)
-      ));
-      board[r][c] = createGem(type);
-    }
-  }
-
-  // Расставляем спецфишки зон — каждая колонка независима
-  for (let c = 0; c < COLS; c++) _fillTestColumn(board, c);
+  const board = Array.from({length:ROWS}, (_,r) =>
+    Array.from({length:COLS}, (_,c) => state.holes.has(`${r},${c}`) ? null : createGem(0))
+  );
+  TEST_ZONES.forEach((_, i) => _fillTestZone(board, i));
 
   state.board = board;
   state.busy = false; state.paused = false;
   showScreen('game'); resizeCanvas(); updateHUD(); updateGoalProgress();
   drawBoard();
-  showToast('🧪 Тест: каждая колонка — зона бонуса. Спавнеры в dev-панели.');
+  showToast('🧪 Тест: 9 островков — каждый бонус отдельно');
 }
 
-function devSpawnZone(col) {
-  if (!state.board || state.currentLevel !== 999) {
-    showToast('Только в тест-уровне'); return;
-  }
-  _fillTestColumn(state.board, col);
+function devSpawnZone(zoneIdx) {
+  if (!state.board || state.currentLevel !== 999) { showToast('Только в тест-уровне'); return; }
+  _fillTestZone(state.board, zoneIdx);
   drawBoard();
-  showToast(`${TEST_ZONE_LABELS[col] ?? col} — зона обновлена`);
+  showToast(`${TEST_ZONES[zoneIdx]?.label ?? zoneIdx} — обновлена`);
 }
 
 async function devTestAllSounds() {
