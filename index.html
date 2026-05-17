@@ -3223,6 +3223,155 @@ const T = {
 };
 function t(k) { return (T[state.lang]||T.ru)[k]||k; }
 
+// Словарь для пословного перевода названий эпизодов (en→ru)
+const EP_NAME_RU = {
+  // Камни/минералы — прилагательные
+  Crystal:'Кристальный', Ruby:'Рубиновый', Sapphire:'Сапфировый',
+  Diamond:'Алмазный', Emerald:'Изумрудный', Amethyst:'Аметистовый',
+  Topaz:'Топазовый', Opal:'Опаловый', Garnet:'Гранатовый', Jade:'Нефритовый',
+  Citrine:'Цитриновый', Obsidian:'Обсидиановый', Turquoise:'Бирюзовый',
+  Onyx:'Ониксовый', Aquamarine:'Аквамариновый', Lapis:'Лазурный',
+  Pearl:'Жемчужный', Moonstone:'Лунный камень', Sunstone:'Солнечный камень',
+  Prism:'Призматический', Alexandrite:'Александритовый', Zircon:'Цирконовый',
+  Tanzanite:'Танзанитовый', Tourmaline:'Турмалиновый', Spinel:'Шпинелевый',
+  Rhodonite:'Родонитовый', Malachite:'Малахитовый', Chrysocolla:'Хризоколловый',
+  Labradorite:'Лабрадоритовый', Peridot:'Перидотовый', Iolite:'Иолитовый',
+  Kunzite:'Кунцитовый', Sphalerite:'Сфалеритовый', Fluorite:'Флюоритовый',
+  Calcite:'Кальцитовый', Halite:'Галитовый', Pyrite:'Пиритовый',
+  Magnetite:'Магнетитовый', Hematite:'Гематитовый', Galena:'Галенитовый',
+  Cinnabar:'Киноварный', Azurite:'Азуритовый', Atacamite:'Атакамитовый',
+  Vivianite:'Вивианитовый', Dioptase:'Диоптазовый', Cuprite:'Купритовый',
+  Quartz:'Кварцевый',
+  // Географические названия
+  Cavern:'Пещера', Ridge:'Хребет', Shore:'Берег', Shores:'Берега',
+  Peak:'Вершина', Peaks:'Вершины', Valley:'Долина', Grotto:'Грот',
+  Tower:'Башня', Ocean:'Океан', Grove:'Роща', Jungle:'Джунгли',
+  Cliffs:'Утёсы', Fortress:'Крепость', Tundra:'Тундра', Outpost:'Форпост',
+  Abyss:'Бездна', Lagoon:'Лагуна', Plains:'Равнины', Mountain:'Гора',
+  Summit:'Вершина', Ravine:'Ущелье', Springs:'Источники', Shoals:'Отмели',
+  Depths:'Глубины', Basin:'Котловина', Glen:'Лощина', Landing:'Причал',
+  Canyon:'Каньон', Garden:'Сад', Junction:'Развилка', Falls:'Водопад',
+  Reef:'Риф', Atoll:'Атолл', Lake:'Озеро', Bay:'Залив', Isle:'Остров',
+  Harbor:'Гавань', Marsh:'Болото', Oasis:'Оазис', Mesa:'Меса',
+  Delta:'Дельта', Vale:'Долина', Pass:'Перевал', Steppes:'Степи',
+  Savanna:'Саванна', Trail:'Тропа', Gorge:'Ущелье', Cove:'Бухта',
+  Domain:'Владения', Wilderness:'Дикоземье', Realm:'Царство',
+  Dungeon:'Подземелье', Keep:'Крепость', Crossing:'Переправа',
+  Crossroads:'Перекрёсток', Tunnel:'Туннель', Shaft:'Шахта', Mine:'Шахта',
+  Zone:'Зона', Territory:'Территория', Expanse:'Просторы', Vault:'Хранилище',
+  Gate:'Врата', Gateway:'Врата', Sanctuary:'Убежище', Sanctum:'Святилище',
+  Arena:'Арена', Alcove:'Ниша', Arch:'Арка', Arches:'Арки', Echo:'Эхо',
+  Nexus:'Узел', Cascade:'Каскад', Chamber:'Чертог', Watchtower:'Дозорная башня',
+  Tides:'Приливы', Compass:'Компас', Ascent:'Подъём', Uplands:'Нагорья',
+  Quarry:'Карьер', Spire:'Шпиль', Heights:'Высоты', Spiral:'Спираль',
+  // Строения
+  Temple:'Храм', Citadel:'Цитадель', Kingdom:'Королевство', Ruins:'Руины',
+  Ruin:'Руины', Tomb:'Гробница', Crypt:'Крипта', Labyrinth:'Лабиринт',
+  Maze:'Лабиринт', Prison:'Тюрьма', Throne:'Трон', Palace:'Дворец',
+  Castle:'Замок', Archive:'Архив', Laboratory:'Лаборатория',
+  Workshop:'Мастерская', Foundry:'Литейня', Forge:'Кузница', Smithy:'Кузница',
+  Kiln:'Горн', Furnace:'Горн',
+  // Погода/природа
+  Lightning:'Молния', Thunder:'Гром', Storm:'Шторм', Tempest:'Буря',
+  Tornado:'Торнадо', Hurricane:'Ураган', Cyclone:'Циклон',
+  Frostfire:'Ледяной огонь', Sunfire:'Солнечный огонь', Moonfire:'Лунный огонь',
+  Volcanic:'Вулканический', Aurora:'Аврора', Twilight:'Сумерки',
+  Starfall:'Звездопад', Windswept:'Ветреный', Blazing:'Пылающий',
+  Frozen:'Ледяной', Breeze:'Бриз', Gale:'Шквал', Mist:'Туман', Fog:'Туман',
+  Haze:'Дымка', Wave:'Волна', Eddy:'Водоворот', Swirl:'Вихрь', Surge:'Волна',
+  Tidal:'Приливный', Current:'Течение', Cloud:'Облако', Whirlwind:'Вихрь',
+  // Космос
+  Solar:'Солнечный', Lunar:'Лунный', Cosmic:'Космический', Celestial:'Небесный',
+  Astral:'Астральный', Nebula:'Туманность', Galaxy:'Галактика', Comet:'Комета',
+  Meteor:'Метеор', Stardust:'Звёздная пыль', Starlight:'Звёздный свет',
+  Nova:'Нова', Pulsar:'Пульсар', Quasar:'Квазар', Universe:'Вселенная',
+  Multiverse:'Мультивселенная', Cosmos:'Космос', Void:'Пустота', Vortex:'Вихрь',
+  Rift:'Разлом', Portal:'Портал', Dimension:'Измерение', Parallel:'Параллельный',
+  Alternate:'Альтернативный', Drift:'Дрейф',
+  // Магия
+  Mystic:'Мистический', Magic:'Магический', Arcane:'Тайный',
+  Enchanted:'Зачарованный', Runic:'Рунический', Sacred:'Священный',
+  Ancient:'Древний', Forgotten:'Забытый', Lost:'Потерянный', Rune:'Руна',
+  Glyph:'Глиф', Sigil:'Сигил', Omen:'Знамение', Prophecy:'Пророчество',
+  Oracle:'Оракул', Vision:'Видение', Dream:'Мечта', Nightmare:'Кошмар',
+  Phantom:'Фантом', Specter:'Призрак', Spirit:'Дух', Ghost:'Призрак',
+  Soul:'Душа', Essence:'Суть', Aura:'Аура', Mana:'Мана', Charm:'Чары',
+  Curse:'Проклятие', Hex:'Гекс', Jinx:'Сглаз', Ward:'Оберег',
+  Spell:'Заклинание', Spellbook:'Книга заклинаний', Grimoire:'Гримуар',
+  Tome:'Фолиант', Scroll:'Свиток', Codex:'Кодекс', Cipher:'Шифр',
+  Riddle:'Загадка', Mystery:'Тайна', Enigma:'Загадка', Illusion:'Иллюзия',
+  Mirage:'Мираж', Mirror:'Зеркало', Reflection:'Отражение',
+  // Свет/цвет
+  Rainbow:'Радужный', Radiant:'Сияющий', Shimmering:'Мерцающий',
+  Sparkling:'Искристый', Gleaming:'Сверкающий', Lustrous:'Лучистый',
+  Brilliant:'Блистательный', Dazzling:'Ослепительный', Neon:'Неоновый',
+  Golden:'Золотой', Silver:'Серебряный', Ivory:'Слоновая кость',
+  Crimson:'Алый', Scarlet:'Пурпурный', Violet:'Фиолетовый', Teal:'Бирюзовый',
+  Azure:'Лазурный', Amber:'Янтарный', Dark:'Тёмный', Shadow:'Тень',
+  Light:'Свет', Electric:'Электрический', Spectrum:'Спектр',
+  Refraction:'Преломление', Diffraction:'Дифракция', Convergence:'Схождение',
+  Frequency:'Частота', Resonance:'Резонанс', Harmonic:'Гармонический',
+  Pulse:'Пульс',
+  // Описательные прилагательные
+  Hidden:'Скрытый', Secret:'Тайный', Concealed:'Скрытый', Shrouded:'Укутанный',
+  Veiled:'Завуалированный', Obscured:'Скрытый', Covert:'Тайный',
+  Eternal:'Вечный', Timeless:'Вечный', Ageless:'Вечный', Boundless:'Бескрайний',
+  Infinite:'Бесконечный', Primordial:'Первозданный', Submerged:'Затопленный',
+  Flooded:'Затопленный', Inundated:'Затопленный', Sunken:'Затопленный',
+  Drowned:'Потопленный', Underground:'Подземный', Subterranean:'Подземный',
+  Bone:'Костяной', Decay:'Разложение',
+  // Существа/мифология
+  Dragon:'Дракон', Phoenix:'Феникс', Griffin:'Грифон', Unicorn:'Единорог',
+  Chimera:'Химера', Wyvern:'Виверна', Drake:'Дрейк', Serpent:'Змей',
+  Basilisk:'Василиск', Hydra:'Гидра', Kraken:'Кракен', Leviathan:'Левиафан',
+  Behemoth:'Бехемот', Titan:'Титан', Colossus:'Колосс', Giant:'Великан',
+  Cyclops:'Циклоп', Minotaur:'Минотавр', Sphinx:'Сфинкс', Gorgon:'Горгона',
+  Harpy:'Гарпия', Siren:'Сирена', Nymph:'Нимфа', Faery:'Фея', Pixie:'Пикси',
+  Sprite:'Дух', Wisp:'Огонёк', Wraith:'Призрак', Revenant:'Ревенант', Lich:'Лич',
+  // Персонажи
+  Hero:'Герой', Knight:'Рыцарь', Paladin:'Паладин', Ranger:'Следопыт',
+  Rogue:'Плут', Mage:'Маг', Wizard:'Волшебник', Sorcerer:'Чародей',
+  Warlock:'Чернокнижник', Witch:'Ведьма', Shaman:'Шаман', Sage:'Мудрец',
+  Scholar:'Учёный', Druid:'Друид', Champion:'Чемпион', Warrior:'Воин',
+  Wanderer:'Странник', Nomad:'Кочевник', Explorer:'Исследователь',
+  Adventurer:'Искатель', Pioneer:'Первопроходец', Trailblazer:'Первопроходец',
+  Pathfinder:'Следопыт', Navigator:'Навигатор', Voyager:'Мореплаватель',
+  Traveller:'Путешественник', Journeyer:'Странник', Pilgrim:'Паломник',
+  Scout:'Разведчик', Hunter:'Охотник', Stalker:'Сталкер', Seeker:'Искатель',
+  Quester:'Искатель', Roamer:'Бродяга', Drifter:'Дрейфующий',
+  // Материалы
+  Iron:'Железный', Steel:'Стальной', Bronze:'Бронзовый', Copper:'Медный',
+  Mithril:'Митрильный', Adamantine:'Адамантиновый', Orichalcum:'Орихалковый',
+  Goldwork:'Золотых дел', Silverwork:'Серебряных дел', Gemwork:'Ювелирный',
+  // Составные слова
+  Gemfield:'Самоцветное поле', Gemstone:'Самоцвет', Gem:'Самоцвет',
+  Jewel:'Самоцвет', Shard:'Осколок', Facet:'Грань', Orb:'Сфера',
+  Scepter:'Скипетр', Crown:'Корона', Wand:'Жезл', Staff:'Посох',
+  Relic:'Реликвия', Artefact:'Артефакт', Elixir:'Эликсир', Brew:'Варево',
+  Cauldron:'Котёл', Crucible:'Тигль', Anvil:'Наковальня', Bellows:'Мехи',
+  Tongs:'Клещи', Smelter:'Плавильня', Alchemy:'Алхимия', Genesis:'Начало',
+  Origin:'Исток', Creation:'Создание', Horizon:'Горизонт', Zenith:'Зенит',
+  Apex:'Апекс', Stronghold:'Твердыня', Bastion:'Бастион', Rampart:'Вал',
+  Battlement:'Зубцы', Parapet:'Парапет', Barrier:'Барьер', Shield:'Щит',
+  Sentinel:'Страж', Watcher:'Наблюдатель', Guardian:'Хранитель',
+  Keeper:'Хранитель', Protector:'Защитник',
+  // Слова с кузнечным суффиксом -forged
+  Starforged:'Звёздной ковки', Moonforged:'Лунной ковки',
+  Sunforged:'Солнечной ковки', Stormforged:'Грозовой ковки',
+  Soulforged:'Душевной ковки', Heartforged:'Сердечной ковки',
+  Mindforged:'Разумной ковки', Dreamforged:'Мечтательной ковки',
+  Visionforged:'Провиденческой ковки', Crystalforged:'Кристальной ковки',
+};
+
+// Возвращает локализованное название эпизода (для ru — пословный перевод)
+function getEpName(ep) {
+  if (state.lang !== 'ru') return ep.name;
+  return ep.name.split(' ').map(w => {
+    const clean = w.replace(/['s]+$/, ''); // убираем 's (Dragon's → Dragon)
+    return EP_NAME_RU[clean] || w;
+  }).join(' ');
+}
+
 // Применяет язык ко всем элементам с data-i18n
 function applyLang() {
   const L = T[state.lang] || T.ru;
@@ -4254,7 +4403,7 @@ function showLevels() {
 
     card.innerHTML =
       `<div class="ep-num">#${ep.id}</div>` +
-      `<div class="ep-name">${ep.name}</div>` +
+      `<div class="ep-name">${getEpName(ep)}</div>` +
       `<div class="ep-types">${typeIcons}</div>` +
       `<div class="ep-stars">${played.length}/${epLvls.length} ⭐</div>`;
 
@@ -4275,7 +4424,7 @@ function showEpisode(epId) {
   if (!ep) { showToast('⏳ Загружаем...'); return; }
 
   showScreen('episode');
-  document.getElementById('ep-title').textContent = ep.name;
+  document.getElementById('ep-title').textContent = getEpName(ep);
 
   const grid = document.getElementById('episode-level-grid');
   grid.innerHTML = '';
@@ -6350,6 +6499,15 @@ function fillFromTop() {
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) { if (state.iceGrid[r][c]) iceOnBoard++; }
     iceNeeded=Math.max(0, lvl.target-state.iceBroken-iceOnBoard);
   }
+  // Bears: how many new honey cells need to spawn so the player can still win
+  let honeyNeeded=0;
+  if (lvl?.type==='bears') {
+    const bt=lvl.bearsTarget||lvl.honeyCount||1;
+    const bearsStillNeeded=bt-(state.bearsFreed||0);
+    let honeyOnBoard=0;
+    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) { if (state.board[r]?.[c]?.honey>0) honeyOnBoard++; }
+    honeyNeeded=Math.max(0, bearsStillNeeded-honeyOnBoard);
+  }
   const newGemPositions=[];
   const sodaLevel = state.sodaLevel || 0;
   const sodaStart = ROWS - sodaLevel;
@@ -6367,8 +6525,10 @@ function fillFromTop() {
         let _ft = randGem();
         for (let _fa=0; _fa<_activeGemTypes && wouldMatch(state.board,r,c,_ft); _fa++) _ft=(_ft+1)%_activeGemTypes;
         const g=createGem(_ft); g.anim={oy:-emptyCount*cellSize,alpha:1};
+        // Bears: spawn honey cell if we still need more bears freed
+        if (honeyNeeded>0) { g.honey=2; g.special=SPECIAL.NONE; honeyNeeded--; }
         // Rainbow Round — 30% chance to spawn RAINBOW gem
-        if (state.rainbowRound?.active && Math.random()<0.30) { g.special=SPECIAL.RAINBOW; g.type=-1; }
+        else if (state.rainbowRound?.active && Math.random()<0.30) { g.special=SPECIAL.RAINBOW; g.type=-1; }
         // Dynamic difficulty — bonus specials when player is struggling
         else if (_currentDynDiff < 1.0 && Math.random() < 0.08) {
           if (_currentSpecialWeights) {
