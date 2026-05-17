@@ -4954,6 +4954,194 @@ function resizeCanvas() {
 }
 
 // ══════════════════════════════════════════
+//  БИОМЫ — фоновые ландшафты по главам
+// ══════════════════════════════════════════
+function getBiome(level) {
+  const B=[
+    {f:1,  t:15, id:'meadow'},   {f:16, t:30, id:'forest'},
+    {f:31, t:45, id:'desert'},   {f:46, t:60, id:'clay'},
+    {f:61, t:75, id:'roots'},    {f:76, t:90, id:'river'},
+    {f:91, t:105,id:'limestone'},{f:106,t:120,id:'malachite'},
+    {f:121,t:140,id:'amethyst'}, {f:141,t:160,id:'quartz'},
+    {f:161,t:180,id:'gold_vein'},{f:181,t:200,id:'ruby_mine'},
+    {f:201,t:220,id:'lava_tubes'},{f:221,t:240,id:'obsidian'},
+    {f:241,t:260,id:'ice_cave'}, {f:261,t:280,id:'ruins'},
+    {f:281,t:300,id:'vault'},    {f:301,t:320,id:'magma_sea'},
+    {f:321,t:340,id:'diamond'},  {f:341,t:360,id:'titanium'},
+    {f:361,t:999,id:'earthcore'},
+  ];
+  return B.find(b=>level>=b.f&&level<=b.t)?.id||'meadow';
+}
+
+const BIOME_CONFIG = {
+  meadow:    {top:'#1a2a0a',bot:'#0d1a06',boardBg:'rgba(15,25,8,0.72)',   cellA:'rgba(80,120,40,0.18)', cellB:'rgba(255,255,255,0.07)'},
+  forest:    {top:'#0d1f0a',bot:'#081508',boardBg:'rgba(8,20,6,0.75)',    cellA:'rgba(40,100,20,0.18)', cellB:'rgba(255,255,255,0.07)'},
+  desert:    {top:'#2a1a06',bot:'#1a0e04',boardBg:'rgba(30,18,6,0.72)',   cellA:'rgba(180,120,40,0.16)',cellB:'rgba(255,255,255,0.07)'},
+  clay:      {top:'#1e0e06',bot:'#120804',boardBg:'rgba(22,12,5,0.72)',   cellA:'rgba(140,70,30,0.18)', cellB:'rgba(255,255,255,0.07)'},
+  roots:     {top:'#150c05',bot:'#0c0803',boardBg:'rgba(18,10,4,0.75)',   cellA:'rgba(100,55,20,0.18)', cellB:'rgba(255,255,255,0.07)'},
+  river:     {top:'#081520',bot:'#040e16',boardBg:'rgba(6,14,22,0.75)',   cellA:'rgba(30,80,140,0.18)', cellB:'rgba(255,255,255,0.07)'},
+  limestone: {top:'#181818',bot:'#0e0e0e',boardBg:'rgba(18,18,18,0.75)', cellA:'rgba(140,140,120,0.16)',cellB:'rgba(255,255,255,0.07)'},
+  malachite: {top:'#0a1e10',bot:'#061208',boardBg:'rgba(8,18,10,0.75)',  cellA:'rgba(30,120,60,0.18)', cellB:'rgba(255,255,255,0.07)'},
+  amethyst:  {top:'#160d22',bot:'#0e0816',boardBg:'rgba(18,10,28,0.75)', cellA:'rgba(100,40,160,0.20)',cellB:'rgba(255,255,255,0.07)'},
+  quartz:    {top:'#1a1a2a',bot:'#101018',boardBg:'rgba(18,18,28,0.75)', cellA:'rgba(120,120,200,0.18)',cellB:'rgba(255,255,255,0.07)'},
+  gold_vein: {top:'#1e1600',bot:'#140f00',boardBg:'rgba(22,16,2,0.75)',  cellA:'rgba(180,140,20,0.20)',cellB:'rgba(255,255,255,0.07)'},
+  ruby_mine: {top:'#200808',bot:'#150404',boardBg:'rgba(22,8,8,0.75)',   cellA:'rgba(160,30,30,0.20)', cellB:'rgba(255,255,255,0.07)'},
+  lava_tubes:{top:'#1e0a00',bot:'#120600',boardBg:'rgba(20,6,0,0.80)',   cellA:'rgba(180,60,10,0.22)', cellB:'rgba(255,255,255,0.07)'},
+  obsidian:  {top:'#080808',bot:'#040404',boardBg:'rgba(6,6,8,0.85)',    cellA:'rgba(60,30,90,0.22)',  cellB:'rgba(255,255,255,0.07)'},
+  ice_cave:  {top:'#0a1820',bot:'#060e16',boardBg:'rgba(8,16,24,0.75)',  cellA:'rgba(80,160,200,0.18)',cellB:'rgba(255,255,255,0.07)'},
+  ruins:     {top:'#121008',bot:'#0c0a04',boardBg:'rgba(14,12,6,0.78)',  cellA:'rgba(100,90,50,0.18)', cellB:'rgba(255,255,255,0.07)'},
+  vault:     {top:'#0c0c0c',bot:'#080808',boardBg:'rgba(10,10,12,0.85)', cellA:'rgba(80,80,100,0.20)', cellB:'rgba(255,255,255,0.07)'},
+  magma_sea: {top:'#200800',bot:'#180400',boardBg:'rgba(22,4,0,0.85)',   cellA:'rgba(200,60,10,0.25)', cellB:'rgba(255,255,255,0.07)'},
+  diamond:   {top:'#080e18',bot:'#040a10',boardBg:'rgba(6,10,20,0.80)',  cellA:'rgba(100,180,220,0.20)',cellB:'rgba(255,255,255,0.07)'},
+  titanium:  {top:'#101010',bot:'#080808',boardBg:'rgba(10,10,12,0.85)', cellA:'rgba(120,130,140,0.20)',cellB:'rgba(255,255,255,0.07)'},
+  earthcore: {top:'#1a0400',bot:'#120200',boardBg:'rgba(18,2,0,0.90)',   cellA:'rgba(220,80,20,0.28)', cellB:'rgba(255,255,255,0.07)'},
+};
+
+function drawBiomeBG(biome, cfg) {
+  const W=canvasLogW, H=canvasLogH;
+  const grd=ctx.createLinearGradient(0,0,0,H);
+  grd.addColorStop(0,cfg.top); grd.addColorStop(1,cfg.bot);
+  ctx.save();
+  ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
+  ctx.restore();
+  if      (biome==='meadow'||biome==='forest')                             _biomeMeadow(cfg,biome);
+  else if (biome==='amethyst'||biome==='quartz')                           _biomeAmethyst(cfg);
+  else if (biome==='lava_tubes'||biome==='magma_sea'||biome==='earthcore') _biomeLava(cfg);
+  else if (biome==='gold_vein')                                            _biomeGold(cfg);
+  else if (biome==='ice_cave')                                             _biomeIce(cfg);
+  else if (biome==='obsidian'||biome==='vault')                            _biomeObsidian(cfg);
+}
+
+function _biomeMeadow(cfg, biome) {
+  const W=canvasLogW, H=canvasLogH, t=Date.now()/1000;
+  ctx.save();
+  const cloudColor = biome==='forest' ? 'rgba(40,80,20,0.12)' : 'rgba(255,255,255,0.10)';
+  ctx.fillStyle = cloudColor;
+  for (let i=0;i<4;i++) {
+    const cx = (W*0.15 + W*0.22*i + t*12*(i%2===0?1:-0.6))%(W+120)-60;
+    const cy = H*0.08 + H*0.04*Math.sin(t*0.4+i);
+    const r  = W*0.07+W*0.03*i;
+    ctx.beginPath(); ctx.ellipse(cx,cy,r,r*0.4,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+r*0.5,cy+r*0.1,r*0.65,r*0.35,0,0,Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle = biome==='forest' ? 'rgba(20,80,10,0.30)' : 'rgba(60,120,20,0.25)';
+  ctx.fillRect(0, H*0.88, W, H*0.12);
+  ctx.restore();
+}
+
+function _biomeAmethyst(cfg) {
+  const W=canvasLogW, H=canvasLogH, t=Date.now()/1000;
+  ctx.save();
+  const color='rgba(140,60,200,0.55)', hilight='rgba(200,140,255,0.55)', n=10;
+  for (let i=0;i<n;i++) {
+    const x=W*(i+0.5)/n + Math.sin(t*0.3+i)*4;
+    const h=H*(0.08+0.06*((i*7)%5/5));
+    const w=W*0.04;
+    ctx.fillStyle=color;
+    ctx.beginPath(); ctx.moveTo(x-w,0); ctx.lineTo(x+w,0); ctx.lineTo(x,h); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=hilight;
+    ctx.beginPath(); ctx.moveTo(x-w*0.3,0); ctx.lineTo(x,h*0.6); ctx.lineTo(x+w*0.1,0); ctx.closePath(); ctx.fill();
+  }
+  for (let i=0;i<n-1;i++) {
+    const x=W*(i+1)/n, h=H*(0.06+0.04*((i*5)%4/4)), w=W*0.035;
+    ctx.fillStyle=color;
+    ctx.beginPath(); ctx.moveTo(x-w,H); ctx.lineTo(x+w,H); ctx.lineTo(x,H-h); ctx.closePath(); ctx.fill();
+  }
+  const grd=ctx.createRadialGradient(W/2,H,0,W/2,H,H*0.5);
+  grd.addColorStop(0,'rgba(120,40,180,0.18)'); grd.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
+  ctx.restore();
+}
+
+function _biomeLava(cfg) {
+  const W=canvasLogW, H=canvasLogH, t=Date.now()/1000;
+  ctx.save();
+  const lh=H*0.22;
+  const grd=ctx.createLinearGradient(0,H-lh,0,H);
+  grd.addColorStop(0,'rgba(200,60,0,0.0)');
+  grd.addColorStop(0.4,'rgba(200,60,0,0.55)');
+  grd.addColorStop(1,'rgba(255,120,0,0.80)');
+  ctx.fillStyle=grd; ctx.fillRect(0,H-lh,W,lh);
+  for (let i=0;i<5;i++) {
+    const bx=W*(0.1+0.18*i)+Math.sin(t*0.5+i*2.1)*W*0.04;
+    const phase=(t*0.25+i*0.37)%1;
+    const by=H-(phase*lh*0.9), br=W*0.014*(0.6+phase*0.4);
+    ctx.globalAlpha=Math.min(1,phase*3)*0.7;
+    ctx.fillStyle='#ff8800';
+    ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  for (let i=0;i<6;i++) {
+    const ex=W*(0.05+0.16*i)+Math.sin(t*0.8+i*1.7)*W*0.06;
+    const ey=H-(((t*0.15+i*0.3)%1)*H*0.7);
+    ctx.globalAlpha=0.6*(1-((t*0.15+i*0.3)%1));
+    ctx.fillStyle='#ffcc44';
+    ctx.beginPath(); ctx.arc(ex,ey,W*0.007,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+function _biomeGold(cfg) {
+  const W=canvasLogW, H=canvasLogH, t=Date.now()/1000;
+  ctx.save();
+  const streaks=[{x:W*0.15,a:-0.8},{x:W*0.38,a:-0.6},{x:W*0.62,a:-0.9},{x:W*0.80,a:-0.7}];
+  for (const s of streaks) {
+    const shimmer=0.3+0.15*Math.sin(t*1.2+s.x);
+    ctx.strokeStyle=`rgba(220,180,50,${shimmer})`; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(s.x,0); ctx.lineTo(s.x+H*Math.tan(s.a),H); ctx.stroke();
+    ctx.strokeStyle=`rgba(255,240,100,${shimmer*0.6})`; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(s.x+2,0); ctx.lineTo(s.x+2+H*Math.tan(s.a),H); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function _biomeIce(cfg) {
+  const W=canvasLogW, H=canvasLogH, t=Date.now()/1000;
+  ctx.save();
+  const n=12;
+  for (let i=0;i<n;i++) {
+    const x=W*(i+0.5)/n, h=H*(0.06+0.05*((i*7)%6/6)), w=W*0.032;
+    ctx.globalAlpha=0.45+0.15*Math.sin(t*0.5+i*0.8);
+    ctx.fillStyle='rgba(140,200,240,0.8)';
+    ctx.beginPath(); ctx.moveTo(x-w,0); ctx.lineTo(x+w,0); ctx.lineTo(x,h); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(220,240,255,0.7)';
+    ctx.beginPath(); ctx.moveTo(x-w*0.2,0); ctx.lineTo(x,h*0.5); ctx.lineTo(x+w*0.15,0); ctx.closePath(); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  const grd=ctx.createLinearGradient(0,0,0,H*0.3);
+  grd.addColorStop(0,'rgba(80,160,220,0.20)'); grd.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grd; ctx.fillRect(0,0,W,H*0.3);
+  ctx.restore();
+}
+
+function _biomeObsidian(cfg) {
+  const W=canvasLogW, H=canvasLogH, t=Date.now()/1000;
+  ctx.save();
+  const pulse=0.4+0.25*Math.sin(t*1.5);
+  ctx.strokeStyle=`rgba(180,20,0,${pulse})`; ctx.lineWidth=1.5;
+  const cracks=[
+    [[0.3,0.2],[0.45,0.5],[0.35,0.8]],
+    [[0.7,0.1],[0.6,0.4],[0.75,0.7],[0.65,0.9]],
+    [[0.1,0.5],[0.3,0.55],[0.5,0.5]],
+    [[0.5,0.3],[0.6,0.55],[0.55,0.75]],
+  ];
+  for (const crack of cracks) {
+    ctx.beginPath(); ctx.moveTo(crack[0][0]*W,crack[0][1]*H);
+    for (let i=1;i<crack.length;i++) ctx.lineTo(crack[i][0]*W,crack[i][1]*H);
+    ctx.stroke();
+  }
+  ctx.strokeStyle=`rgba(255,60,0,${pulse*0.4})`; ctx.lineWidth=4; ctx.filter='blur(3px)';
+  for (const crack of cracks) {
+    ctx.beginPath(); ctx.moveTo(crack[0][0]*W,crack[0][1]*H);
+    for (let i=1;i<crack.length;i++) ctx.lineTo(crack[i][0]*W,crack[i][1]*H);
+    ctx.stroke();
+  }
+  ctx.filter='none';
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════
 //  РЕНДЕР
 // ══════════════════════════════════════════
 let _screenShakeX = 0, _screenShakeY = 0, _screenShakeDur = 0;
@@ -4965,6 +5153,11 @@ function triggerScreenShake(intensity=4, duration=8) {
 function drawBoard() {
   if (!canvas||!ctx) return;
   ctx.clearRect(0,0,canvasLogW,canvasLogH);
+
+  // Biome background
+  const _biome = getBiome(state.currentLevel);
+  const _bmCfg = BIOME_CONFIG[_biome] || BIOME_CONFIG.meadow;
+  drawBiomeBG(_biome, _bmCfg);
 
   // Screen shake
   const _doShake = _screenShakeDur > 0;
@@ -4987,11 +5180,9 @@ function drawBoard() {
   }
 
   const cs=cellSize;
-  // 1. Адаптивный фон — каменная доска подземелья
-  const _lvlTier=getDifficultyTier(getLevel(state.currentLevel));
-  const _boardBg=_lvlTier>=3?'rgba(20,12,4,0.72)':_lvlTier>=2?'rgba(25,15,6,0.65)':'rgba(30,18,8,0.58)';
+  // 1. Биомный фон доски
   ctx.save();
-  ctx.fillStyle=_boardBg;
+  ctx.fillStyle=_bmCfg.boardBg;
   ctx.beginPath();
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
     if (state.holes.has(`${r},${c}`)) continue;
@@ -5019,7 +5210,7 @@ function drawBoard() {
     const bx=boardOffX+c*cs, by=boardOffY+r*cs;
     // Фон клетки — нейтральный, не сливается с блокерами
     const isEven=(r+c)%2===0;
-    ctx.fillStyle=isEven?'rgba(180,80,130,0.14)':'rgba(255,255,255,0.07)';
+    ctx.fillStyle=isEven?_bmCfg.cellA:_bmCfg.cellB;
     roundRect(ctx,bx+1,by+1,cs-2,cs-2,10); ctx.fill();
     // Внутренний блик (верхняя полоска)
     ctx.fillStyle='rgba(255,255,255,0.08)';
@@ -11759,18 +11950,24 @@ function initDevPanel() {
         <button onclick="devSpawnSpecial(SPECIAL.COLORING)"  style="${devBtnStyle('#064e3b')}" title="Красящий">🎨</button>
       </div>
       <button onclick="startTestLevel()" style="${devBtnStyle('#134e4a')};width:100%;margin-bottom:4px;">🧪 Тест-уровень</button>
-      <div style="margin-top:4px;margin-bottom:3px;font-size:10px;color:#64748b;">🔄 Спавн зон (только в тест-уровне):</div>
-      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px;">
-        <button onclick="devSpawnZone(0)" style="${devBtnStyle('#1e40af')}" title="Горизонт. молния">⚡H</button>
-        <button onclick="devSpawnZone(1)" style="${devBtnStyle('#1e40af')}" title="Верт. молния">⚡V</button>
-        <button onclick="devSpawnZone(2)" style="${devBtnStyle('#9d174d')}" title="Бомба">🎁</button>
-        <button onclick="devSpawnZone(3)" style="${devBtnStyle('#7c3aed')}" title="Мега">💥</button>
-        <button onclick="devSpawnZone(4)" style="${devBtnStyle('#065f46')}" title="Ракета">🎆</button>
-        <button onclick="devSpawnZone(5)" style="${devBtnStyle('#1e3a5f')}" title="Радуга">🌈</button>
-        <button onclick="devSpawnZone(6)" style="${devBtnStyle('#064e3b')}" title="Красящий">🎨</button>
-        <button onclick="devSpawnZone(7)" style="${devBtnStyle('#9d174d')}" title="Str+Bomb комбо">⚡🎁</button>
-        <button onclick="devSpawnZone(8)" style="${devBtnStyle('#4a1d96')}" title="Rain+Mega комбо">🌈💥</button>
-        <button onclick="TEST_ZONES.forEach((_,i)=>devSpawnZone(i))" style="${devBtnStyle('#14532d')};width:100%;margin-top:2px;">♻️ Все зоны</button>
+      <div style="margin-top:4px;margin-bottom:3px;font-size:10px;color:#64748b;">🔄 Спавн комбо (только в тест-уровне):</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:2px;">
+        <button onclick="devSpawnZone(0)"  style="${devBtnStyle('#1e40af')}" title="⚡H+⚡V">⚡+⚡</button>
+        <button onclick="devSpawnZone(1)"  style="${devBtnStyle('#1e3a8a')}" title="⚡+Бомба">⚡🎁</button>
+        <button onclick="devSpawnZone(2)"  style="${devBtnStyle('#9d174d')}" title="Бомба+Бомба">🎁🎁</button>
+        <button onclick="devSpawnZone(3)"  style="${devBtnStyle('#1e40af')}" title="⚡+Мега">⚡💥</button>
+        <button onclick="devSpawnZone(4)"  style="${devBtnStyle('#7c3aed')}" title="Мега+Мега">💥💥</button>
+        <button onclick="devSpawnZone(5)"  style="${devBtnStyle('#5b21b6')}" title="Бомба+Мега">🎁💥</button>
+        <button onclick="devSpawnZone(6)"  style="${devBtnStyle('#1e3a5f')}" title="🌈+⚡">🌈⚡</button>
+        <button onclick="devSpawnZone(7)"  style="${devBtnStyle('#1e3a5f')}" title="🌈+Бомба">🌈🎁</button>
+        <button onclick="devSpawnZone(8)"  style="${devBtnStyle('#1e3a5f')}" title="🌈+Мега">🌈💥</button>
+        <button onclick="devSpawnZone(9)"  style="${devBtnStyle('#164e63')}" title="🌈+Ракета">🌈🎆</button>
+        <button onclick="devSpawnZone(10)" style="${devBtnStyle('#1e3a5f')}" title="🌈+🌈">🌈🌈</button>
+        <button onclick="devSpawnZone(11)" style="${devBtnStyle('#064e3b')}" title="🌈+🎨">🌈🎨</button>
+        <button onclick="devSpawnZone(12)" style="${devBtnStyle('#064e3b')}" title="🎨+⚡">🎨⚡</button>
+        <button onclick="devSpawnZone(13)" style="${devBtnStyle('#064e3b')}" title="🎨+Бомба">🎨🎁</button>
+        <button onclick="devSpawnZone(14)" style="${devBtnStyle('#065f46')}" title="Ракета+Ракета">🎆🎆</button>
+        <button onclick="TEST_COMBOS.forEach((_,i)=>devSpawnZone(i))" style="${devBtnStyle('#14532d')};width:100%;margin-top:2px;">♻️ Все комбо</button>
       </div>
       <div style="margin-top:4px;margin-bottom:3px;font-size:10px;color:#64748b;">⏩ Скорость анимации: <span id="dev-speed-val">1×</span></div>
       <input type="range" min="0.1" max="5" step="0.1" value="1"
@@ -11855,49 +12052,47 @@ function devBtnStyle(bg) {
   return `background:${bg};color:#fff;border:none;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:11px;`;
 }
 
-// ── Тестовый уровень: островки 3×3 на сетке 11×11 ────────────────────────
-// 3×3 зоны разделены hole-стенками col 3, col 7, row 3, row 7
-const TEST_ZONES = [
-  { gr:0, gc:0, label:'⚡H',        sp: SPECIAL.STRIPE_H },
-  { gr:0, gc:1, label:'⚡V',        sp: SPECIAL.STRIPE_V },
-  { gr:0, gc:2, label:'Бомба',      sp: SPECIAL.BOMB },
-  { gr:1, gc:0, label:'Мега',       sp: SPECIAL.MEGA },
-  { gr:1, gc:1, label:'Ракета',     sp: SPECIAL.ROCKET },
-  { gr:1, gc:2, label:'Радуга',     sp: SPECIAL.RAINBOW },
-  { gr:2, gc:0, label:'Красящий',   sp: SPECIAL.COLORING },
-  { gr:2, gc:1, label:'Str+Bomb',   sp: [SPECIAL.STRIPE_H, SPECIAL.BOMB] },
-  { gr:2, gc:2, label:'Rain+Mega',  sp: [SPECIAL.RAINBOW, SPECIAL.MEGA] },
+// ── Тестовый уровень: все комбо на одном поле 10×15 ──────────────────────
+// 15 слотов (5 рядов × 3 в ряду). Каждый слот = пара соседних спецфишек.
+// Остальные клетки — обычные фишки (поле для отработки взрывов).
+// Слот (i): позиция (r, c) и (r, c+1). Спавнер восстанавливает только эти 2 клетки.
+//
+// Ряды комбо-слотов: 1, 4, 7, 10, 13  |  Колонки пар: 1-2, 4-5, 7-8
+const TEST_COMBOS = [
+  // ряд 1 — stripe-комбо
+  { r:1,  c:1, sp1:SPECIAL.STRIPE_H, t1:0,  sp2:SPECIAL.STRIPE_V, t2:1,  label:'⚡H+⚡V' },
+  { r:1,  c:4, sp1:SPECIAL.STRIPE_H, t1:0,  sp2:SPECIAL.BOMB,     t2:1,  label:'⚡+Бомба' },
+  { r:1,  c:7, sp1:SPECIAL.BOMB,     t1:0,  sp2:SPECIAL.BOMB,     t2:1,  label:'Бомба+Бомба' },
+  // ряд 4 — мега-комбо
+  { r:4,  c:1, sp1:SPECIAL.STRIPE_H, t1:0,  sp2:SPECIAL.MEGA,     t2:1,  label:'⚡+Мега' },
+  { r:4,  c:4, sp1:SPECIAL.MEGA,     t1:0,  sp2:SPECIAL.MEGA,     t2:1,  label:'Мега+Мега' },
+  { r:4,  c:7, sp1:SPECIAL.BOMB,     t1:0,  sp2:SPECIAL.MEGA,     t2:1,  label:'Бомба+Мега' },
+  // ряд 7 — радуга×3
+  { r:7,  c:1, sp1:SPECIAL.RAINBOW,  t1:-1, sp2:SPECIAL.STRIPE_H, t2:0,  label:'🌈+⚡' },
+  { r:7,  c:4, sp1:SPECIAL.RAINBOW,  t1:-1, sp2:SPECIAL.BOMB,     t2:0,  label:'🌈+Бомба' },
+  { r:7,  c:7, sp1:SPECIAL.RAINBOW,  t1:-1, sp2:SPECIAL.MEGA,     t2:0,  label:'🌈+Мега' },
+  // ряд 10 — радуга×3 продолжение
+  { r:10, c:1, sp1:SPECIAL.RAINBOW,  t1:-1, sp2:SPECIAL.ROCKET,   t2:0,  label:'🌈+Ракета' },
+  { r:10, c:4, sp1:SPECIAL.RAINBOW,  t1:-1, sp2:SPECIAL.RAINBOW,  t2:-1, label:'🌈+🌈' },
+  { r:10, c:7, sp1:SPECIAL.RAINBOW,  t1:-1, sp2:SPECIAL.COLORING, t2:2,  label:'🌈+🎨' },
+  // ряд 13 — красящий + ракета
+  { r:13, c:1, sp1:SPECIAL.COLORING, t1:2,  sp2:SPECIAL.STRIPE_H, t2:2,  label:'🎨+⚡' },
+  { r:13, c:4, sp1:SPECIAL.COLORING, t1:2,  sp2:SPECIAL.BOMB,     t2:2,  label:'🎨+Бомба' },
+  { r:13, c:7, sp1:SPECIAL.ROCKET,   t1:0,  sp2:SPECIAL.ROCKET,   t2:1,  label:'Ракета+Ракета' },
 ];
 
-function _fillTestZone(board, zoneIdx) {
-  const z = TEST_ZONES[zoneIdx]; if (!z) return;
-  const r0 = z.gr * 4, c0 = z.gc * 4;
-  for (let r = r0; r < r0 + 3; r++) {
-    for (let c = c0; c < c0 + 3; c++) {
-      let type;
-      do { type = Math.floor(Math.random() * 5); }
-      while (
-        (r > r0+1 && board[r-1]?.[c]?.type === type && board[r-2]?.[c]?.type === type) ||
-        (c > c0+1 && board[r]?.[c-1]?.type === type && board[r]?.[c-2]?.type === type)
-      );
-      board[r][c] = createGem(type);
-    }
-  }
-  const sp = z.sp;
-  if (Array.isArray(sp)) {
-    board[r0+1][c0+1] = createGem(0); board[r0+1][c0+1].special = sp[0];
-    if (sp[0] === SPECIAL.RAINBOW) board[r0+1][c0+1].type = -1;
-    board[r0+1][c0+2] = createGem(1); board[r0+1][c0+2].special = sp[1];
-    if (sp[1] === SPECIAL.RAINBOW) board[r0+1][c0+2].type = -1;
-  } else {
-    board[r0+1][c0+1] = createGem(zoneIdx % 5);
-    board[r0+1][c0+1].special = sp;
-    if (sp === SPECIAL.RAINBOW) board[r0+1][c0+1].type = -1;
-  }
+function _placeTestCombo(board, idx) {
+  const z = TEST_COMBOS[idx]; if (!z || !board[z.r]?.[z.c]) return;
+  board[z.r][z.c]   = createGem(z.t1 < 0 ? 0 : z.t1);
+  board[z.r][z.c].special = z.sp1;
+  if (z.t1 < 0) board[z.r][z.c].type = -1;
+  board[z.r][z.c+1] = createGem(z.t2 < 0 ? 0 : z.t2);
+  board[z.r][z.c+1].special = z.sp2;
+  if (z.t2 < 0) board[z.r][z.c+1].type = -1;
 }
 
 function startTestLevel() {
-  COLS = 11; ROWS = 11;
+  COLS = 10; ROWS = 15;
   const fakeLevel = { level:999, type:'score', target:999999999, moves:999, gems:[], iceCount:0,
     stoneCount:0, jellyCount:0, gemTypes:5, holes:[], chocolateCount:0 };
   _levelCache.set(999, fakeLevel);
@@ -11916,9 +12111,6 @@ function startTestLevel() {
   _matchEpoch++;
 
   state.holes = new Set();
-  for (let r = 0; r < ROWS; r++) { state.holes.add(`${r},3`); state.holes.add(`${r},7`); }
-  for (let c = 0; c < COLS; c++) { state.holes.add(`3,${c}`); state.holes.add(`7,${c}`); }
-
   state.jellyGrid  = Array.from({length:ROWS},()=>new Array(COLS).fill(0));
   state.carpetGrid = Array.from({length:ROWS},()=>new Array(COLS).fill(false));
   state.carpetTotal = 0;
@@ -11926,23 +12118,35 @@ function startTestLevel() {
   state.jellyTotal = 0;
   state._testLevel = true;
 
-  const board = Array.from({length:ROWS}, (_,r) =>
-    Array.from({length:COLS}, (_,c) => state.holes.has(`${r},${c}`) ? null : createGem(0))
-  );
-  TEST_ZONES.forEach((_, i) => _fillTestZone(board, i));
+  // Заполнить всё поле обычными фишками без матчей
+  const board = [];
+  for (let r = 0; r < ROWS; r++) {
+    board[r] = [];
+    for (let c = 0; c < COLS; c++) {
+      let type;
+      do { type = Math.floor(Math.random() * 5); }
+      while (
+        (r >= 2 && board[r-1][c]?.type === type && board[r-2][c]?.type === type) ||
+        (c >= 2 && board[r][c-1]?.type === type && board[r][c-2]?.type === type)
+      );
+      board[r][c] = createGem(type);
+    }
+  }
+  // Разместить все комбо-слоты поверх поля
+  TEST_COMBOS.forEach((_, i) => _placeTestCombo(board, i));
 
   state.board = board;
   state.busy = false; state.paused = false;
   showScreen('game'); resizeCanvas(); updateHUD(); updateGoalProgress();
   drawBoard();
-  showToast('🧪 Тест: 9 островков — каждый бонус отдельно');
+  showToast('🧪 Тест: все комбо на поле. Спавнеры восстанавливают слоты.');
 }
 
-function devSpawnZone(zoneIdx) {
+function devSpawnZone(idx) {
   if (!state.board || state.currentLevel !== 999) { showToast('Только в тест-уровне'); return; }
-  _fillTestZone(state.board, zoneIdx);
+  _placeTestCombo(state.board, idx);
   drawBoard();
-  showToast(`${TEST_ZONES[zoneIdx]?.label ?? zoneIdx} — обновлена`);
+  showToast(`${TEST_COMBOS[idx]?.label ?? idx} — восстановлен`);
 }
 
 async function devTestAllSounds() {
