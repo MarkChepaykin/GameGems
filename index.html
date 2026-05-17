@@ -6281,6 +6281,8 @@ async function processMatches(hintR, hintC) {
     const _othersInMatch = specialsInMatch.filter(s => s.special !== SPECIAL.BOMB);
     for (const {r,c,special,type} of _othersInMatch) {
       if (_matchEpoch !== _myEpoch) return;
+      // CC cascade rule: COLORING scatter suppressed after first iteration to prevent chain amplification
+      if (_loopGuard > 1 && special === SPECIAL.COLORING) continue;
       await triggerSpecial(r,c,special,type);
     }
     if (_bombsInMatch.length) {
@@ -6350,7 +6352,7 @@ async function processMatches(hintR, hintC) {
 
   if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
   state.comboCount=0; state.matchSoundLvl=0; state.matchSequenceStep=0; stopOnFire();
-  if (_cascadeWon) { state.busy=false; setTimeout(showWin, 600); return; }
+  if (_cascadeWon) { if (!state._inBonusExplosion) { state.busy=false; setTimeout(showWin, 600); } return; }
   // Финальный sweep — гарантируем отсутствие пустых клеток (баг с дырками после бонусов)
   { let hadEmpty=false;
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
@@ -9138,39 +9140,38 @@ function spawnScreenShake(amplitude=10) {
 // ══════════════════════════════════════════
 async function bonusMovesExplosion() {
   if (!state.moves || state.moves <= 0) return;
+  const _myEpoch = _matchEpoch;
   state.busy = true;
+  state._inBonusExplosion = true;
   const specials=[SPECIAL.STRIPE_H,SPECIAL.STRIPE_V,SPECIAL.BOMB];
-  // One special at a time for visual clarity; batch 2 when >12 moves remain to keep it reasonable
   while (state.moves > 0) {
-    const batchSize = state.moves > 12 ? 2 : 1;
-    const placed = [];
-    for (let b=0; b<batchSize; b++) {
-      const free=[];
-      for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
-        if (state.holes.has(`${r},${c}`)) continue;
-        const cl=state.board[r]?.[c];
-        if (cl&&!cl.stone&&!cl.chocolate&&cl.type>=0&&cl.special===SPECIAL.NONE) free.push([r,c]);
-      }
-      if (!free.length) break;
-      const [br,bc]=free[Math.floor(Math.random()*free.length)];
-      const sp=specials[Math.floor(Math.random()*specials.length)];
-      state.board[br][bc].special=sp;
-      placed.push([br,bc,sp]);
-      state.moves--;
+    if (_matchEpoch !== _myEpoch) break; // уровень сменился — прерываем
+    const free=[];
+    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+      if (state.holes.has(`${r},${c}`)) continue;
+      const cl=state.board[r]?.[c];
+      if (cl&&!cl.stone&&!cl.chocolate&&cl.type>=0&&cl.special===SPECIAL.NONE) free.push([r,c]);
     }
-    if (!placed.length) break;
+    if (!free.length) break;
+    const [br,bc]=free[Math.floor(Math.random()*free.length)];
+    const sp=specials[Math.floor(Math.random()*specials.length)];
+    state.board[br][bc].special=sp;
+    state.moves--;
     state.comboCount++;
     drawBoard(); updateHUD();
     await new Promise(r=>setTimeout(r,200)); // brief pause so player sees the placed special
-    for (const [br,bc,sp] of placed) {
-      await triggerSpecial(br,bc,sp);
-      if (state.board[br]?.[bc]) state.board[br][bc]=null;
-    }
+    if (_matchEpoch !== _myEpoch) break;
+    await triggerSpecial(br,bc,sp);
+    if (_matchEpoch !== _myEpoch) break;
+    if (state.board[br]?.[bc]) state.board[br][bc]=null;
     applyGravity(); fillFromTop(); await animateDrop(); // gems settle visually before next
+    if (_matchEpoch !== _myEpoch) break;
     const cascadeMatches = findMatches();
     if (cascadeMatches.size > 0) await processMatches();
+    if (_matchEpoch !== _myEpoch) break;
     updateHUD(); updateGoalProgress();
   }
+  state._inBonusExplosion = false;
   state.comboCount=0; state.matchSoundLvl=0; state.matchSequenceStep=0;
 }
 
@@ -9804,7 +9805,7 @@ function playLevel(n, fresh) {
     state.moves=lvl.moves; state.score=0;
     state.collectedGems={}; state.iceBroken=0; state.stonesBroken=0;
     state.comboCount=0; state.adMovesUsed=false; state.extraMovesUsed=false; state.ingredientsDelivered=0;
-    state.chocolateInitial=0; state.sodaLevel=0; state.bottlesBroken=0; state._winShowing=false; state.bearsFreed=0;
+    state.chocolateInitial=0; state.sodaLevel=0; state.bottlesBroken=0; state._winShowing=false; state.bearsFreed=0; state._inBonusExplosion=false;
     if (state.rainbowRound) { state.rainbowRound.active=false; state.rainbowRound.movesLeft=0; }
     state.lastSwap=null; state.undoUsedThisLevel=false; hideGestureHint();
     state.buffPieces=0; state.buffNukeReady=false; state.buffNukeActive=false;
@@ -11354,7 +11355,7 @@ function startTestLevel() {
   state.comboCount = 0; state.matchSequenceStep = 0; state.matchSoundLvl = 0;
   state.adMovesUsed = false; state.extraMovesUsed = false;
   state.ingredientsDelivered = 0; state.chocolateInitial = 0;
-  state.sodaLevel = 0; state.bottlesBroken = 0; state._winShowing = false;
+  state.sodaLevel = 0; state.bottlesBroken = 0; state._winShowing = false; state._inBonusExplosion = false;
   state.lastSwap = null; state.undoUsedThisLevel = false;
   state.buffPieces = 0; state.buffNukeReady = false; state.buffNukeActive = false;
   state.supersonicActive = false; state.supersonicMovesLeft = 0;
