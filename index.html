@@ -42,6 +42,12 @@
   --radius-btn: 999px;
   --shadow-glow: 0 6px 18px rgba(180,100,0,.5), inset 0 2px 0 rgba(255,255,255,.45), inset 0 -3px 0 rgba(80,40,0,.35);
   --bubble-shadow: 0 4px 0 rgba(80,40,0,.45), 0 10px 22px rgba(80,40,0,.35);
+  /* Typography scale */
+  --fs-xl: clamp(26px, 6.5vw, 40px);
+  --fs-lg: clamp(18px, 5vw,   26px);
+  --fs-md: clamp(14px, 3.8vw, 18px);
+  --fs-sm: clamp(11px, 3vw,   14px);
+  --fs-xs: clamp(9px,  2.5vw, 12px);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -170,7 +176,7 @@ canvas { display: block; touch-action: none; }
   letter-spacing: -1px;
   text-shadow: 0 3px 0 #804800, 0 6px 14px rgba(20,10,0,.65);
 }
-.sub  { font-size: 16px; color: #f4d890; opacity: .95; margin: 16px 0 28px; font-weight: 700; letter-spacing:.5px; }
+.sub  { font-size: var(--fs-md); color: #f4d890; opacity: .95; margin: 16px 0 28px; font-weight: 700; letter-spacing:.5px; }
 #loading-bar-wrap { width: 240px; height: 14px; background: rgba(20,10,0,.55); border-radius: 999px; overflow: hidden; border: 1px solid rgba(255,255,255,.3); }
 #loading-bar { height: 100%; width: 0; background: linear-gradient(180deg,#ffd75a 0%,#e89008 100%); border-radius: 999px; transition: width .3s; }
 
@@ -227,7 +233,7 @@ canvas { display: block; touch-action: none; }
 .qfc-icon { font-size:28px; flex-shrink:0; }
 .qfc-body { flex:1; min-width:0; }
 .qfc-title { font-size:14px; font-weight:700; color:#e2e8f0; margin-bottom:4px; }
-.qfc-progress { font-size:12px; color:#f9a8d4; }
+.qfc-progress { font-size:var(--fs-xs); color:#d4b880; }
 .qfc-bar { height:5px; background:#ffffff22; border-radius:3px; margin:5px 0; }
 .qfc-bar-fill { height:5px; background:linear-gradient(90deg,#f9a8d4,#60a5fa); border-radius:3px; transition:width .4s; }
 .qfc-reward { font-size:12px; color:#fbbf24; }
@@ -238,7 +244,7 @@ canvas { display: block; touch-action: none; }
 
 /* ── уровни / эпизоды ── */
 #screen-levels, #screen-episode { justify-content: flex-start; }
-.levels-title { font-size: 22px; color: #f0c030; font-weight: 800; text-align: center; padding: 16px 0 8px; text-shadow: 0 2px 0 #804800; }
+.levels-title { font-size: var(--fs-lg); color: #f0c030; font-weight: 800; text-align: center; padding: 16px 0 8px; text-shadow: 0 2px 0 #804800; }
 .level-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 4px 16px 16px; max-width: 380px; width: 100%; }
 
 /* ── карта эпизодов ── */
@@ -288,7 +294,7 @@ canvas { display: block; touch-action: none; }
 /* ── пре-геймплей (с бустерами) ── */
 #screen-pregame { justify-content: flex-start; }
 .pg-wrap { width: 100%; max-width: 380px; padding: 12px 16px 24px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.pg-title { font-size: 30px; font-weight: 900; color: #f0c030; text-shadow: 0 2px 0 #804800, 0 4px 0 #502800, 0 6px 18px rgba(20,10,0,.6); transform: rotate(-2deg); display:inline-block; }
+.pg-title { font-size: var(--fs-xl); font-weight: 900; color: #f0c030; text-shadow: 0 2px 0 #804800, 0 4px 0 #502800, 0 6px 18px rgba(20,10,0,.6); transform: rotate(-2deg); display:inline-block; }
 .pg-level-lbl { font-size: 14px; color: #f4d890; }
 .pg-goal-box { background: rgba(255,255,255,.05); border-radius: 16px; padding: 14px 20px; width: 100%; text-align: center; }
 .pg-goal-type { font-size: 18px; font-weight: bold; color: #4ade80; margin-bottom: 4px; }
@@ -296,7 +302,7 @@ canvas { display: block; touch-action: none; }
 .pg-moves-lbl { font-size: 13px; color: #f9a8d4; }
 
 /* бустеры */
-.boosters-title { font-size: 14px; color: #f9a8d4; align-self: flex-start; }
+.boosters-title { font-size: var(--fs-sm); color: #d4b880; align-self: flex-start; }
 .boosters-row { display: flex; gap: 10px; width: 100%; }
 .booster-btn {
   flex: 1; background: rgba(255,255,255,.06); border-radius: 14px; border: 2px solid transparent;
@@ -345,8 +351,8 @@ canvas { display: block; touch-action: none; }
   min-width: 48px;
   box-shadow: 0 2px 8px rgba(20,10,0,.35);
 }
-.hud-moves-lbl { font-size: 9px; color:#ffd2ea; text-transform:uppercase; letter-spacing:.6px; font-weight:700; }
-.hud-moves { font-size: 28px; font-weight: 900; color: #fff; line-height:1; text-shadow: 0 2px 0 #804800; }
+.hud-moves-lbl { font-size: var(--fs-xs); color:#d4b880; text-transform:uppercase; letter-spacing:.6px; font-weight:700; }
+.hud-moves { font-size: var(--fs-xl); font-weight: 900; color: #fff; line-height:1; text-shadow: 0 2px 0 #804800; }
 #hud-pause-btn  {
   pointer-events: all; cursor: pointer; font-size: 20px;
   background: rgba(255,255,255,.18);
@@ -1422,17 +1428,17 @@ canvas { display: block; touch-action: none; }
   <div id="hud">
     <!-- Строка 1: уровень | ходы | бустеры | пауза -->
     <div class="hud-row1">
-      <span id="hud-mascot" style="font-size:22px;animation:mascotBob 2s ease-in-out infinite;cursor:default;user-select:none;flex-shrink:0;">💎</span>
+      <span id="hud-mascot" style="font-size:22px;animation:mascotBob 2s ease-in-out infinite;cursor:default;user-select:none;flex-shrink:0;">⛏️</span>
       <span id="hud-level-num" class="hud-lvlbadge">Ур. 1</span>
       <div class="hud-moves-box">
         <span class="hud-moves-lbl">ходов</span>
         <span class="hud-moves" id="hud-moves">20</span>
       </div>
       <div id="hud-ingame-boosters">
-        <button class="hud-bst-btn" id="hbst-hammer"     onclick="activateInGameBooster('hammer')"     title="Молоток">🔨<span id="hbst-hammer-cnt">0</span></button>
-        <button class="hud-bst-btn" id="hbst-colorbomb"  onclick="activateInGameBooster('colorbomb')"  title="Радуга">🌈<span id="hbst-colorbomb-cnt">0</span></button>
+        <button class="hud-bst-btn" id="hbst-hammer"     onclick="activateInGameBooster('hammer')"     title="Кирка">⛏️<span id="hbst-hammer-cnt">0</span></button>
+        <button class="hud-bst-btn" id="hbst-colorbomb"  onclick="activateInGameBooster('colorbomb')"  title="Сканер">📡<span id="hbst-colorbomb-cnt">0</span></button>
         <button class="hud-bst-btn" id="hbst-shuffle"    onclick="activateInGameBooster('shuffle')"    title="Перемешать">🔀<span id="hbst-shuffle-cnt">0</span></button>
-        <button class="hud-bst-btn" id="hbst-extramoves" onclick="activateInGameBooster('extramoves')" title="+5 ходов">⏱️<span id="hbst-extramoves-cnt">0</span></button>
+        <button class="hud-bst-btn" id="hbst-extramoves" onclick="activateInGameBooster('extramoves')" title="+5 ходов">⚡<span id="hbst-extramoves-cnt">0</span></button>
         <button class="hud-bst-btn" id="hbst-striped"    onclick="activateInGameBooster('striped')"    title="Молния">⚡<span id="hbst-striped-cnt">0</span></button>
         <button class="hud-bst-btn" id="hbst-supersonic" onclick="activateSupersonic()" title="Суперсоник (5 ходов)" style="display:none;">🚀</button>
         <button id="hud-undo-btn" class="hud-bst-btn" onclick="applyUndo()" title="Отмена хода" style="display:none;opacity:0.5;pointer-events:none;">↩️</button>
@@ -2831,9 +2837,9 @@ const DAILY_REWARDS = [
 
 // Бустеры
 const BOOSTERS = [
-  { id:'lightning', icon:'⚡', name:'Молния',   desc:'Убирает ряд',      cost:150 },
-  { id:'bomb',      icon:'💥', name:'Взрыв',    desc:'Взрыв 3×3 в центре', cost:200 },
-  { id:'color',     icon:'🌈', name:'Радуга',    desc:'Убирает 1 цвет',   cost:300 },
+  { id:'lightning', icon:'⛏️', name:'Бур',       desc:'Убирает ряд',      cost:150 },
+  { id:'bomb',      icon:'🧨', name:'Динамит',  desc:'Взрыв 3×3 в центре', cost:200 },
+  { id:'color',     icon:'📡', name:'Сканер',    desc:'Убирает 1 цвет',   cost:300 },
 ];
 
 // ── Компаньоны-помощники (Sidekick) ──
@@ -2846,8 +2852,8 @@ const SIDEKICKS = {
 // Кристалл-бустеры перед уровнем (только L10+)
 const PRE_BOOSTERS = [
   { id:'extra_moves', icon:'🕐', name:'+3 хода',  desc:'Добавляет 3 хода к лимиту', cost:20 },
-  { id:'rainbow_gem', icon:'🌈', name:'Радуга',   desc:'Rainbow-фишка на случайную клетку', cost:30 },
-  { id:'bomb_gem',    icon:'🎁', name:'Бомба',    desc:'Бомба на случайную клетку', cost:20 },
+  { id:'rainbow_gem', icon:'📡', name:'Сканер',   desc:'Rainbow-фишка на случайную клетку', cost:30 },
+  { id:'bomb_gem',    icon:'🧨', name:'Динамит',  desc:'Бомба на случайную клетку', cost:20 },
 ];
 
 // ══════════════════════════════════════════
@@ -4584,7 +4590,7 @@ function buildBoostersUI() {
       const startBtn = pgWrap.querySelector('button.btn-primary');
       pgWrap.insertBefore(preSection, startBtn);
     }
-    preSection.innerHTML = `<div class="boosters-title">⚡ Бустеры старта:</div><div class="boosters-row" id="pre-boosters-row"></div>`;
+    preSection.innerHTML = `<div class="boosters-title">⛏️ Бустеры старта:</div><div class="boosters-row" id="pre-boosters-row"></div>`;
     const preRow = document.getElementById('pre-boosters-row');
     PRE_BOOSTERS.forEach(b => {
       const div = document.createElement('div');
@@ -7597,8 +7603,9 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
 function animateBombBlast(r,c) {
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
-    const dur=220, t0=performance.now(), id=++_animOverlayId;
+    const dur=220, t0=performance.now(), _ep=_matchEpoch, id=++_animOverlayId;
     _animOverlays.set(id,(now)=>{
+      if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       if (t<0.25) {
@@ -7625,11 +7632,12 @@ function animateBombBlast(r,c) {
 function animateRocketBlast(r,c) {
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
-    const dur=400, t0=performance.now(), id=++_animOverlayId;
+    const dur=400, t0=performance.now(), _ep=_matchEpoch, id=++_animOverlayId;
     const numRays=14;
     const angles=Array.from({length:numRays},(_,i)=>i*Math.PI*2/numRays+(Math.random()-0.5)*0.22);
     const rayColors=['#ff4040','#ff8800','#ffdd00','#40ff80','#40ccff','#cc44ff','#ff44bb','#ffffff','#ff6600','#88ff00','#00ccff','#ff0088','#ffbb00','#aaffaa'];
     _animOverlays.set(id,(now)=>{
+      if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       if (t<0.22) {
@@ -7663,8 +7671,9 @@ function animateRocketBlast(r,c) {
 function animateMegaBlast(r,c) {
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
-    const dur=320, t0=performance.now(), id=++_animOverlayId;
+    const dur=320, t0=performance.now(), _ep=_matchEpoch, id=++_animOverlayId;
     _animOverlays.set(id,(now)=>{
+      if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       if (t<0.28) {
@@ -7692,8 +7701,9 @@ function animateMegaBlast(r,c) {
 function animateColoringWave(r,c) {
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
-    const dur=_d(340), t0=performance.now(), hue0=Math.random()*360, id=++_animOverlayId;
+    const dur=_d(340), t0=performance.now(), hue0=Math.random()*360, _ep=_matchEpoch, id=++_animOverlayId;
     _animOverlays.set(id,(now)=>{
+      if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       if (t<0.22) {
@@ -7722,8 +7732,9 @@ function animateColoringWave(r,c) {
 function animateSuperMegaBlast(r,c) {
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
-    const dur=440, t0=performance.now(), id=++_animOverlayId;
+    const dur=440, t0=performance.now(), _ep=_matchEpoch, id=++_animOverlayId;
     _animOverlays.set(id,(now)=>{
+      if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       if (t<0.22) {
@@ -7750,12 +7761,13 @@ function animateSuperMegaBlast(r,c) {
 // ── Анимация бура — два проходки в разные стороны ──────────────────────
 function animateStripeBeam(r, c, horizontal) {
   return new Promise(res => {
-    const dur = _d(300), t0 = performance.now(), id = ++_animOverlayId;
+    const dur = _d(300), t0 = performance.now(), _ep = _matchEpoch, id = ++_animOverlayId;
     const sx = boardOffX + c*cellSize + cellSize/2;
     const sy = boardOffY + r*cellSize + cellSize/2;
     const maxDist = (horizontal ? COLS : ROWS) * cellSize * 1.08;
     const dustSpawned = new Set();
     _animOverlays.set(id, (now) => {
+      if (_matchEpoch !== _ep) { _animOverlays.delete(id); res(); return; }
       const t = Math.min((now - t0) / dur, 1);
       ctx.save();
       // Вспышка по строке/столбцу в начале (t<0.25)
@@ -7845,8 +7857,9 @@ function animateRainbowBurst(targetType) {
       if (cl && (targetType===-1 || cl.type===targetType||cl.special===SPECIAL.RAINBOW)) targets.push({r,c,cl});
     }
     if (!targets.length) { res(); return; }
-    const dur=_d(300), t0=performance.now();
+    const dur=_d(300), t0=performance.now(), _ep=_matchEpoch;
     function f(now) {
+      if (_matchEpoch!==_ep) { targets.forEach(({cl})=>{ cl.anim={}; }); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       const pulse=Math.sin(t*Math.PI);
       targets.forEach(({cl})=>{ cl.anim={scale:1+pulse*0.35}; });
@@ -8198,8 +8211,9 @@ function animateRocketFlight(fromR,fromC,toR,toC) {
       dx: 2*(1-t)*(cpx-fx)+2*t*(tx-cpx),
       dy: 2*(1-t)*(cpy-fy)+2*t*(ty-cpy)
     };}
-    const id=++_animOverlayId;
+    const _ep=_matchEpoch, id=++_animOverlayId;
     _animOverlays.set(id,(now)=>{
+      if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       const {x:px,y:py}=bezier(t);
       const {dx,dy}=bezierTangent(t);
@@ -8304,8 +8318,9 @@ async function explodeCell(r,c) {
 // ══════════════════════════════════════════
 function animateDestroy(cells) {
   return new Promise(res => {
-    const dur=180, t0=performance.now();
+    const dur=180, t0=performance.now(), _ep=_matchEpoch;
     function f(now) {
+      if (_matchEpoch!==_ep) { cells.forEach(({r,c})=>{ const cl=state.board[r]?.[c]; if(cl) cl.anim={}; }); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       const scale = t<0.28 ? 1+t/0.28*0.35 : 1.35*(1-(t-0.28)/0.72);
       const alpha = t<0.28 ? 1 : Math.max(0, 1-(t-0.28)/0.72);
@@ -8319,9 +8334,10 @@ function animateDestroy(cells) {
 function animateDestroyWave(cells, centerR, centerC) {
   if (!cells.length) return Promise.resolve();
   return new Promise(res => {
-    const dur=200, waveDur=60, t0=performance.now();
+    const dur=200, waveDur=60, t0=performance.now(), _ep=_matchEpoch;
     const maxDist = Math.max(...cells.map(({r,c})=>Math.abs(r-centerR)+Math.abs(c-centerC)),1);
     function f(now) {
+      if (_matchEpoch!==_ep) { res(); return; }
       const elapsed=now-t0;
       let anyAlive=false;
       cells.forEach(({r,c})=>{
@@ -8427,9 +8443,10 @@ function animateDrop() {
     }
   }
   if (!colData.length) return Promise.resolve();
-  const t0=performance.now();
+  const t0=performance.now(), _ep=_matchEpoch;
   return new Promise(res=>{
     function f(now){
+      if (_matchEpoch!==_ep) { colData.forEach(({drops})=>drops.forEach(({cl})=>{if(cl.anim)cl.anim.oy=0;})); res(); return; }
       let allDone=true;
       for (const {drops,dur} of colData){
         const t=Math.min((now-t0)/dur,1);
@@ -8446,10 +8463,11 @@ function animateDrop() {
 
 function animateSwap(r1,c1,r2,c2) {
   return new Promise(res => {
-    const dur=PHYSICS.SWAP_MS, t0=performance.now();
+    const dur=PHYSICS.SWAP_MS, t0=performance.now(), _ep=_matchEpoch;
     const dx=(c2-c1)*cellSize, dy=(r2-r1)*cellSize;
     const cl1=state.board[r1][c1], cl2=state.board[r2][c2];
     function f(now) {
+      if (_matchEpoch!==_ep) { if(cl1)cl1.anim={}; if(cl2)cl2.anim={}; res(); return; }
       const t=EASE.outQuad(Math.min((now-t0)/dur,1));
       if(cl1)cl1.anim={ox:dx*t,oy:dy*t};
       if(cl2)cl2.anim={ox:-dx*t,oy:-dy*t};
@@ -8825,8 +8843,9 @@ function spawnLicorice() {
 // ── Анимация перемешивания (плавный scale-down → shuffle → scale-up) ────────
 function animateShuffleEffect() {
   return new Promise(res=>{
-    const dur=180, t0=performance.now();
+    const dur=180, t0=performance.now(), _ep=_matchEpoch;
     function down(now) {
+      if (_matchEpoch!==_ep) { res(); return; }
       const t=Math.min((now-t0)/dur,1);
       for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
         const cl=state.board[r]?.[c]; if(cl) cl.anim={scale:1-t*0.9};
@@ -8838,6 +8857,7 @@ function animateShuffleEffect() {
         setTimeout(()=>{
           const t1=performance.now();
           function up(now2) {
+            if (_matchEpoch!==_ep) { res(); return; }
             const t2=Math.min((now2-t1)/dur,1);
             for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
               const cl=state.board[r]?.[c]; if(cl) cl.anim={scale:t2};
@@ -10509,6 +10529,7 @@ function playLevel(n, fresh) {
     // jellyGrid, carpetGrid и holes инициализируются внутри initBoard
     state.jellyTotal=0; state.carpetTotal=0;
     _matchEpoch++; // прерываем любые зависшие async-операции предыдущего уровня
+    particles.length=0; // сбрасываем частицы от предыдущего уровня
     state.board=initBoard(lvl);
     clearInitialMatches(state.board); // убираем совпадения до старта
     state.jellyTotal=countJellyRemaining(); // фиксируем стартовое кол-во слоёв
