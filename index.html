@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Gem Blast — Match-3</title>
+<title>Ore Rush — Match-3 Excavation</title>
 <link rel="preload" as="audio" href="audio/menu.mp3">
 <link rel="preload" as="audio" href="audio/bgm.mp3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,33 +15,33 @@
    Тема: Кристаллы, самоцветы, волшебный свет
    ══════════════════════════════════ */
 :root {
-  --bg-deep:    #5b0a3a;
-  --bg-mid:     #c1247b;
-  --bg-top:     #ff8dc4;
-  --bg-cream:   #ffe6f1;
-  --c-primary:  #ff3d8a;
-  --c-primary2: #d11a64;
-  --c-magenta:  #ff5db1;
-  --c-magenta2: #b21d6d;
-  --c-gold:     #ffd75a;
-  --c-gold2:    #e89008;
-  --c-green:    #4be0a3;
-  --c-green2:   #16a874;
-  --c-purple:   #c97bff;
-  --c-purple2:  #7c2cc6;
-  --c-coral:    #ff6f8a;
-  --c-coral2:   #d92857;
-  --c-mint:     #5ee0d0;
-  --c-sky:      #5bb6ff;
-  --c-cream:    #fff4e3;
+  --bg-deep:    #0a0804;
+  --bg-mid:     #2c1a08;
+  --bg-top:     #5c3820;
+  --bg-cream:   #c89048;
+  --c-primary:  #e8a020;
+  --c-primary2: #b07810;
+  --c-magenta:  #d46018;
+  --c-magenta2: #8c3808;
+  --c-gold:     #f0c030;
+  --c-gold2:    #c08010;
+  --c-green:    #4cd890;
+  --c-green2:   #18a860;
+  --c-purple:   #c060ff;
+  --c-purple2:  #7030b0;
+  --c-coral:    #ff6840;
+  --c-coral2:   #c83010;
+  --c-mint:     #40d0a0;
+  --c-sky:      #4090d0;
+  --c-cream:    #f4e8c8;
   --c-text:     #fff;
-  --c-text-soft:#ffd2ea;
-  --c-text-dark:#4a0f33;
-  --c-border:   rgba(255,180,220,.45);
-  --c-topbar:   rgba(91,10,58,.94);
+  --c-text-soft:#f4d890;
+  --c-text-dark:#3c2808;
+  --c-border:   rgba(200,160,80,.45);
+  --c-topbar:   rgba(10,8,4,.94);
   --radius-btn: 999px;
-  --shadow-glow: 0 6px 18px rgba(255,61,138,.5), inset 0 2px 0 rgba(255,255,255,.45), inset 0 -3px 0 rgba(123,15,72,.35);
-  --bubble-shadow: 0 4px 0 rgba(123,15,72,.45), 0 10px 22px rgba(123,15,72,.35);
+  --shadow-glow: 0 6px 18px rgba(180,100,0,.5), inset 0 2px 0 rgba(255,255,255,.45), inset 0 -3px 0 rgba(80,40,0,.35);
+  --bubble-shadow: 0 4px 0 rgba(80,40,0,.45), 0 10px 22px rgba(80,40,0,.35);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -49,18 +49,19 @@ html, body {
   width: 100%; height: 100%;
   /* 80% sky → 20% pink earth, без видимого горизонтального стыка */
   background:
-    /* Мягкое солнце-свечение в верхней части */
-    radial-gradient(circle 360px at 50% 14%, rgba(255,255,255,.30) 0%, rgba(255,255,255,0) 70%),
-    /* Длинный голубой градиент с долгим плавным переходом в розовый внизу */
+    /* Мерцающий фонарь в центре — имитация подземного освещения */
+    radial-gradient(ellipse 500px 400px at 50% 40%, rgba(180,100,20,.18) 0%, rgba(0,0,0,0) 70%),
+    /* Подземный градиент: тёмная порода сверху → тёплая земля снизу */
     linear-gradient(180deg,
-      #7cc7f0 0%,
-      #92d2f0 18%,
-      #b3def0 38%,
-      #cad9ee 58%,
-      #d4cbe5 70%,
-      #d9aacc 82%,
-      #e07ab0 92%,
-      #c6478f 100%);
+      #050302 0%,
+      #0a0804 12%,
+      #140c06 25%,
+      #201408 38%,
+      #2c1a08 52%,
+      #3d2510 65%,
+      #4a3018 76%,
+      #3a2510 88%,
+      #1c0e04 100%);
   background-attachment: fixed;
   overflow: hidden;
   font-family: 'Nunito','Segoe UI',Arial,sans-serif;
@@ -75,20 +76,20 @@ html, body {
   background: transparent;
   overflow: hidden;
 }
-/* Декорации — облачка вверху, конфетти-горошек внизу */
+/* Декорации — сталактиты сверху, золотые блики снизу */
 body::before {
   content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background-image:
-    /* Облака в небе (верхние 50%) */
-    radial-gradient(ellipse 140px 30px at 18% 14%, rgba(255,255,255,.55), transparent 70%),
-    radial-gradient(ellipse 180px 36px at 78% 26%, rgba(255,255,255,.50), transparent 70%),
-    radial-gradient(ellipse 100px 24px at 46% 8%,  rgba(255,255,255,.55), transparent 70%),
-    radial-gradient(ellipse 120px 28px at 30% 42%, rgba(255,255,255,.30), transparent 70%),
-    radial-gradient(ellipse 90px  20px at 88% 56%, rgba(255,255,255,.25), transparent 70%),
-    /* Звёздочки / конфетти в розовой полосе */
-    radial-gradient(circle 2px at 22% 88%, rgba(255,255,255,.55), transparent 60%),
-    radial-gradient(circle 2px at 68% 96%, rgba(255,255,255,.45), transparent 60%),
-    radial-gradient(circle 2.5px at 88% 90%, rgba(255,221,90,.5), transparent 60%);
+    /* Золотые жилы / блики в породе */
+    radial-gradient(ellipse 80px 120px at 8%  20%, rgba(180,130,20,.18), transparent 70%),
+    radial-gradient(ellipse 60px 100px at 92% 15%, rgba(160,110,10,.15), transparent 70%),
+    radial-gradient(ellipse 100px 80px at 15% 70%, rgba(100,60,10,.20), transparent 70%),
+    radial-gradient(ellipse 70px  90px at 88% 75%, rgba(120,80,10,.18), transparent 70%),
+    /* Мерцающие золотые точки (руда) */
+    radial-gradient(circle 2px at 25% 30%, rgba(240,192,48,.60), transparent 60%),
+    radial-gradient(circle 2px at 72% 22%, rgba(240,192,48,.50), transparent 60%),
+    radial-gradient(circle 2.5px at 60% 80%, rgba(220,160,30,.55), transparent 60%),
+    radial-gradient(circle 1.5px at 40% 65%, rgba(200,140,20,.45), transparent 60%);
   background-repeat: no-repeat;
 }
 /* Горизонт-полоска убрана — слив цветов плавный, без артефакта */
@@ -123,20 +124,20 @@ canvas { display: block; touch-action: none; }
   color: #fff;
   text-shadow: 0 1px 0 rgba(0,0,0,.25);
   box-shadow:
-    0 3px 0 rgba(74,15,51,.45),
-    0 5px 12px rgba(74,15,51,.22),
+    0 3px 0 rgba(20,10,0,.55),
+    0 5px 12px rgba(20,10,0,.28),
     inset 0 -2px 0 rgba(0,0,0,.15);
   position: relative;
 }
-.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(74,15,51,.45), inset 0 -1px 0 rgba(0,0,0,.15); }
-.btn-primary { background: linear-gradient(180deg,#ff5a9d 0%,#e62a7d 100%); }
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(20,10,0,.55), inset 0 -1px 0 rgba(0,0,0,.15); }
+.btn-primary { background: linear-gradient(180deg,#f0c030 0%,#c08010 100%); color: #3c2808; }
 .btn-green   { background: linear-gradient(180deg,#3ed28d 0%,#13975b 100%); }
 .btn-gold    { background: linear-gradient(180deg,#ffce4a 0%,#e08406 100%); }
 .btn-red     { background: linear-gradient(180deg,#ff6b7e 0%,#c91835 100%); }
 .btn-blue    { background: linear-gradient(180deg,#b074ff 0%,#6e23b6 100%); }
-.btn-gray    { background: linear-gradient(180deg,#9c849a 0%,#5d4459 100%); }
-.btn-sm      { padding: 8px 16px; font-size: 14px; box-shadow: 0 2px 0 rgba(74,15,51,.45), inset 0 -1px 0 rgba(0,0,0,.15); }
-.btn-disabled{ background:linear-gradient(180deg,#8a6e80,#5a4054); color: rgba(255,255,255,.55); pointer-events:none; box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+.btn-gray    { background: linear-gradient(180deg,#6a5840 0%,#3a2818 100%); }
+.btn-sm      { padding: 8px 16px; font-size: 14px; box-shadow: 0 2px 0 rgba(20,10,0,.55), inset 0 -1px 0 rgba(0,0,0,.15); }
+.btn-disabled{ background:linear-gradient(180deg,#5a4828,#3a2810); color: rgba(255,255,255,.55); pointer-events:none; box-shadow: 0 2px 0 rgba(0,0,0,.25); }
 
 /* ── шапка валюты ── */
 /* ── шапка валюты ── */
@@ -150,41 +151,40 @@ canvas { display: block; touch-action: none; }
 }
 .cur-pill {
   display: flex; align-items: center; gap: 6px;
-  /* «Маршмеллоу» — белая полупрозрачная капсула с мягкой тёмной обводкой */
-  background: rgba(255,255,255,.40);
+  background: rgba(80,50,10,.65);
   border-radius: 999px;
-  border: 1.5px solid rgba(255,255,255,.6);
+  border: 1.5px solid rgba(200,160,80,.6);
   padding: 5px 12px;
-  color: #4a0f33; font-size: 14px; font-weight: 800;
+  color: #f4e8c8; font-size: 14px; font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 2px 0 rgba(74,15,51,.18), 0 4px 10px rgba(74,15,51,.12);
+  box-shadow: 0 2px 0 rgba(20,10,0,.35), 0 4px 10px rgba(20,10,0,.25);
 }
-.cur-pill .plus { font-size: 16px; color: #e62a7d; margin-left: 3px; font-weight: 900; }
-.lives-timer { font-size: 9px; color: #4a0f33; opacity: .75; display: block; text-align: center; white-space: nowrap; font-weight: 700; }
+.cur-pill .plus { font-size: 16px; color: #f0c030; margin-left: 3px; font-weight: 900; }
+.lives-timer { font-size: 9px; color: #f4d890; opacity: .75; display: block; text-align: center; white-space: nowrap; font-weight: 700; }
 
 /* ── загрузка ── */
 #screen-loading { justify-content: center; gap: 0; }
 .logo {
   font-size: 56px; font-weight: 800;
-  color: #fff;
+  color: #f0c030;
   letter-spacing: -1px;
-  text-shadow: 0 3px 0 #c0185f, 0 6px 14px rgba(74,15,51,.45);
+  text-shadow: 0 3px 0 #804800, 0 6px 14px rgba(20,10,0,.65);
 }
-.sub  { font-size: 16px; color: #ffd2ea; opacity: .95; margin: 16px 0 28px; font-weight: 700; letter-spacing:.5px; }
-#loading-bar-wrap { width: 240px; height: 14px; background: rgba(74,15,51,.45); border-radius: 999px; overflow: hidden; border: 1px solid rgba(255,255,255,.3); }
+.sub  { font-size: 16px; color: #f4d890; opacity: .95; margin: 16px 0 28px; font-weight: 700; letter-spacing:.5px; }
+#loading-bar-wrap { width: 240px; height: 14px; background: rgba(20,10,0,.55); border-radius: 999px; overflow: hidden; border: 1px solid rgba(255,255,255,.3); }
 #loading-bar { height: 100%; width: 0; background: linear-gradient(180deg,#ffd75a 0%,#e89008 100%); border-radius: 999px; transition: width .3s; }
 
 /* ── меню ── */
 #screen-menu { gap: 4px; justify-content: flex-start; }
 .menu-hero { text-align: center; padding: 18px 0 10px; position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.menu-deco { width: 56px; height: 56px; filter: drop-shadow(0 4px 0 rgba(74,15,51,.4)); animation: menuDecoBob 3s ease-in-out infinite; flex-shrink: 0; }
+.menu-deco { width: 56px; height: 56px; filter: drop-shadow(0 4px 0 rgba(20,10,0,.50)); animation: menuDecoBob 3s ease-in-out infinite; flex-shrink: 0; }
 .menu-deco-left  { animation-delay: 0s; transform: rotate(-12deg); }
 .menu-deco-right { animation-delay: .8s; transform: rotate(12deg); }
 @keyframes menuDecoBob { 0%,100%{translate:0 0} 50%{translate:0 -4px} }
 .menu-title {
   font-size: 42px; font-weight: 800; letter-spacing: -1px;
-  color: #fff;
-  text-shadow: 0 3px 0 #c0185f, 0 6px 12px rgba(74,15,51,.4);
+  color: #f0c030;
+  text-shadow: 0 3px 0 #804800, 0 6px 12px rgba(20,10,0,.5);
   display:inline-block;
 }
 /* Единая ширина для всего контента меню */
@@ -238,7 +238,7 @@ canvas { display: block; touch-action: none; }
 
 /* ── уровни / эпизоды ── */
 #screen-levels, #screen-episode { justify-content: flex-start; }
-.levels-title { font-size: 22px; color: #fff; font-weight: 800; text-align: center; padding: 16px 0 8px; text-shadow: 0 2px 0 #c0185f; }
+.levels-title { font-size: 22px; color: #f0c030; font-weight: 800; text-align: center; padding: 16px 0 8px; text-shadow: 0 2px 0 #804800; }
 .level-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 4px 16px 16px; max-width: 380px; width: 100%; }
 
 /* ── карта эпизодов ── */
@@ -251,15 +251,15 @@ canvas { display: block; touch-action: none; }
   border-radius: 16px; border: none; cursor: pointer;
   padding: 10px 12px 28px; text-align: left;
   display: flex; flex-direction: column; gap: 3px;
-  background: linear-gradient(155deg,#ff5a9d 0%,#e62a7d 100%);
-  box-shadow: 0 3px 0 rgba(74,15,51,.45);
+  background: linear-gradient(155deg,#5c3820 0%,#3a2010 100%);
+  box-shadow: 0 3px 0 rgba(20,10,0,.55), 0 0 0 1.5px rgba(200,160,80,.35);
   transition: transform .1s, box-shadow .1s;
   min-height: 90px; position: relative;
 }
-.ep-card:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(74,15,51,.45); }
-.ep-card.locked  { background: linear-gradient(155deg,#5a3a4e 0%,#3a2434 100%); cursor: default; opacity:.7; }
-.ep-card.partial { background: linear-gradient(155deg,#a855f7 0%,#7c3aed 100%); }
-.ep-card.complete { background: linear-gradient(155deg,#3ed28d 0%,#13975b 100%); }
+.ep-card:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(20,10,0,.55); }
+.ep-card.locked  { background: linear-gradient(155deg,#2a1e14 0%,#1a1008 100%); cursor: default; opacity:.7; }
+.ep-card.partial { background: linear-gradient(155deg,#4a2a60 0%,#2a1040 100%); }
+.ep-card.complete { background: linear-gradient(155deg,#1a5030 0%,#0e3018 100%); }
 .ep-num  { font-size: 10px; color: rgba(255,255,255,.65); font-weight: 700; }
 .ep-name { font-size: 13px; color: #fff; font-weight: 800; line-height: 1.25; }
 .ep-types { font-size: 13px; margin-top: 2px; }
@@ -270,14 +270,14 @@ canvas { display: block; touch-action: none; }
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   transition: transform .1s;
   color: #fff;
-  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+  text-shadow: 0 1px 0 rgba(0,0,0,.35);
   box-shadow:
-    0 3px 0 rgba(74,15,51,.45),
+    0 3px 0 rgba(20,10,0,.55),
     inset 0 -2px 0 rgba(0,0,0,.15);
 }
-.level-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(74,15,51,.45), inset 0 -1px 0 rgba(0,0,0,.15); }
-.level-btn.unlocked { background: linear-gradient(180deg,#ff5a9d 0%,#e62a7d 100%); }
-.level-btn.locked   { background: linear-gradient(180deg,#5a3a4e 0%,#3a2434 100%); color: rgba(255,255,255,.45); cursor: default; box-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.level-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(20,10,0,.55), inset 0 -1px 0 rgba(0,0,0,.15); }
+.level-btn.unlocked { background: linear-gradient(180deg,#c89030 0%,#8a5808 100%); }
+.level-btn.locked   { background: linear-gradient(180deg,#2a1e14 0%,#1a1008 100%); color: rgba(255,255,255,.40); cursor: default; box-shadow: 0 2px 0 rgba(0,0,0,.35); }
 .level-btn.complete { background: linear-gradient(180deg,#3ed28d 0%,#13975b 100%); }
 .level-btn.tier-hard     { box-shadow: 0 0 0 2.5px #ff8a3a, 0 4px 0 rgba(166,74,10,.6), inset 0 -2px 0 rgba(0,0,0,.15); }
 .level-btn.tier-superhard { box-shadow: 0 0 0 2.5px #ff5a6e, 0 4px 0 rgba(160,16,48,.6), inset 0 -2px 0 rgba(0,0,0,.15); }
@@ -288,8 +288,8 @@ canvas { display: block; touch-action: none; }
 /* ── пре-геймплей (с бустерами) ── */
 #screen-pregame { justify-content: flex-start; }
 .pg-wrap { width: 100%; max-width: 380px; padding: 12px 16px 24px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.pg-title { font-size: 30px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #b1226a, 0 4px 0 #7c0a4a, 0 6px 18px rgba(74,15,51,.5); transform: rotate(-2deg); display:inline-block; }
-.pg-level-lbl { font-size: 14px; color: #f9a8d4; }
+.pg-title { font-size: 30px; font-weight: 900; color: #f0c030; text-shadow: 0 2px 0 #804800, 0 4px 0 #502800, 0 6px 18px rgba(20,10,0,.6); transform: rotate(-2deg); display:inline-block; }
+.pg-level-lbl { font-size: 14px; color: #f4d890; }
 .pg-goal-box { background: rgba(255,255,255,.05); border-radius: 16px; padding: 14px 20px; width: 100%; text-align: center; }
 .pg-goal-type { font-size: 18px; font-weight: bold; color: #4ade80; margin-bottom: 4px; }
 .pg-goal-desc { font-size: 14px; color: #ccc; }
@@ -314,12 +314,12 @@ canvas { display: block; touch-action: none; }
 #hud {
   position: absolute; top: 0; left: 0; right: 0; z-index: 10;
   display: flex; flex-direction: column; gap: 0;
-  background: rgba(91,10,58,.82);
+  background: rgba(14,9,3,.88);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1.5px solid rgba(255,160,210,.40);
+  border-bottom: 1.5px solid rgba(200,160,80,.40);
   border-radius: 0 0 18px 18px;
-  box-shadow: 0 4px 20px rgba(74,15,51,.45);
+  box-shadow: 0 4px 20px rgba(10,5,0,.65);
   color: #fff;
   pointer-events: none;
 }
@@ -329,12 +329,12 @@ canvas { display: block; touch-action: none; }
   padding: 6px 12px 4px; gap: 6px;
 }
 .hud-lvlbadge {
-  font-size: 11px; font-weight: 800; color: #4a0f33;
-  background: rgba(255,255,255,.80);
-  border: 1.5px solid rgba(255,255,255,.95);
+  font-size: 11px; font-weight: 800; color: #3c2808;
+  background: rgba(240,192,48,.90);
+  border: 1.5px solid rgba(255,220,80,.95);
   border-radius: 999px;
   padding: 4px 10px; letter-spacing: .3px; white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(74,15,51,.20);
+  box-shadow: 0 2px 6px rgba(20,10,0,.35);
 }
 .hud-moves-box {
   display:flex; flex-direction:column; align-items:center;
@@ -343,10 +343,10 @@ canvas { display: block; touch-action: none; }
   border-radius: 14px;
   padding: 3px 10px;
   min-width: 48px;
-  box-shadow: 0 2px 8px rgba(74,15,51,.25);
+  box-shadow: 0 2px 8px rgba(20,10,0,.35);
 }
 .hud-moves-lbl { font-size: 9px; color:#ffd2ea; text-transform:uppercase; letter-spacing:.6px; font-weight:700; }
-.hud-moves { font-size: 28px; font-weight: 900; color: #fff; line-height:1; text-shadow: 0 2px 0 #c0185f; }
+.hud-moves { font-size: 28px; font-weight: 900; color: #fff; line-height:1; text-shadow: 0 2px 0 #804800; }
 #hud-pause-btn  {
   pointer-events: all; cursor: pointer; font-size: 20px;
   background: rgba(255,255,255,.18);
@@ -354,7 +354,7 @@ canvas { display: block; touch-action: none; }
   border-radius: 50%;
   width: 36px; height: 36px;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 8px rgba(74,15,51,.25);
+  box-shadow: 0 2px 8px rgba(20,10,0,.35);
   flex-shrink: 0;
 }
 #hud-ingame-boosters { display:flex; gap:3px; align-items:center; }
@@ -362,7 +362,7 @@ canvas { display: block; touch-action: none; }
   background:rgba(255,255,255,0.16); border:1.5px solid rgba(255,255,255,0.30);
   border-radius:12px; padding:4px 6px; font-size:17px; cursor:pointer; position:relative;
   pointer-events:all; transition:transform .1s, background .1s; line-height:1;
-  box-shadow: 0 2px 6px rgba(74,15,51,.20);
+  box-shadow: 0 2px 6px rgba(20,10,0,.28);
 }
 .hud-bst-btn:active { transform:scale(.9); }
 .hud-bst-btn.active-booster { background:rgba(255,200,0,0.25); border-color:#f59e0b; box-shadow:0 0 10px #f59e0b; }
@@ -431,7 +431,7 @@ canvas { display: block; touch-action: none; }
 #star-icons span.lit { text-shadow: 0 0 8px #ffd75a; transform: scale(1.2); }
 #star-bar-wrap {
   flex: 1; height: 8px; border-radius: 4px; min-width: 40px;
-  background: rgba(74,15,51,.45); overflow: hidden;
+  background: rgba(20,10,0,.55); overflow: hidden;
 }
 #star-bar { height: 100%; width: 0; background: linear-gradient(90deg,#ffd75a,#ff8a3a); transition: width .4s; border-radius: 4px; position: relative; overflow: hidden; }
 #star-bar.shine::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent); background-size:200% 100%; animation:barShine .4s ease-out forwards; }
@@ -616,7 +616,7 @@ canvas { display: block; touch-action: none; }
   gap: 14px; z-index: 50;
 }
 #pause-overlay.hidden { display: none; }
-#pause-overlay h2 { color: #fff; font-size: 32px; text-shadow: 0 2px 0 #b1226a, 0 4px 14px rgba(74,15,51,.5); transform: rotate(-2deg); display:inline-block; }
+#pause-overlay h2 { color: #fff; font-size: 32px; text-shadow: 0 2px 0 #804800, 0 4px 14px rgba(20,10,0,.60); transform: rotate(-2deg); display:inline-block; }
 .pause-settings-box { background:rgba(0,0,0,.45); border-radius:14px; padding:14px 18px; width:min(88vw,300px); box-sizing:border-box; display:flex; flex-direction:column; gap:10px; }
 .pause-setting-row { display:flex; align-items:center; gap:8px; flex-wrap:nowrap; }
 .pause-setting-row label { flex:none; color:#e2e8f0; font-size:13px; white-space:nowrap; }
@@ -632,8 +632,8 @@ canvas { display: block; touch-action: none; }
 .win-tier-hard .result-title   { color:#fb923c; text-shadow:0 0 20px rgba(249,115,22,.5); }
 .win-tier-super .result-title  { color:#f87171; text-shadow:0 0 20px rgba(239,68,68,.5); }
 .win-tier-ultra .result-title  { color:#c084fc; text-shadow:0 0 24px rgba(168,85,247,.6); }
-.result-title   { font-size: 42px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #b1226a, 0 4px 0 #7c0a4a, 0 8px 18px rgba(74,15,51,.6); transform: rotate(-2deg); display:inline-block; }
-.result-sub     { font-size: 16px; color: #ffe6f1; font-weight:700; }
+.result-title   { font-size: 42px; font-weight: 900; color: #f0c030; text-shadow: 0 2px 0 #804800, 0 4px 0 #402400, 0 8px 18px rgba(20,10,0,.7); transform: rotate(-2deg); display:inline-block; }
+.result-sub     { font-size: 16px; color: #f4e8c8; font-weight:700; }
 .stars-row      { font-size: 50px; letter-spacing: 8px; display:flex; justify-content:center; gap:8px; }
 .reward-row     { font-size: 16px; color: #4ade80; margin: 2px 0; }
 .win-star       { display:inline-block; transform:scale(0); opacity:0; transition:none; }
@@ -704,7 +704,7 @@ canvas { display: block; touch-action: none; }
 /* ── магазин ── */
 #screen-shop { justify-content: flex-start; }
 .shop-wrap { width: 100%; max-width: 420px; padding-bottom: 24px; }
-.shop-title { font-size: 26px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #b1226a, 0 4px 14px rgba(74,15,51,.5); text-align: center; padding: 14px 0 10px; }
+.shop-title { font-size: 26px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #804800, 0 4px 14px rgba(20,10,0,.60); text-align: center; padding: 14px 0 10px; }
 
 .tabs { display: flex; gap: 4px; padding: 0 12px 10px; }
 .tab-btn {
@@ -756,7 +756,7 @@ canvas { display: block; touch-action: none; }
 /* ── настройки ── */
 #screen-settings { gap: 0; justify-content: flex-start; }
 .settings-wrap { width: 100%; max-width: 360px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.settings-title { font-size: 26px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #b1226a, 0 4px 14px rgba(74,15,51,.5); text-align: center; padding: 12px 0; }
+.settings-title { font-size: 26px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #804800, 0 4px 14px rgba(20,10,0,.60); text-align: center; padding: 12px 0; }
 .setting-row { display: flex; align-items: center; justify-content: space-between; color: #fff; font-size: 17px; background: rgba(255,255,255,.05); border-radius: 12px; padding: 12px 16px; }
 .skin-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .skin-swatch {
@@ -787,7 +787,7 @@ canvas { display: block; touch-action: none; }
   box-shadow: 0 0 60px rgba(255,95,158,.35);
   border: 1px solid var(--c-border);
 }
-.popup-title { font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #b1226a; }
+.popup-title { font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #804800; }
 .popup-sub   { font-size: 14px; color: #f9a8d4; }
 
 /* Ежедневная награда */
@@ -859,14 +859,14 @@ canvas { display: block; touch-action: none; }
 /* ══ Сезонный пропуск ══ */
 #screen-season { justify-content: flex-start; }
 .season-wrap { width: 100%; max-width: 420px; padding-bottom: 32px; }
-.season-title { font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #b1226a; text-align: center; padding: 14px 0 4px; }
+.season-title { font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #804800; text-align: center; padding: 14px 0 4px; }
 .season-timer { text-align: center; font-size: 13px; color: #f9a8d4; margin-bottom: 10px; }
 .season-xp-bar-wrap { margin: 0 12px 14px; background: rgba(255,255,255,.08); border-radius: 8px; height: 18px; overflow: hidden; position: relative; }
 .season-xp-bar { height: 100%; background: linear-gradient(90deg,var(--c-primary),var(--c-primary2)); transition: width .4s; }
 .season-xp-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; font-weight: bold; }
 
 .season-tracks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px; }
-.season-track { border-radius: 14px; overflow: hidden; background: rgba(255,255,255,.45); box-shadow: 0 2px 10px rgba(74,15,51,.12); }
+.season-track { border-radius: 14px; overflow: hidden; background: rgba(255,255,255,.45); box-shadow: 0 2px 10px rgba(20,10,0,.18); }
 .season-track-head {
   padding: 10px 12px; font-size: 14px; font-weight: bold; text-align: center;
   background: rgba(255,255,255,.25); color: #2d1048;
@@ -892,7 +892,7 @@ canvas { display: block; touch-action: none; }
 /* ══ Турнир ══ */
 #screen-tournament { justify-content: flex-start; }
 .tourn-wrap { width: 100%; max-width: 420px; padding-bottom: 32px; }
-.tourn-title { font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #b1226a; text-align: center; padding: 14px 0 4px; }
+.tourn-title { font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #804800; text-align: center; padding: 14px 0 4px; }
 .tourn-timer { text-align: center; font-size: 13px; color: #f9a8d4; margin-bottom: 10px; }
 .tourn-my-score { text-align: center; font-size: 18px; color: #fff; font-weight: bold; margin-bottom: 8px; }
 
@@ -901,7 +901,7 @@ canvas { display: block; touch-action: none; }
   display: flex; align-items: center; gap: 10px;
   background: rgba(255,255,255,.72); border-radius: 12px;
   padding: 10px 14px; font-size: 14px; color: #2d1048;
-  box-shadow: 0 1px 4px rgba(74,15,51,.10);
+  box-shadow: 0 1px 4px rgba(20,10,0,.15);
 }
 .tourn-row.me     { background: rgba(255,95,158,.30); color: #1e0828; border: 1.5px solid rgba(255,95,158,.6); }
 .tourn-row.top1   { background: rgba(255,220,0,.30); }
@@ -927,27 +927,27 @@ canvas { display: block; touch-action: none; }
 
 /* Streak badge — компактнее */
 .streak-badge {
-  background: rgba(255,255,255,.45);
-  border: 1px solid rgba(255,255,255,.7);
-  color: #b1226a;
+  background: rgba(80,50,10,.70);
+  border: 1px solid rgba(200,160,80,.65);
+  color: #f4d890;
   font-weight: 800;
   border-radius: 999px;
   padding: 7px 18px;
-  box-shadow: 0 2px 0 rgba(74,15,51,.18);
+  box-shadow: 0 2px 0 rgba(20,10,0,.35);
 }
 
-/* Piggy & quest cards — стеклянная карточка без блеска */
+/* Piggy & quest cards */
 .piggy-bar-row {
-  background: rgba(255,255,255,.40);
-  border: 1px solid rgba(255,255,255,.65);
+  background: rgba(60,40,10,.55);
+  border: 1px solid rgba(200,160,80,.45);
   border-radius: 16px;
-  box-shadow: 0 2px 0 rgba(74,15,51,.18);
-  color: #4a0f33;
+  box-shadow: 0 2px 0 rgba(20,10,0,.25);
+  color: #f4e8c8;
 }
-.piggy-wrap span { color: #4a0f33 !important; }
-.piggy-bar-bg { background: rgba(74,15,51,.18); }
-.piggy-bar-fill { background: linear-gradient(90deg,#ffd75a,#ff8a3a); }
-.piggy-label { color: #e08406; }
+.piggy-wrap span { color: #f4e8c8 !important; }
+.piggy-bar-bg { background: rgba(20,12,4,.45); }
+.piggy-bar-fill { background: linear-gradient(90deg,#f0c030,#d46018); }
+.piggy-label { color: #f0c030; }
 
 .quest-card, .quest-full-card {
   background: rgba(255,255,255,.10);
@@ -956,28 +956,28 @@ canvas { display: block; touch-action: none; }
 }
 .quest-full-card.done { background: rgba(75,224,163,.16); border-color: rgba(75,224,163,.55); }
 .qfc-title, .quest-title { color: #fff; }
-.qfc-progress, .quest-prog { color: rgba(255,255,255,0.80); text-shadow: 0 1px 2px rgba(74,15,51,.40); }
-.qfc-bar { background: rgba(74,15,51,.4); }
-.qfc-bar-fill, .quest-bar-fill { background: linear-gradient(90deg,#ffd75a,#ff5a9d); }
-.qfc-reward, .quest-reward { color: #fff5b0; }
-.quests-section-title { color: #fff; text-shadow: 0 1px 2px rgba(74,15,51,.55); }
-.quests-title { color: #fff; text-shadow: 0 1px 2px rgba(74,15,51,.55); }
+.qfc-progress, .quest-prog { color: rgba(255,255,255,0.80); text-shadow: 0 1px 2px rgba(20,10,0,.50); }
+.qfc-bar { background: rgba(20,12,4,.55); }
+.qfc-bar-fill, .quest-bar-fill { background: linear-gradient(90deg,#f0c030,#d46018); }
+.qfc-reward, .quest-reward { color: #f4e8c8; }
+.quests-section-title { color: #f4d890; text-shadow: 0 1px 2px rgba(20,10,0,.55); }
+.quests-title { color: #f4d890; text-shadow: 0 1px 2px rgba(20,10,0,.55); }
 
 /* Booster buttons */
 .booster-btn {
-  background: rgba(74,15,51,.22);
-  border: 2px solid rgba(255,255,255,.30);
+  background: rgba(30,18,8,.55);
+  border: 2px solid rgba(200,160,80,.30);
   border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(74,15,51,.20);
+  box-shadow: 0 2px 8px rgba(20,10,0,.35);
 }
 .booster-btn.selected {
-  border-color: #ffd75a;
-  background: rgba(255,215,90,.22);
+  border-color: #f0c030;
+  background: rgba(240,192,48,.20);
 }
-.booster-btn .b-name { color: #fff; font-size: 12px; text-shadow: 0 1px 2px rgba(74,15,51,.55); }
-.booster-btn .b-cost { font-size: 12px; text-shadow: 0 1px 2px rgba(74,15,51,.45); }
+.booster-btn .b-name { color: #f4e8c8; font-size: 12px; text-shadow: 0 1px 2px rgba(20,10,0,.55); }
+.booster-btn .b-cost { font-size: 12px; text-shadow: 0 1px 2px rgba(20,10,0,.45); }
 .booster-btn .b-cost-crystal { color: #a5f3fc; text-shadow: 0 1px 2px rgba(0,60,90,.55); }
-.boosters-title { color: #fff; text-shadow: 0 1px 2px rgba(74,15,51,.55); font-weight: 800; font-size: 15px; }
+.boosters-title { color: #f4d890; text-shadow: 0 1px 2px rgba(20,10,0,.55); font-weight: 800; font-size: 15px; }
 
 /* In-game booster buttons */
 .hud-bst-btn {
@@ -994,9 +994,9 @@ canvas { display: block; touch-action: none; }
   border-radius: 18px;
   box-shadow: none;
 }
-.pg-goal-type { color: #fff; text-shadow: 0 2px 0 #c0185f; }
-.pg-goal-desc { color: #fff; text-shadow: 0 1px 2px rgba(74,15,51,.50); }
-.pg-level-lbl, .pg-moves-lbl { color: #fff; text-shadow: 0 1px 2px rgba(74,15,51,.50); font-weight: 700; font-size: 15px; }
+.pg-goal-type { color: #fff; text-shadow: 0 2px 0 #804800; }
+.pg-goal-desc { color: #fff; text-shadow: 0 1px 2px rgba(20,10,0,.60); }
+.pg-level-lbl, .pg-moves-lbl { color: #fff; text-shadow: 0 1px 2px rgba(20,10,0,.60); font-weight: 700; font-size: 15px; }
 .pg-title { font-weight: 800; }
 
 /* Settings rows */
@@ -1009,7 +1009,7 @@ canvas { display: block; touch-action: none; }
   border: 1px solid rgba(255,200,225,.35);
   box-shadow: 0 12px 32px rgba(0,0,0,.5);
 }
-.bc-btn-ok { background: linear-gradient(180deg,#ffce4a,#e08406); box-shadow: 0 3px 0 rgba(74,15,51,.45); }
+.bc-btn-ok { background: linear-gradient(180deg,#ffce4a,#e08406); box-shadow: 0 3px 0 rgba(20,10,0,.55); }
 .bc-btn-no { background: rgba(255,255,255,.16); color:#fff; }
 .bd-pack { background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22); }
 .bd-pack:hover { background: rgba(255,215,90,.18); border-color: #ffd75a; }
@@ -1017,10 +1017,10 @@ canvas { display: block; touch-action: none; }
 .bd-btn-close { background: rgba(255,255,255,.16); color: #fff; }
 
 /* Pause overlay */
-.pause-settings-box { background: rgba(74,15,51,.55); border: 1px solid rgba(255,255,255,.22); border-radius: 16px; }
+.pause-settings-box { background: rgba(20,10,0,.65); border: 1px solid rgba(255,255,255,.22); border-radius: 16px; }
 .pause-setting-row label { color: #fff; font-weight: 700; }
 .pause-setting-row span { color: #ffd2ea; }
-.pause-setting-row input[type=range] { accent-color: #ff5a9d; }
+.pause-setting-row input[type=range] { accent-color: #f0c030; }
 #pause-overlay { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(50,8,32,.85); }
 
 /* Daily / skin selectors */
@@ -1038,15 +1038,15 @@ canvas { display: block; touch-action: none; }
 /* Result screen sheet */
 .screen { color: #fff; }
 /* Pre-game rainbow-streak label: white + purple glow so it reads on light gradient */
-#pg-rainbow-streak { color: #fff !important; text-shadow: 0 0 8px #c084fc, 0 1px 2px rgba(74,15,51,.55) !important; }
+#pg-rainbow-streak { color: #fff !important; text-shadow: 0 0 8px #c084fc, 0 1px 2px rgba(20,10,0,.65) !important; }
 /* Popup subtitles & streak label: #f9a8d4 gives only 2.6:1 on the popup gradient top */
 .popup-sub, .streak-label { color: rgba(255,255,255,0.88); }
 /* Daily-day cards: #ccc at 10px gives <3:1; white-ish is readable */
 .daily-day { color: rgba(255,255,255,0.80); }
 /* Season / tournament timers: #f9a8d4 on transparent screens = low contrast */
-.season-timer, .tourn-timer { color: rgba(255,255,255,0.88); text-shadow: 0 1px 2px rgba(74,15,51,.50); }
+.season-timer, .tourn-timer { color: rgba(255,255,255,0.88); text-shadow: 0 1px 2px rgba(20,10,0,.60); }
 /* Shop cards: price/desc in #f9a8d4 on near-transparent card over body gradient */
-.shop-card .sc-price, .shop-wide-card .swc-desc { color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px rgba(74,15,51,.40); }
+.shop-card .sc-price, .shop-wide-card .swc-desc { color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px rgba(20,10,0,.50); }
 /* Booster confirm desc: #aaa gives 3.2:1 on top of the dark-pink dialog gradient */
 #booster-confirm-box .bc-desc { color: rgba(255,255,255,0.82); }
 
@@ -1226,14 +1226,14 @@ canvas { display: block; touch-action: none; }
 
 <!-- ══ ЗАГРУЗКА ══ -->
 <div id="screen-loading" class="screen">
-  <svg viewBox="0 0 120 120" style="width:96px;height:96px;margin-bottom:8px;filter:drop-shadow(0 6px 0 rgba(74,15,51,.4));animation:menuDecoBob 2.2s ease-in-out infinite;">
-    <circle cx="60" cy="60" r="46" fill="#ff5a9d" stroke="#fff" stroke-width="4"/>
+  <svg viewBox="0 0 120 120" style="width:96px;height:96px;margin-bottom:8px;filter:drop-shadow(0 6px 0 rgba(20,10,0,.50));animation:menuDecoBob 2.2s ease-in-out infinite;">
+    <circle cx="60" cy="60" r="46" fill="#d4a020" stroke="#fff" stroke-width="4"/>
     <circle cx="60" cy="60" r="26" fill="#ffd75a"/>
     <circle cx="60" cy="60" r="10" fill="#fff"/>
     <circle cx="48" cy="48" r="6" fill="#fff" opacity=".55"/>
   </svg>
-  <div class="logo">GEM BLAST</div>
-  <div class="sub">Match-3 Adventure</div>
+  <div class="logo">ORE RUSH</div>
+  <div class="sub">Match-3 Excavation</div>
   <div id="loading-bar-wrap"><div id="loading-bar"></div></div>
 </div>
 
@@ -1252,10 +1252,10 @@ canvas { display: block; touch-action: none; }
   <div class="menu-hero">
     <svg class="menu-deco menu-deco-left" viewBox="0 0 80 80" aria-hidden="true">
       <circle cx="40" cy="40" r="22" fill="#ffd75a" stroke="#fff" stroke-width="3"/>
-      <circle cx="40" cy="40" r="11" fill="#ff5a9d"/>
+      <circle cx="40" cy="40" r="11" fill="#d4a020"/>
       <circle cx="34" cy="34" r="3.5" fill="#fff" opacity=".8"/>
     </svg>
-    <div class="menu-title">GEM BLAST</div>
+    <div class="menu-title">ORE RUSH</div>
     <svg class="menu-deco menu-deco-right" viewBox="0 0 80 80" aria-hidden="true">
       <rect x="18" y="18" width="44" height="44" rx="14" fill="#4be0a3" stroke="#fff" stroke-width="3"/>
       <rect x="28" y="28" width="24" height="24" rx="6" fill="#fff" opacity=".25"/>
@@ -1271,7 +1271,7 @@ canvas { display: block; touch-action: none; }
   </div>
 
   <!-- Последний трофей  -->
-  <div id="m-last-trophy" style="display:none;font-size:12px;color:#4a0f33;text-align:center;font-weight:700;cursor:pointer;margin:-4px 0 4px;animation:winStarBounce .5s ease-out;" onclick="showScreen('achievements')"></div>
+  <div id="m-last-trophy" style="display:none;font-size:12px;color:#3c2808;text-align:center;font-weight:700;cursor:pointer;margin:-4px 0 4px;animation:winStarBounce .5s ease-out;" onclick="showScreen('achievements')"></div>
 
   <!-- Пигги-банк -->
   <div class="piggy-wrap">
@@ -1314,7 +1314,7 @@ canvas { display: block; touch-action: none; }
 <div id="screen-quests" class="screen hidden" style="justify-content:flex-start;">
   <div class="top-bar">
     <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
-    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #b1226a,0 0 8px rgba(255,170,210,.4);">📋 Задания</div>
+    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800,0 0 8px rgba(200,160,40,.4);">📋 Задания</div>
     <div class="cur-pill">🪙 <span id="qst-coins">0</span></div>
     <div class="cur-pill">💎 <span id="qst-crystals">0</span></div>
     <div class="cur-pill">❤️ <span id="qst-lives">5</span></div>
@@ -1324,7 +1324,7 @@ canvas { display: block; touch-action: none; }
     <div id="quests-daily-full"></div>
     <div class="quests-section-title" style="margin-top:12px;">На неделю</div>
     <div id="quests-weekly-full"></div>
-    <div id="quests-timer" style="text-align:center;padding:16px 0 4px;color:#fff;font-size:13px;text-shadow:0 1px 2px rgba(74,15,51,.50);"></div>
+    <div id="quests-timer" style="text-align:center;padding:16px 0 4px;color:#fff;font-size:13px;text-shadow:0 1px 2px rgba(20,10,0,.60);"></div>
   </div>
 </div>
 
@@ -1332,7 +1332,7 @@ canvas { display: block; touch-action: none; }
 <div id="screen-achievements" class="screen hidden" style="justify-content:flex-start;">
   <div class="top-bar">
     <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
-    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #b1226a,0 0 8px rgba(255,170,210,.4);">🏅 Достижения</div>
+    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800,0 0 8px rgba(200,160,40,.4);">🏅 Достижения</div>
     <div class="cur-pill">🪙 <span id="ach-coins">0</span></div>
     <div class="cur-pill">💎 <span id="ach-crystals">0</span></div>
   </div>
@@ -1346,7 +1346,7 @@ canvas { display: block; touch-action: none; }
 <div id="screen-island" class="screen hidden" style="justify-content:flex-start;">
   <div class="top-bar">
     <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
-    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #b1226a,0 0 8px rgba(255,170,210,.4);">🏝️ МОЙ ОСТРОВ</div>
+    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800,0 0 8px rgba(200,160,40,.4);">🏝️ МОЙ ОСТРОВ</div>
     <div class="cur-pill" style="cursor:default;">⭐ <span id="island-stars-hdr">0</span></div>
   </div>
   <div class="island-wrap">
@@ -1364,7 +1364,7 @@ canvas { display: block; touch-action: none; }
 <div id="screen-levels" class="screen hidden" style="justify-content:flex-start;">
   <div class="top-bar">
     <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;" data-i18n="back">← Назад</button>
-    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #b1226a,0 0 8px rgba(255,170,210,.4);" data-i18n="choose_level">Выбор уровня</div>
+    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800,0 0 8px rgba(200,160,40,.4);" data-i18n="choose_level">Выбор уровня</div>
     <div class="cur-pill">🪙 <span id="lvl-coins">0</span></div>
     <div class="cur-pill">❤️ <span id="lvl-lives">5</span></div>
   </div>
@@ -1383,7 +1383,7 @@ canvas { display: block; touch-action: none; }
 <div id="screen-episode" class="screen hidden" style="justify-content:flex-start;">
   <div class="top-bar">
     <button class="btn btn-gray btn-sm" onclick="showLevels()" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
-    <div id="ep-title" style="font-size:16px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #b1226a;">Эпизод</div>
+    <div id="ep-title" style="font-size:16px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800;">Эпизод</div>
     <div class="cur-pill">🪙 <span id="ep-coins">0</span></div>
     <div class="cur-pill">❤️ <span id="ep-lives">5</span></div>
   </div>
@@ -1504,7 +1504,7 @@ canvas { display: block; touch-action: none; }
 <div id="quit-level-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:center;justify-content:center;display:none;">
   <div style="background:linear-gradient(145deg,#2a0845,#4a1065);border-radius:20px;padding:24px 28px;text-align:center;max-width:280px;border:1px solid rgba(255,140,210,.3);box-shadow:0 8px 40px rgba(0,0,0,.6);">
     <div style="font-size:28px;margin-bottom:8px;">🚪</div>
-    <div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:6px;text-shadow:0 2px 0 #b1226a;">Выйти из уровня?</div>
+    <div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:6px;text-shadow:0 2px 0 #804800;">Выйти из уровня?</div>
     <div id="quit-loss-warning" style="font-size:13px;color:#ef4444;font-weight:700;margin-bottom:10px;display:none;"></div>
     <div id="quit-progress-note" style="font-size:13px;color:#f9a8d4;margin-bottom:14px;"></div>
     <div style="display:flex;flex-direction:column;gap:8px;">
@@ -1532,7 +1532,7 @@ canvas { display: block; touch-action: none; }
 <div class="popup-overlay hidden" id="unlock-screen-overlay" onclick="if(event.target===this)hideUnlockScreen()">
   <div id="unlock-screen-box" style="background:linear-gradient(160deg,var(--bg-mid),var(--bg-deep));border-radius:24px;padding:32px 24px;max-width:340px;width:90%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 0 60px rgba(255,95,158,.4);">
     <div id="us-icon" style="font-size:64px;opacity:0;transform:scale(0);transition:none;">🎁</div>
-    <div id="us-title" style="font-size:22px;font-weight:900;color:#fff;text-shadow:0 2px 0 #b1226a;opacity:0;transform:translateY(20px);transition:none;"></div>
+    <div id="us-title" style="font-size:22px;font-weight:900;color:#fff;text-shadow:0 2px 0 #804800;opacity:0;transform:translateY(20px);transition:none;"></div>
     <div id="us-desc" style="font-size:14px;color:var(--c-text-soft);opacity:0;transition:none;line-height:1.5;"></div>
     <button id="us-btn" onclick="hideUnlockScreen()" style="opacity:0;transform:scale(0);transition:none;background:linear-gradient(135deg,var(--c-primary),var(--c-primary2));color:#fff;border:none;border-radius:50px;padding:12px 36px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:var(--shadow-glow);">Отлично!</button>
   </div>
@@ -1622,7 +1622,7 @@ canvas { display: block; touch-action: none; }
 <div id="screen-shop" class="screen hidden">
   <div class="top-bar">
     <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;" data-i18n="back">← Назад</button>
-    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #b1226a,0 0 8px rgba(255,170,210,.4);" data-i18n="shop_title">🛒 Магазин</div>
+    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800,0 0 8px rgba(200,160,40,.4);" data-i18n="shop_title">🛒 Магазин</div>
     <div class="cur-pill">🪙 <span id="sh-coins">0</span></div>
     <div class="cur-pill">💎 <span id="sh-crystals">0</span></div>
   </div>
@@ -1877,7 +1877,7 @@ canvas { display: block; touch-action: none; }
 <div id="screen-settings" class="screen hidden">
   <div class="top-bar" style="position:sticky;top:0;z-index:20;">
     <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;" data-i18n="back">← Назад</button>
-    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #b1226a,0 0 8px rgba(255,170,210,.4);" data-i18n="settings_title">⚙️ Настройки</div>
+    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800,0 0 8px rgba(200,160,40,.4);" data-i18n="settings_title">⚙️ Настройки</div>
   </div>
   <div class="settings-wrap">
     <div class="setting-row" style="gap:8px;">
@@ -1955,7 +1955,7 @@ canvas { display: block; touch-action: none; }
 <div id="screen-season" class="screen hidden">
   <div class="top-bar">
     <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;" data-i18n="back">← Назад</button>
-    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #b1226a,0 0 8px rgba(255,170,210,.4);">🏆 Сезон</div>
+    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800,0 0 8px rgba(200,160,40,.4);">🏆 Сезон</div>
     <div class="cur-pill">🪙 <span id="sea-coins">0</span></div>
     <div class="cur-pill">💎 <span id="sea-crystals">0</span></div>
   </div>
@@ -1976,7 +1976,7 @@ canvas { display: block; touch-action: none; }
 <div id="screen-tournament" class="screen hidden">
   <div class="top-bar">
     <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;" data-i18n="back">← Назад</button>
-    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #b1226a,0 0 8px rgba(255,170,210,.4);">⚔️ Турнир</div>
+    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800,0 0 8px rgba(200,160,40,.4);">⚔️ Турнир</div>
     <div class="cur-pill">🪙 <span id="tn-coins">0</span></div>
     <div class="cur-pill">💎 <span id="tn-crystals">0</span></div>
   </div>
@@ -2325,12 +2325,12 @@ const EASE = {
 };
 
 const GEMS = [
-  { id:0, color:'#ff3d6e', shape:'heart',   name:'Малина'   },
-  { id:1, color:'#3aa8ff', shape:'drop',    name:'Капля'    },
-  { id:2, color:'#34d96f', shape:'clover',  name:'Клевер'   },
-  { id:3, color:'#ffcb3a', shape:'star',    name:'Звезда'   },
-  { id:4, color:'#b96bff', shape:'kite',    name:'Кристалл' },
-  { id:5, color:'#ff8a3a', shape:'flower',  name:'Цветок'   },
+  { id:0, color:'#f0c030', shape:'ore_spike',  name:'Золото'   },
+  { id:1, color:'#4aafff', shape:'ore_hex',    name:'Сапфир'   },
+  { id:2, color:'#30d870', shape:'ore_rect',   name:'Изумруд'  },
+  { id:3, color:'#ff4848', shape:'ore_round',  name:'Рубин'    },
+  { id:4, color:'#c060ff', shape:'ore_tri',    name:'Аметист'  },
+  { id:5, color:'#ff8840', shape:'ore_blob',   name:'Янтарь'   },
 ];
 
 const SPECIAL = { NONE:0, STRIPE_H:1, STRIPE_V:2, RAINBOW:4, MEGA:5, ROCKET:6, BOMB:7, COLORING:8 };
@@ -4961,9 +4961,9 @@ function drawBoard() {
   }
 
   const cs=cellSize;
-  // 1. Адаптивный фон — мягкая малиновая «доска» с тенью
+  // 1. Адаптивный фон — каменная доска подземелья
   const _lvlTier=getDifficultyTier(getLevel(state.currentLevel));
-  const _boardBg=_lvlTier>=3?'rgba(195,75,135,0.42)':_lvlTier>=2?'rgba(205,85,145,0.38)':'rgba(215,95,155,0.33)';
+  const _boardBg=_lvlTier>=3?'rgba(20,12,4,0.72)':_lvlTier>=2?'rgba(25,15,6,0.65)':'rgba(30,18,8,0.58)';
   ctx.save();
   ctx.fillStyle=_boardBg;
   ctx.beginPath();
@@ -5634,6 +5634,81 @@ function _gemPath(ctx,shape,cx,cy,r) {
       ctx.arc(cx, cy, r*0.30, 0, Math.PI*2);
       break;
     }
+    // ── ORE SHAPES — рудные формы для темы раскопок ──────────────
+    // ore_spike — кристаллический пик (золото)
+    case 'ore_spike': {
+      const w = r*0.55, h = r*0.95, sh = r*0.32;
+      ctx.moveTo(cx, cy - h);
+      ctx.lineTo(cx + w*0.45, cy - sh);
+      ctx.lineTo(cx + w, cy + h*0.60);
+      ctx.lineTo(cx + w*0.30, cy + h);
+      ctx.lineTo(cx - w*0.30, cy + h);
+      ctx.lineTo(cx - w, cy + h*0.60);
+      ctx.lineTo(cx - w*0.45, cy - sh);
+      ctx.closePath();
+      break;
+    }
+    // ore_hex — правильный шестиугольник (сапфир)
+    case 'ore_hex': {
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
+        if (i === 0) ctx.moveTo(cx + Math.cos(a)*r*0.92, cy + Math.sin(a)*r*0.92);
+        else ctx.lineTo(cx + Math.cos(a)*r*0.92, cy + Math.sin(a)*r*0.92);
+      }
+      ctx.closePath();
+      break;
+    }
+    // ore_rect — прямоугольный срез с фасками (изумруд)
+    case 'ore_rect': {
+      const ww = r*0.68, hh = r*0.90, ch = r*0.20;
+      ctx.moveTo(cx - ww + ch, cy - hh);
+      ctx.lineTo(cx + ww - ch, cy - hh);
+      ctx.lineTo(cx + ww,      cy - hh + ch);
+      ctx.lineTo(cx + ww,      cy + hh - ch);
+      ctx.lineTo(cx + ww - ch, cy + hh);
+      ctx.lineTo(cx - ww + ch, cy + hh);
+      ctx.lineTo(cx - ww,      cy + hh - ch);
+      ctx.lineTo(cx - ww,      cy - hh + ch);
+      ctx.closePath();
+      break;
+    }
+    // ore_round — восьмигранник (рубин)
+    case 'ore_round': {
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 - Math.PI / 8;
+        if (i === 0) ctx.moveTo(cx + Math.cos(a)*r*0.92, cy + Math.sin(a)*r*0.92);
+        else ctx.lineTo(cx + Math.cos(a)*r*0.92, cy + Math.sin(a)*r*0.92);
+      }
+      ctx.closePath();
+      break;
+    }
+    // ore_tri — кластер из трёх кристальных пиков (аметист)
+    case 'ore_tri': {
+      for (let i = 0; i < 3; i++) {
+        const baseAng = (i / 3) * Math.PI * 2 - Math.PI / 2;
+        const tx = cx + Math.cos(baseAng) * r * 0.90;
+        const ty = cy + Math.sin(baseAng) * r * 0.90;
+        const s1 = baseAng + Math.PI * 0.78;
+        const s2 = baseAng - Math.PI * 0.78;
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(cx + Math.cos(s1)*r*0.42, cy + Math.sin(s1)*r*0.42);
+        ctx.lineTo(cx + Math.cos(s2)*r*0.42, cy + Math.sin(s2)*r*0.42);
+        ctx.closePath();
+      }
+      break;
+    }
+    // ore_blob — самородок неправильной формы (янтарь)
+    case 'ore_blob': {
+      const offs = [1.0, 0.80, 0.94, 0.76, 0.88, 0.82, 0.96, 0.78];
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 - Math.PI * 0.2;
+        const ir = r * offs[i] * 0.90;
+        if (i === 0) ctx.moveTo(cx + Math.cos(a)*ir, cy + Math.sin(a)*ir);
+        else ctx.lineTo(cx + Math.cos(a)*ir, cy + Math.sin(a)*ir);
+      }
+      ctx.closePath();
+      break;
+    }
     // ── fallback (старые шапки, на случай) ────────────────────────
     case 'circle':   ctx.arc(cx,cy,r-1,0,Math.PI*2); break;
     case 'diamond':  ctx.moveTo(cx,cy-r+1);ctx.lineTo(cx+r-1,cy);ctx.lineTo(cx,cy+r-1);ctx.lineTo(cx-r+1,cy);ctx.closePath(); break;
@@ -5769,6 +5844,15 @@ function _getCarpetSprite() {
   return cv;
 }
 
+// PNG asset override — заполнить GEM_IMAGES[i] HTMLImageElement чтобы заменить canvas-рисовку
+// Пример: loadGemImage(0, 'assets/ore_gold.png')
+const GEM_IMAGES = new Array(6).fill(null);
+function loadGemImage(gemIndex, url) {
+  const img = new Image();
+  img.onload = () => { GEM_IMAGES[gemIndex] = img; invalidateGemCache(); };
+  img.src = url;
+}
+
 function _renderGemSprite(shape, color, size, gemType, skin) {
   const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
   const pad = Math.ceil(size * 0.20);
@@ -5779,6 +5863,12 @@ function _renderGemSprite(shape, color, size, gemType, skin) {
   const c = cv.getContext('2d');
   c.scale(dpr, dpr);
   const r = size/2, cx = pad + r, cy = pad + r;
+
+  // PNG override — если загружен внешний ассет для этого типа гема
+  if (gemType !== undefined && GEM_IMAGES[gemType] && !SKIN_EMOJI[skin]) {
+    c.drawImage(GEM_IMAGES[gemType], pad, pad, size, size);
+    return { canvas: cv, pad, size, w };
+  }
 
   const emojiSet = SKIN_EMOJI[skin];
   if (emojiSet && gemType !== undefined && emojiSet[gemType]) {
@@ -11703,8 +11793,8 @@ function renderQuestsFull() {
 
   const daily  = state.quests.filter(q => !q.weekly);
   const weekly = state.quests.filter(q => q.weekly);
-  dailyEl.innerHTML  = daily.length  ? daily.map(cardHTML).join('')  : '<div style="color:#fff;font-size:13px;padding:8px 0;text-shadow:0 1px 2px rgba(74,15,51,.5);">Нет ежедневных заданий</div>';
-  weeklyEl.innerHTML = weekly.length ? weekly.map(cardHTML).join('') : '<div style="color:#fff;font-size:13px;padding:8px 0;text-shadow:0 1px 2px rgba(74,15,51,.5);">Нет еженедельных заданий</div>';
+  dailyEl.innerHTML  = daily.length  ? daily.map(cardHTML).join('')  : '<div style="color:#fff;font-size:13px;padding:8px 0;text-shadow:0 1px 2px rgba(20,10,0,.60);">Нет ежедневных заданий</div>';
+  weeklyEl.innerHTML = weekly.length ? weekly.map(cardHTML).join('') : '<div style="color:#fff;font-size:13px;padding:8px 0;text-shadow:0 1px 2px rgba(20,10,0,.60);">Нет еженедельных заданий</div>';
 
   // Таймер до следующих заданий
   const timerEl = document.getElementById('quests-timer');
@@ -11716,7 +11806,7 @@ function renderQuestsFull() {
       const msLeft = midnight - now;
       const hh = Math.floor(msLeft/3600000);
       const mm = Math.floor((msLeft%3600000)/60000);
-      timerEl.innerHTML = `<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:12px 16px;margin-top:8px;color:#fff;text-shadow:0 1px 2px rgba(74,15,51,.5);">
+      timerEl.innerHTML = `<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:12px 16px;margin-top:8px;color:#fff;text-shadow:0 1px 2px rgba(20,10,0,.60);">
         ✅ На сегодня все задания выполнены!<br>
         <span style="color:#ffd2ea;">Следующие задания через ${hh}ч ${mm}м</span>
       </div>`;
@@ -11811,7 +11901,7 @@ function renderAchievements() {
       <div style="display:flex;align-items:center;gap:10px;color:#2d1048;font-size:14px;font-weight:700;margin-bottom:6px;">
         <span>Получено: ${done} / ${total}</span><span style="color:#7c2cc6;">${pct}%</span>
       </div>
-      <div style="background:rgba(74,15,51,0.15);border-radius:8px;height:8px;overflow:hidden;">
+      <div style="background:rgba(20,10,0,0.20);border-radius:8px;height:8px;overflow:hidden;">
         <div style="background:linear-gradient(90deg,#a855f7,#6366f1);height:100%;width:${pct}%;transition:width .4s;border-radius:8px;"></div>
       </div>
     </div>`;
@@ -11855,7 +11945,7 @@ function renderAchievements() {
   }).join('');
 
   el.insertAdjacentHTML('beforeend', `
-    <div style="margin-top:18px;margin-bottom:6px;font-size:13px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(74,15,51,.55);letter-spacing:0.05em;text-transform:uppercase;">
+    <div style="margin-top:18px;margin-bottom:6px;font-size:13px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(20,10,0,.65);letter-spacing:0.05em;text-transform:uppercase;">
       🏆 Трофеи (${earnedTrophies.length}/${TROPHIES.length})
     </div>
     ${trophyHTML}
