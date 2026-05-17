@@ -5221,15 +5221,13 @@ function drawCellGem(r,c,cell) {
     ctx.font=`${cs*.48}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('❓',cx,cy);
   } else if (cell.bottle) {
-    // Газировочная бутылка — синяя с пузырьками
-    ctx.fillStyle='#0ea5e9'; roundRect(ctx,x+pad,y+pad,cs-pad*2,cs-pad*2,10); ctx.fill();
-    const bGrd=ctx.createRadialGradient(cx-cs*.1,cy-cs*.2,2,cx,cy,cs*.55);
-    bGrd.addColorStop(0,'rgba(186,230,253,0.6)'); bGrd.addColorStop(1,'rgba(2,132,199,0)');
-    ctx.fillStyle=bGrd; roundRect(ctx,x+pad,y+pad,cs-pad*2,cs-pad*2,10); ctx.fill();
-    ctx.strokeStyle='rgba(125,211,252,0.9)'; ctx.lineWidth=2;
-    roundRect(ctx,x+pad,y+pad,cs-pad*2,cs-pad*2,10); ctx.stroke();
-    ctx.font=`${cs*.5}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('🍶',cx,cy);
+    // Колба: рисуем гем-цвет фишки, поверх — иконка колбы
+    const _bGem = GEMS[cell.type];
+    if (_bGem) drawShape(ctx, _bGem.shape, cx, cy, cs / 2 - pad + 2, _bGem.color, SPECIAL.NONE);
+    ctx.globalAlpha = 0.82;
+    ctx.font = `${cs * 0.42}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🍶', cx, cy);
+    ctx.globalAlpha = 1;
   } else if (cell.stone) {
     ctx.fillStyle='#4b5563'; roundRect(ctx,x+pad,y+pad,cs-pad*2,cs-pad*2,8); ctx.fill();
     ctx.font=`${cs*.5}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -6220,6 +6218,7 @@ async function processMatches(hintR, hintC) {
       const cell=state.board[r][c]; if (!cell) continue;
       if (cell.ingredient) continue; // ингредиенты не уничтожаются матчем — падают сами
       if (cell.locked) { cell.locked=false; spawnParticles(r,c,'#a78bfa',4); }
+      if (cell.bottle) popBottle(r, c); // колба в матче — считаем её как сбитую
       const gem=GEMS[cell.type]; if (gem) { spawnParticles(r,c,getSkinColor(cell.type)); spawnScorePop(r,c,getSkinColor(cell.type)); }
       if (state.iceGrid[r]?.[c]) { state.iceGrid[r][c]=0; state.iceBroken++; updateQuestProgress('ice', 1); }
       clearJellyAt(r, c);
@@ -7379,8 +7378,14 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
     // Find where bomb landed (track by object reference)
     let _br=r,_bc=c;
     if(bombCell){let _found=false;for(let rr=0;rr<ROWS&&!_found;rr++)for(let cc=0;cc<COLS&&!_found;cc++){if(state.board[rr]?.[cc]===bombCell){_br=rr;_bc=cc;_found=true;}}}
-    // Smoke while waiting for second blast
-    for(let i=0;i<3;i++){spawnParticles(_br,_bc,'#cccccc',2);await new Promise(res=>setTimeout(res,150));if(_matchEpoch!==_myEpoch)return;}
+    // Smoke while waiting for second blast (shortened during bonus explosion)
+    if (state._inBonusExplosion) {
+      spawnParticles(_br,_bc,'#cccccc',2);
+      await new Promise(res=>setTimeout(res,50));
+    } else {
+      for(let i=0;i<3;i++){spawnParticles(_br,_bc,'#cccccc',2);await new Promise(res=>setTimeout(res,150));if(_matchEpoch!==_myEpoch)return;}
+    }
+    if(_matchEpoch!==_myEpoch)return;
     // Phase 2: remove bomb and blast 3×3 at landed position
     state.board[_br][_bc]=null;
     await _bombBlast3x3(_br,_bc);
@@ -7502,8 +7507,11 @@ function popBottle(r, c) {
   const cl = state.board[r]?.[c]; if (!cl || !cl.bottle) return;
   cl.bottle = false;
   state.bottlesBroken++;
-  // Расширяем сода-зону
-  if (state.sodaLevel < ROWS) state.sodaLevel++;
+  // Расширяем сода-зону пропорционально: все колбы → вода до верха
+  { const _bl = getLevel(state.currentLevel);
+    const _bn = Math.max(1, _bl?.bottleCount || 1);
+    const _bi = Math.min(2, Math.floor(_bn / 2) + 1);
+    state.sodaLevel = Math.min(ROWS, _bi + Math.round((ROWS - _bi) * state.bottlesBroken / _bn)); }
   spawnParticles(r, c, '#38bdf8', 8);
   rings.push({ x:boardOffX+c*cellSize+cellSize/2, y:boardOffY+r*cellSize+cellSize/2,
     color:'rgba(56,189,248,0.9)', r:4, maxR:cellSize*1.2, life:1, lw:3 });
@@ -7846,7 +7854,7 @@ async function trySwap(r1,c1,r2,c2) {
   if (state.busy||state.paused) return;
   if (r2<0||r2>=ROWS||c2<0||c2>=COLS) return;
   const cl1=state.board[r1][c1], cl2=state.board[r2][c2];
-  if (!cl1||!cl2||cl1.stone||cl2.stone||cl1.chocolate||cl2.chocolate||cl1.marmalade||cl2.marmalade||cl1.locked||cl2.locked||cl1.mystery||cl2.mystery||cl1.bottle||cl2.bottle) return;
+  if (!cl1||!cl2||cl1.stone||cl2.stone||cl1.chocolate||cl2.chocolate||cl1.marmalade||cl2.marmalade||cl1.locked||cl2.locked||cl1.mystery||cl2.mystery) return;
   haptic('tap');
   if (cl1.ingredient || cl2.ingredient) return;
 
@@ -9159,7 +9167,7 @@ async function bonusMovesExplosion() {
     state.moves--;
     state.comboCount++;
     drawBoard(); updateHUD();
-    await new Promise(r=>setTimeout(r,200)); // brief pause so player sees the placed special
+    await new Promise(r=>setTimeout(r,60)); // brief pause so player sees the placed special
     if (_matchEpoch !== _myEpoch) break;
     await triggerSpecial(br,bc,sp);
     if (_matchEpoch !== _myEpoch) break;
@@ -10035,7 +10043,7 @@ function canSwap(r,c) {
   if ((state.iceGrid[r]?.[c]||0) > 0) return false;
   const cl=state.board[r]?.[c];
   if (!cl) return false;
-  if (cl.stone||cl.chocolate||cl.marmalade||cl.ingredient||cl.locked||cl.mystery||cl.bottle||(cl.licorice>0)||(cl.honey>0)) return false;
+  if (cl.stone||cl.chocolate||cl.marmalade||cl.ingredient||cl.locked||cl.mystery||(cl.licorice>0)||(cl.honey>0)) return false;
   return true;
 }
 function findBestHint() {
