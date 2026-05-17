@@ -1033,12 +1033,6 @@ canvas { display: block; touch-action: none; }
 #screen-achievements, #screen-shop, #screen-settings,
 #screen-season, #screen-tournament, #screen-island { padding-bottom: 60px; }
 
-/* Win / Lose — dark overlay so all secondary text (pink, gold, green) is readable */
-#screen-win, #screen-lose {
-  background: rgba(40,5,28,.80);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-}
 /* Win glow canvas sits on top of the dark overlay */
 #win-glow-canvas { z-index: 0; mix-blend-mode: screen; }
 /* Result screen sheet */
@@ -3223,104 +3217,109 @@ const T = {
 };
 function t(k) { return (T[state.lang]||T.ru)[k]||k; }
 
-// Словарь для пословного перевода названий эпизодов (en→ru)
-const EP_NAME_RU = {
-  // Камни/минералы — прилагательные
+// Существительные-финалы с грамматическим родом [перевод, род: m/f/n/pl]
+const EP_NOUNS_RU = {
+  Cavern:['Пещера','f'], Ridge:['Хребет','m'], Shore:['Берег','m'],
+  Shores:['Берега','pl'], Peak:['Вершина','f'], Peaks:['Вершины','pl'],
+  Valley:['Долина','f'], Grotto:['Грот','m'], Tower:['Башня','f'],
+  Ocean:['Океан','m'], Grove:['Роща','f'], Jungle:['Джунгли','pl'],
+  Cliffs:['Утёсы','pl'], Cliff:['Утёс','m'], Fortress:['Крепость','f'],
+  Tundra:['Тундра','f'], Outpost:['Форпост','m'], Abyss:['Бездна','f'],
+  Lagoon:['Лагуна','f'], Plains:['Равнины','pl'], Mountain:['Гора','f'],
+  Summit:['Вершина','f'], Ravine:['Ущелье','n'], Springs:['Источники','pl'],
+  Shoals:['Отмели','pl'], Depths:['Глубины','pl'], Basin:['Котловина','f'],
+  Glen:['Лощина','f'], Landing:['Причал','m'], Canyon:['Каньон','m'],
+  Garden:['Сад','m'], Junction:['Развилка','f'], Falls:['Водопад','m'],
+  Reef:['Риф','m'], Atoll:['Атолл','m'], Lake:['Озеро','n'],
+  Bay:['Залив','m'], Isle:['Остров','m'], Island:['Остров','m'],
+  Harbor:['Гавань','f'], Marsh:['Болото','n'], Oasis:['Оазис','m'],
+  Mesa:['Меса','f'], Delta:['Дельта','f'], Vale:['Долина','f'],
+  Pass:['Перевал','m'], Steppes:['Степи','pl'], Savanna:['Саванна','f'],
+  Trail:['Тропа','f'], Gorge:['Ущелье','n'], Cove:['Бухта','f'],
+  Domain:['Владения','pl'], Wilderness:['Дикоземье','n'], Realm:['Царство','n'],
+  Dungeon:['Подземелье','n'], Keep:['Крепость','f'], Crossing:['Переправа','f'],
+  Crossroads:['Перекрёсток','m'], Tunnel:['Туннель','m'], Shaft:['Шахта','f'],
+  Zone:['Зона','f'], Territory:['Территория','f'], Expanse:['Просторы','pl'],
+  Vault:['Хранилище','n'], Gate:['Врата','pl'], Gateway:['Врата','pl'],
+  Sanctuary:['Убежище','n'], Sanctum:['Святилище','n'], Arena:['Арена','f'],
+  Alcove:['Ниша','f'], Arch:['Арка','f'], Arches:['Арки','pl'],
+  Echo:['Эхо','n'], Nexus:['Узел','m'], Cascade:['Каскад','m'],
+  Chamber:['Чертог','m'], Tides:['Приливы','pl'], Compass:['Компас','m'],
+  Ascent:['Подъём','m'], Uplands:['Нагорья','pl'], Quarry:['Карьер','m'],
+  Spire:['Шпиль','m'], Heights:['Высоты','pl'], Spiral:['Спираль','f'],
+  Plateau:['Плато','n'], Wasteland:['Пустошь','f'], Wastes:['Пустоши','pl'],
+  Forest:['Лес','m'], Lair:['Логово','n'], Nest:['Гнездо','n'],
+  Temple:['Храм','m'], Citadel:['Цитадель','f'], Kingdom:['Королевство','n'],
+  Ruins:['Руины','pl'], Ruin:['Руины','pl'], Tomb:['Гробница','f'],
+  Crypt:['Крипта','f'], Labyrinth:['Лабиринт','m'], Maze:['Лабиринт','m'],
+  Prison:['Тюрьма','f'], Throne:['Трон','m'], Palace:['Дворец','m'],
+  Castle:['Замок','m'], Archive:['Архив','m'], Laboratory:['Лаборатория','f'],
+  Workshop:['Мастерская','f'], Foundry:['Литейня','f'], Forge:['Кузница','f'],
+  Smithy:['Кузница','f'], Kiln:['Горн','m'], Furnace:['Горн','m'],
+  Meadow:['Луг','m'], Swamp:['Болото','n'], Bay:['Залив','m'],
+  Watchtower:['Дозорная башня','f'],
+};
+
+// Прилагательные (мужской род — автоматически согласуются с родом финального существительного)
+const EP_ADJS_RU = {
   Crystal:'Кристальный', Ruby:'Рубиновый', Sapphire:'Сапфировый',
   Diamond:'Алмазный', Emerald:'Изумрудный', Amethyst:'Аметистовый',
   Topaz:'Топазовый', Opal:'Опаловый', Garnet:'Гранатовый', Jade:'Нефритовый',
   Citrine:'Цитриновый', Obsidian:'Обсидиановый', Turquoise:'Бирюзовый',
   Onyx:'Ониксовый', Aquamarine:'Аквамариновый', Lapis:'Лазурный',
-  Pearl:'Жемчужный', Moonstone:'Лунный камень', Sunstone:'Солнечный камень',
-  Prism:'Призматический', Alexandrite:'Александритовый', Zircon:'Цирконовый',
-  Tanzanite:'Танзанитовый', Tourmaline:'Турмалиновый', Spinel:'Шпинелевый',
-  Rhodonite:'Родонитовый', Malachite:'Малахитовый', Chrysocolla:'Хризоколловый',
-  Labradorite:'Лабрадоритовый', Peridot:'Перидотовый', Iolite:'Иолитовый',
-  Kunzite:'Кунцитовый', Sphalerite:'Сфалеритовый', Fluorite:'Флюоритовый',
-  Calcite:'Кальцитовый', Halite:'Галитовый', Pyrite:'Пиритовый',
-  Magnetite:'Магнетитовый', Hematite:'Гематитовый', Galena:'Галенитовый',
-  Cinnabar:'Киноварный', Azurite:'Азуритовый', Atacamite:'Атакамитовый',
-  Vivianite:'Вивианитовый', Dioptase:'Диоптазовый', Cuprite:'Купритовый',
-  Quartz:'Кварцевый',
-  // Географические названия
-  Cavern:'Пещера', Ridge:'Хребет', Shore:'Берег', Shores:'Берега',
-  Peak:'Вершина', Peaks:'Вершины', Valley:'Долина', Grotto:'Грот',
-  Tower:'Башня', Ocean:'Океан', Grove:'Роща', Jungle:'Джунгли',
-  Cliffs:'Утёсы', Fortress:'Крепость', Tundra:'Тундра', Outpost:'Форпост',
-  Abyss:'Бездна', Lagoon:'Лагуна', Plains:'Равнины', Mountain:'Гора',
-  Summit:'Вершина', Ravine:'Ущелье', Springs:'Источники', Shoals:'Отмели',
-  Depths:'Глубины', Basin:'Котловина', Glen:'Лощина', Landing:'Причал',
-  Canyon:'Каньон', Garden:'Сад', Junction:'Развилка', Falls:'Водопад',
-  Reef:'Риф', Atoll:'Атолл', Lake:'Озеро', Bay:'Залив', Isle:'Остров',
-  Harbor:'Гавань', Marsh:'Болото', Oasis:'Оазис', Mesa:'Меса',
-  Delta:'Дельта', Vale:'Долина', Pass:'Перевал', Steppes:'Степи',
-  Savanna:'Саванна', Trail:'Тропа', Gorge:'Ущелье', Cove:'Бухта',
-  Domain:'Владения', Wilderness:'Дикоземье', Realm:'Царство',
-  Dungeon:'Подземелье', Keep:'Крепость', Crossing:'Переправа',
-  Crossroads:'Перекрёсток', Tunnel:'Туннель', Shaft:'Шахта', Mine:'Шахта',
-  Zone:'Зона', Territory:'Территория', Expanse:'Просторы', Vault:'Хранилище',
-  Gate:'Врата', Gateway:'Врата', Sanctuary:'Убежище', Sanctum:'Святилище',
-  Arena:'Арена', Alcove:'Ниша', Arch:'Арка', Arches:'Арки', Echo:'Эхо',
-  Nexus:'Узел', Cascade:'Каскад', Chamber:'Чертог', Watchtower:'Дозорная башня',
-  Tides:'Приливы', Compass:'Компас', Ascent:'Подъём', Uplands:'Нагорья',
-  Quarry:'Карьер', Spire:'Шпиль', Heights:'Высоты', Spiral:'Спираль',
-  // Строения
-  Temple:'Храм', Citadel:'Цитадель', Kingdom:'Королевство', Ruins:'Руины',
-  Ruin:'Руины', Tomb:'Гробница', Crypt:'Крипта', Labyrinth:'Лабиринт',
-  Maze:'Лабиринт', Prison:'Тюрьма', Throne:'Трон', Palace:'Дворец',
-  Castle:'Замок', Archive:'Архив', Laboratory:'Лаборатория',
-  Workshop:'Мастерская', Foundry:'Литейня', Forge:'Кузница', Smithy:'Кузница',
-  Kiln:'Горн', Furnace:'Горн',
-  // Погода/природа
+  Pearl:'Жемчужный', Prism:'Призматический', Alexandrite:'Александритовый',
+  Zircon:'Цирконовый', Tanzanite:'Танзанитовый', Tourmaline:'Турмалиновый',
+  Spinel:'Шпинелевый', Rhodonite:'Родонитовый', Malachite:'Малахитовый',
+  Chrysocolla:'Хризоколловый', Labradorite:'Лабрадоритовый',
+  Peridot:'Перидотовый', Iolite:'Иолитовый', Kunzite:'Кунцитовый',
+  Sphalerite:'Сфалеритовый', Fluorite:'Флюоритовый', Calcite:'Кальцитовый',
+  Halite:'Галитовый', Pyrite:'Пиритовый', Magnetite:'Магнетитовый',
+  Hematite:'Гематитовый', Galena:'Галенитовый', Cinnabar:'Киноварный',
+  Azurite:'Азуритовый', Atacamite:'Атакамитовый', Vivianite:'Вивианитовый',
+  Dioptase:'Диоптазовый', Cuprite:'Купритовый', Quartz:'Кварцевый',
+  Golden:'Золотой', Silver:'Серебряный', Ivory:'Костяной',
+  Crimson:'Алый', Scarlet:'Пурпурный', Violet:'Фиолетовый', Teal:'Бирюзовый',
+  Azure:'Лазурный', Amber:'Янтарный', Dark:'Тёмный', Blazing:'Пылающий',
+  Frozen:'Ледяной', Gleaming:'Сверкающий', Shimmering:'Мерцающий',
+  Sparkling:'Искристый', Radiant:'Сияющий', Brilliant:'Блистательный',
+  Dazzling:'Ослепительный', Lustrous:'Лучистый', Neon:'Неоновый',
+  Rainbow:'Радужный', Ancient:'Древний', Forgotten:'Забытый', Lost:'Потерянный',
+  Sacred:'Священный', Hidden:'Скрытый', Secret:'Тайный', Mystic:'Мистический',
+  Arcane:'Тайный', Enchanted:'Зачарованный', Runic:'Рунический',
+  Electric:'Электрический', Volcanic:'Вулканический', Cosmic:'Космический',
+  Astral:'Астральный', Celestial:'Небесный', Lunar:'Лунный', Solar:'Солнечный',
+  Eternal:'Вечный', Timeless:'Вечный', Ageless:'Вечный', Boundless:'Бескрайний',
+  Infinite:'Бесконечный', Primordial:'Первозданный', Submerged:'Затопленный',
+  Flooded:'Затопленный', Sunken:'Затопленный', Drowned:'Потопленный',
+  Underground:'Подземный', Subterranean:'Подземный', Windswept:'Ветреный',
+  Harmonic:'Гармонический', Tidal:'Приливный', Parallel:'Параллельный',
+  Alternate:'Альтернативный', Iron:'Железный', Steel:'Стальной',
+  Bronze:'Бронзовый', Copper:'Медный', Mithril:'Митрильный',
+  Adamantine:'Адамантиновый', Orichalcum:'Орихалковый', Shadow:'Теневой',
+  Concealed:'Скрытый', Shrouded:'Укутанный', Veiled:'Завуалированный',
+  Obscured:'Скрытый', Covert:'Тайный', Bone:'Костяной',
+};
+
+// Неизменяемые слова (не прилагательные — существительные-определители, составные слова)
+const EP_FIXED_RU = {
   Lightning:'Молния', Thunder:'Гром', Storm:'Шторм', Tempest:'Буря',
-  Tornado:'Торнадо', Hurricane:'Ураган', Cyclone:'Циклон',
-  Frostfire:'Ледяной огонь', Sunfire:'Солнечный огонь', Moonfire:'Лунный огонь',
-  Volcanic:'Вулканический', Aurora:'Аврора', Twilight:'Сумерки',
-  Starfall:'Звездопад', Windswept:'Ветреный', Blazing:'Пылающий',
-  Frozen:'Ледяной', Breeze:'Бриз', Gale:'Шквал', Mist:'Туман', Fog:'Туман',
-  Haze:'Дымка', Wave:'Волна', Eddy:'Водоворот', Swirl:'Вихрь', Surge:'Волна',
-  Tidal:'Приливный', Current:'Течение', Cloud:'Облако', Whirlwind:'Вихрь',
-  // Космос
-  Solar:'Солнечный', Lunar:'Лунный', Cosmic:'Космический', Celestial:'Небесный',
-  Astral:'Астральный', Nebula:'Туманность', Galaxy:'Галактика', Comet:'Комета',
-  Meteor:'Метеор', Stardust:'Звёздная пыль', Starlight:'Звёздный свет',
+  Tornado:'Торнадо', Hurricane:'Ураган', Cyclone:'Циклон', Aurora:'Аврора',
+  Twilight:'Сумерки', Frostfire:'Ледяной огонь', Sunfire:'Солнечный огонь',
+  Moonfire:'Лунный огонь', Moonstone:'Лунный камень', Sunstone:'Солнечный камень',
+  Stardust:'Звёздная пыль', Starfall:'Звездопад', Starlight:'Звёздный свет',
+  Nebula:'Туманность', Galaxy:'Галактика', Comet:'Комета', Meteor:'Метеор',
   Nova:'Нова', Pulsar:'Пульсар', Quasar:'Квазар', Universe:'Вселенная',
-  Multiverse:'Мультивселенная', Cosmos:'Космос', Void:'Пустота', Vortex:'Вихрь',
-  Rift:'Разлом', Portal:'Портал', Dimension:'Измерение', Parallel:'Параллельный',
-  Alternate:'Альтернативный', Drift:'Дрейф',
-  // Магия
-  Mystic:'Мистический', Magic:'Магический', Arcane:'Тайный',
-  Enchanted:'Зачарованный', Runic:'Рунический', Sacred:'Священный',
-  Ancient:'Древний', Forgotten:'Забытый', Lost:'Потерянный', Rune:'Руна',
-  Glyph:'Глиф', Sigil:'Сигил', Omen:'Знамение', Prophecy:'Пророчество',
-  Oracle:'Оракул', Vision:'Видение', Dream:'Мечта', Nightmare:'Кошмар',
-  Phantom:'Фантом', Specter:'Призрак', Spirit:'Дух', Ghost:'Призрак',
-  Soul:'Душа', Essence:'Суть', Aura:'Аура', Mana:'Мана', Charm:'Чары',
-  Curse:'Проклятие', Hex:'Гекс', Jinx:'Сглаз', Ward:'Оберег',
+  Multiverse:'Мультивселенная', Vortex:'Вихрь', Rift:'Разлом',
+  Portal:'Портал', Dimension:'Измерение', Void:'Пустота', Drift:'Дрейф',
+  Rune:'Руна', Glyph:'Глиф', Sigil:'Сигил', Omen:'Знамение',
+  Prophecy:'Пророчество', Oracle:'Оракул', Vision:'Видение', Dream:'Мечта',
+  Nightmare:'Кошмар', Phantom:'Фантом', Specter:'Призрак', Spirit:'Дух',
+  Ghost:'Призрак', Soul:'Душа', Essence:'Суть', Aura:'Аура', Mana:'Мана',
+  Charm:'Чары', Curse:'Проклятие', Hex:'Гекс', Jinx:'Сглаз', Ward:'Оберег',
   Spell:'Заклинание', Spellbook:'Книга заклинаний', Grimoire:'Гримуар',
   Tome:'Фолиант', Scroll:'Свиток', Codex:'Кодекс', Cipher:'Шифр',
   Riddle:'Загадка', Mystery:'Тайна', Enigma:'Загадка', Illusion:'Иллюзия',
   Mirage:'Мираж', Mirror:'Зеркало', Reflection:'Отражение',
-  // Свет/цвет
-  Rainbow:'Радужный', Radiant:'Сияющий', Shimmering:'Мерцающий',
-  Sparkling:'Искристый', Gleaming:'Сверкающий', Lustrous:'Лучистый',
-  Brilliant:'Блистательный', Dazzling:'Ослепительный', Neon:'Неоновый',
-  Golden:'Золотой', Silver:'Серебряный', Ivory:'Слоновая кость',
-  Crimson:'Алый', Scarlet:'Пурпурный', Violet:'Фиолетовый', Teal:'Бирюзовый',
-  Azure:'Лазурный', Amber:'Янтарный', Dark:'Тёмный', Shadow:'Тень',
-  Light:'Свет', Electric:'Электрический', Spectrum:'Спектр',
-  Refraction:'Преломление', Diffraction:'Дифракция', Convergence:'Схождение',
-  Frequency:'Частота', Resonance:'Резонанс', Harmonic:'Гармонический',
-  Pulse:'Пульс',
-  // Описательные прилагательные
-  Hidden:'Скрытый', Secret:'Тайный', Concealed:'Скрытый', Shrouded:'Укутанный',
-  Veiled:'Завуалированный', Obscured:'Скрытый', Covert:'Тайный',
-  Eternal:'Вечный', Timeless:'Вечный', Ageless:'Вечный', Boundless:'Бескрайний',
-  Infinite:'Бесконечный', Primordial:'Первозданный', Submerged:'Затопленный',
-  Flooded:'Затопленный', Inundated:'Затопленный', Sunken:'Затопленный',
-  Drowned:'Потопленный', Underground:'Подземный', Subterranean:'Подземный',
-  Bone:'Костяной', Decay:'Разложение',
-  // Существа/мифология
   Dragon:'Дракон', Phoenix:'Феникс', Griffin:'Грифон', Unicorn:'Единорог',
   Chimera:'Химера', Wyvern:'Виверна', Drake:'Дрейк', Serpent:'Змей',
   Basilisk:'Василиск', Hydra:'Гидра', Kraken:'Кракен', Leviathan:'Левиафан',
@@ -3328,7 +3327,6 @@ const EP_NAME_RU = {
   Cyclops:'Циклоп', Minotaur:'Минотавр', Sphinx:'Сфинкс', Gorgon:'Горгона',
   Harpy:'Гарпия', Siren:'Сирена', Nymph:'Нимфа', Faery:'Фея', Pixie:'Пикси',
   Sprite:'Дух', Wisp:'Огонёк', Wraith:'Призрак', Revenant:'Ревенант', Lich:'Лич',
-  // Персонажи
   Hero:'Герой', Knight:'Рыцарь', Paladin:'Паладин', Ranger:'Следопыт',
   Rogue:'Плут', Mage:'Маг', Wizard:'Волшебник', Sorcerer:'Чародей',
   Warlock:'Чернокнижник', Witch:'Ведьма', Shaman:'Шаман', Sage:'Мудрец',
@@ -3338,24 +3336,17 @@ const EP_NAME_RU = {
   Pathfinder:'Следопыт', Navigator:'Навигатор', Voyager:'Мореплаватель',
   Traveller:'Путешественник', Journeyer:'Странник', Pilgrim:'Паломник',
   Scout:'Разведчик', Hunter:'Охотник', Stalker:'Сталкер', Seeker:'Искатель',
-  Quester:'Искатель', Roamer:'Бродяга', Drifter:'Дрейфующий',
-  // Материалы
-  Iron:'Железный', Steel:'Стальной', Bronze:'Бронзовый', Copper:'Медный',
-  Mithril:'Митрильный', Adamantine:'Адамантиновый', Orichalcum:'Орихалковый',
-  Goldwork:'Золотых дел', Silverwork:'Серебряных дел', Gemwork:'Ювелирный',
-  // Составные слова
-  Gemfield:'Самоцветное поле', Gemstone:'Самоцвет', Gem:'Самоцвет',
-  Jewel:'Самоцвет', Shard:'Осколок', Facet:'Грань', Orb:'Сфера',
-  Scepter:'Скипетр', Crown:'Корона', Wand:'Жезл', Staff:'Посох',
-  Relic:'Реликвия', Artefact:'Артефакт', Elixir:'Эликсир', Brew:'Варево',
-  Cauldron:'Котёл', Crucible:'Тигль', Anvil:'Наковальня', Bellows:'Мехи',
-  Tongs:'Клещи', Smelter:'Плавильня', Alchemy:'Алхимия', Genesis:'Начало',
-  Origin:'Исток', Creation:'Создание', Horizon:'Горизонт', Zenith:'Зенит',
-  Apex:'Апекс', Stronghold:'Твердыня', Bastion:'Бастион', Rampart:'Вал',
-  Battlement:'Зубцы', Parapet:'Парапет', Barrier:'Барьер', Shield:'Щит',
-  Sentinel:'Страж', Watcher:'Наблюдатель', Guardian:'Хранитель',
-  Keeper:'Хранитель', Protector:'Защитник',
-  // Слова с кузнечным суффиксом -forged
+  Quester:'Искатель', Roamer:'Бродяга', Drifter:'Странник',
+  Gem:'Самоцвет', Jewel:'Самоцвет', Shard:'Осколок', Facet:'Грань',
+  Orb:'Сфера', Scepter:'Скипетр', Crown:'Корона', Wand:'Жезл', Staff:'Посох',
+  Relic:'Реликвия', Artefact:'Артефакт', Elixir:'Эликсир',
+  Gemfield:'Самоцветное поле', Gemstone:'Самоцвет', Gemwork:'Ювелирное',
+  Goldwork:'Золотых дел', Silverwork:'Серебряных дел',
+  Breeze:'Бриз', Gale:'Шквал', Mist:'Туман', Fog:'Туман', Haze:'Дымка',
+  Wave:'Волна', Eddy:'Водоворот', Swirl:'Вихрь', Surge:'Волна',
+  Current:'Течение', Cloud:'Облако', Whirlwind:'Вихрь',
+  Light:'Свет', Spectrum:'Спектр', Frequency:'Частота', Resonance:'Резонанс',
+  Pulse:'Пульс', Decay:'Разложение',
   Starforged:'Звёздной ковки', Moonforged:'Лунной ковки',
   Sunforged:'Солнечной ковки', Stormforged:'Грозовой ковки',
   Soulforged:'Душевной ковки', Heartforged:'Сердечной ковки',
@@ -3363,13 +3354,39 @@ const EP_NAME_RU = {
   Visionforged:'Провиденческой ковки', Crystalforged:'Кристальной ковки',
 };
 
-// Возвращает локализованное название эпизода (для ru — пословный перевод)
+// Согласует прилагательное (мужской род) с родом финального существительного
+function _agreeAdj(adj, gender) {
+  if (gender === 'm') return adj;
+  if (adj.endsWith('ый') || adj.endsWith('ой') || adj.endsWith('ий')) {
+    const stem = adj.slice(0, -2);
+    const last = stem[stem.length - 1] || '';
+    const velar = 'гкхжшщч'.includes(last);
+    const soft = adj.endsWith('ий') && !velar;
+    if (gender === 'f')  return stem + (soft ? 'яя' : 'ая');
+    if (gender === 'n')  return stem + (soft ? 'ее' : 'ое');
+    if (gender === 'pl') return stem + ((soft || velar) ? 'ие' : 'ые');
+  }
+  return adj;
+}
+
+// Возвращает локализованное название эпизода (для ru — пословный перевод с согласованием)
 function getEpName(ep) {
   if (state.lang !== 'ru') return ep.name;
-  return ep.name.split(' ').map(w => {
-    const clean = w.replace(/['s]+$/, ''); // убираем 's (Dragon's → Dragon)
-    return EP_NAME_RU[clean] || w;
-  }).join(' ');
+  const words = ep.name.split(' ');
+  const lastEn = words[words.length - 1].replace(/'s$/, '');
+  const nounData = EP_NOUNS_RU[lastEn];
+  const gender = nounData ? nounData[1] : 'm';
+  const nounRu = nounData ? nounData[0] : lastEn;
+
+  const prefixRu = words.slice(0, -1).map(w => {
+    const c = w.replace(/'s$/, '');
+    if (EP_FIXED_RU[c]) return EP_FIXED_RU[c];
+    if (EP_ADJS_RU[c])  return _agreeAdj(EP_ADJS_RU[c], gender);
+    if (EP_NOUNS_RU[c]) return EP_NOUNS_RU[c][0]; // существительное-определитель
+    return w;
+  });
+
+  return [...prefixRu, nounRu].join(' ');
 }
 
 // Применяет язык ко всем элементам с data-i18n
@@ -5296,42 +5313,39 @@ function drawCellGem(r,c,cell) {
       const pulse = 0.7 + 0.30 * Math.sin(t + cell.type);
       ctx.save();
 
-      // STRIPE — молния-зигзаг (H или V)
+      // STRIPE — две полупрозрачные полосы через гем (показывают строку/столбец взрыва)
       if (spc === SPECIAL.STRIPE_H || spc === SPECIAL.STRIPE_V) {
         const horz = spc === SPECIAL.STRIPE_H;
         ctx.save();
+        const barW = cs * 0.10;
+        const barOff = cs * 0.13;
+        ctx.shadowColor = '#ffe040'; ctx.shadowBlur = 7 * pulse;
+        ctx.globalAlpha = 0.55 + 0.20 * pulse;
+        ctx.fillStyle = 'rgba(255,240,60,0.90)';
         if (horz) {
-          ctx.translate(cx, cy);
-          ctx.rotate(Math.PI / 2);
-          ctx.translate(-cx, -cy);
+          roundRect(ctx, x+pad, cy - barOff - barW/2, cs-pad*2, barW, barW/2); ctx.fill();
+          roundRect(ctx, x+pad, cy + barOff - barW/2, cs-pad*2, barW, barW/2); ctx.fill();
+        } else {
+          roundRect(ctx, cx - barOff - barW/2, y+pad, barW, cs-pad*2, barW/2); ctx.fill();
+          roundRect(ctx, cx + barOff - barW/2, y+pad, barW, cs-pad*2, barW/2); ctx.fill();
         }
-        const boltW = cs * 0.34;
-        const boltH = cs * 0.40;
-        ctx.shadowColor = '#ffe040';
-        ctx.shadowBlur = 12 * pulse;
-        ctx.fillStyle = `rgba(255,235,60,${0.80*pulse + 0.15})`;
-        // Форма молнии: классический зигзаг ⚡
+        // Стрелка в верхнем левом углу — направление взрыва
+        ctx.globalAlpha = 1; ctx.shadowBlur = 6 * pulse;
+        const ax = x + cs*0.21, ay = y + cs*0.21, ar = cs*0.13;
+        ctx.strokeStyle = `rgba(255,240,60,${0.95*pulse+0.05})`;
+        ctx.lineWidth = Math.max(1.5, cs*0.038); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
         ctx.beginPath();
-        ctx.moveTo(cx + boltW*0.22,  cy - boltH*0.50); // верх правее
-        ctx.lineTo(cx - boltW*0.06,  cy - boltH*0.04); // средина левее
-        ctx.lineTo(cx + boltW*0.20,  cy - boltH*0.04); // правее (горизонталь)
-        ctx.lineTo(cx - boltW*0.22,  cy + boltH*0.50); // низ левее
-        ctx.lineTo(cx + boltW*0.06,  cy + boltH*0.04); // средина правее
-        ctx.lineTo(cx - boltW*0.20,  cy + boltH*0.04); // левее (горизонталь)
-        ctx.closePath();
-        ctx.fill();
-        // Белый блик поверх
-        ctx.fillStyle = `rgba(255,255,255,${0.45*pulse})`;
-        ctx.beginPath();
-        ctx.moveTo(cx + boltW*0.22,  cy - boltH*0.50);
-        ctx.lineTo(cx - boltW*0.06,  cy - boltH*0.04);
-        ctx.lineTo(cx + boltW*0.20,  cy - boltH*0.04);
-        ctx.lineTo(cx + boltW*0.00,  cy + boltH*0.10);
-        ctx.closePath();
-        ctx.fill();
+        if (horz) {
+          ctx.moveTo(ax - ar, ay); ctx.lineTo(ax + ar, ay);
+          ctx.moveTo(ax + ar*0.4, ay - ar*0.6); ctx.lineTo(ax + ar, ay); ctx.lineTo(ax + ar*0.4, ay + ar*0.6);
+        } else {
+          ctx.moveTo(ax, ay - ar); ctx.lineTo(ax, ay + ar);
+          ctx.moveTo(ax - ar*0.6, ay - ar*0.4); ctx.lineTo(ax, ay - ar); ctx.lineTo(ax + ar*0.6, ay - ar*0.4);
+        }
+        ctx.stroke();
         ctx.restore();
       }
-      // MEGA — маленькая бомба в углу, фишка видна
+      // MEGA — золотая бомба в нижнем правом углу (5×5 взрыв)
       else if (spc === SPECIAL.MEGA) {
         const isMega = true;
         // Позиция: нижний правый угол фишки
@@ -5368,73 +5382,70 @@ function drawCellGem(r,c,cell) {
           ctx.beginPath(); ctx.arc(bx, by, rr*1.25, 0, Math.PI*2); ctx.stroke();
         }
       }
-      // BOMB — двойной взрыв: два кольца + лучи
+      // BOMB — красная бомба в нижнем левом углу (двойной 3×3 взрыв)
       else if (spc === SPECIAL.BOMB) {
-        const r0 = cs * 0.28;
-        const numRays = 8;
+        const bx = x + cs * 0.24, by = y + cs * 0.76;
+        const rr = cs * 0.17;
         ctx.save();
-        ctx.shadowColor = '#ff80d0';
-        ctx.shadowBlur = 10 * pulse;
-        // Внешнее кольцо
-        ctx.strokeStyle = `rgba(255,120,200,${0.70*pulse + 0.20})`;
-        ctx.lineWidth = Math.max(2, cs * 0.055);
-        ctx.beginPath(); ctx.arc(cx, cy, r0 * 1.15, 0, Math.PI*2); ctx.stroke();
-        // Внутреннее кольцо
-        ctx.strokeStyle = `rgba(255,255,255,${0.80*pulse + 0.15})`;
-        ctx.lineWidth = Math.max(1.5, cs * 0.040);
-        ctx.beginPath(); ctx.arc(cx, cy, r0 * 0.65, 0, Math.PI*2); ctx.stroke();
-        // Радиальные лучи между кольцами
-        ctx.strokeStyle = `rgba(255,200,240,${0.55*pulse + 0.10})`;
-        ctx.lineWidth = Math.max(1, cs * 0.025);
-        ctx.lineCap = 'round';
-        for (let i = 0; i < numRays; i++) {
-          const ang = i * (Math.PI * 2 / numRays) + t * 0.25;
-          ctx.beginPath();
-          ctx.moveTo(cx + Math.cos(ang) * r0 * 0.65,
-                     cy + Math.sin(ang) * r0 * 0.65);
-          ctx.lineTo(cx + Math.cos(ang) * r0 * 1.15,
-                     cy + Math.sin(ang) * r0 * 1.15);
-          ctx.stroke();
-        }
-        // Центральная звёздочка
+        ctx.shadowColor = '#ff5020'; ctx.shadowBlur = 8 * pulse;
+        // Свечение
+        ctx.fillStyle = `rgba(255,80,30,${0.38*pulse+0.16})`;
+        ctx.beginPath(); ctx.arc(bx, by, rr*1.7, 0, Math.PI*2); ctx.fill();
+        // Корпус бомбы — тёмный диск
+        const bbg = ctx.createRadialGradient(bx-rr*0.3, by-rr*0.35, rr*0.1, bx, by, rr);
+        bbg.addColorStop(0, '#3a1010'); bbg.addColorStop(1, '#120408');
+        ctx.fillStyle = bbg;
+        ctx.beginPath(); ctx.arc(bx, by, rr, 0, Math.PI*2); ctx.fill();
+        // Блик
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.beginPath(); ctx.ellipse(bx-rr*0.25, by-rr*0.28, rr*0.32, rr*0.20, -Math.PI/4, 0, Math.PI*2); ctx.fill();
+        // Фитиль
+        ctx.strokeStyle = '#b84040'; ctx.lineWidth = Math.max(1, cs*0.028); ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(bx + rr*0.5, by - rr*0.5);
+        ctx.quadraticCurveTo(bx + rr*0.85, by - rr*1.1, bx + rr*0.38, by - rr*1.4);
+        ctx.stroke();
+        // Огонёк на фитиле
+        ctx.shadowBlur = 4 * pulse;
+        ctx.fillStyle = '#ff5020';
+        ctx.beginPath(); ctx.arc(bx + rr*0.38, by - rr*1.4, Math.max(1.5, cs*0.048*pulse), 0, Math.PI*2); ctx.fill();
+        // Два кольца — знак двойного взрыва
         ctx.shadowBlur = 0;
-        ctx.fillStyle = `rgba(255,255,255,${0.75*pulse + 0.20})`;
-        drawStar(ctx, cx, cy, 4, r0 * 0.28, r0 * 0.14); ctx.fill();
+        ctx.strokeStyle = `rgba(255,100,40,${0.80*pulse})`;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(bx, by, rr*1.28, 0, Math.PI*2); ctx.stroke();
+        ctx.strokeStyle = `rgba(255,160,80,${0.50*pulse})`;
+        ctx.beginPath(); ctx.arc(bx, by, rr*1.55, 0, Math.PI*2); ctx.stroke();
         ctx.restore();
       }
-      // ROCKET — фейерверк: звёздный взрыв с лучами
+      // ROCKET — ракета в верхнем правом углу (летит к цели)
       else if (spc === SPECIAL.ROCKET) {
+        const rx = x + cs * 0.78, ry = y + cs * 0.22;
+        const rs = cs * 0.16;
         ctx.save();
-        ctx.shadowColor = `rgba(255,180,0,${0.70*pulse+0.20})`;
-        ctx.shadowBlur = 12 * pulse;
-        const numRays = 8;
-        const rInner = cs * 0.10;
-        const rOuter = cs * 0.30;
-        // Основные лучи
-        ctx.strokeStyle = `rgba(255,220,60,${0.90*pulse+0.10})`;
-        ctx.lineWidth = Math.max(1.5, cs * 0.045);
-        ctx.lineCap = 'round';
-        for (let i = 0; i < numRays; i++) {
-          const ang = i * (Math.PI*2/numRays) + t * 0.9;
-          ctx.beginPath();
-          ctx.moveTo(cx + Math.cos(ang)*rInner, cy + Math.sin(ang)*rInner);
-          ctx.lineTo(cx + Math.cos(ang)*rOuter, cy + Math.sin(ang)*rOuter);
-          ctx.stroke();
-        }
-        // Короткие лучи между основными
-        ctx.strokeStyle = `rgba(255,100,40,${0.70*pulse+0.10})`;
-        ctx.lineWidth = Math.max(1, cs * 0.026);
-        for (let i = 0; i < numRays; i++) {
-          const ang = (i + 0.5) * (Math.PI*2/numRays) + t * 0.9;
-          ctx.beginPath();
-          ctx.moveTo(cx + Math.cos(ang)*rInner*0.9, cy + Math.sin(ang)*rInner*0.9);
-          ctx.lineTo(cx + Math.cos(ang)*rOuter*0.60, cy + Math.sin(ang)*rOuter*0.60);
-          ctx.stroke();
-        }
-        // Яркое ядро
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = `rgba(255,255,200,${0.95*pulse+0.05})`;
-        ctx.beginPath(); ctx.arc(cx, cy, cs*0.09, 0, Math.PI*2); ctx.fill();
+        ctx.shadowColor = '#60aaff'; ctx.shadowBlur = 8 * pulse;
+        // Ореол
+        ctx.globalAlpha = 0.30 * pulse;
+        ctx.fillStyle = '#80c0ff';
+        ctx.beginPath(); ctx.arc(rx, ry, rs*1.5, 0, Math.PI*2); ctx.fill();
+        ctx.globalAlpha = 1;
+        // Ракета повёрнута носом вверх-влево
+        ctx.save(); ctx.translate(rx, ry); ctx.rotate(-Math.PI * 0.75);
+        // Корпус
+        ctx.fillStyle = `rgba(200,230,255,${0.95*pulse+0.05})`;
+        ctx.beginPath();
+        ctx.moveTo(0, -rs*0.85);
+        ctx.lineTo(-rs*0.28, rs*0.35);
+        ctx.lineTo( rs*0.28, rs*0.35);
+        ctx.closePath(); ctx.fill();
+        // Иллюминатор
+        ctx.fillStyle = `rgba(80,180,255,${0.85*pulse})`;
+        ctx.beginPath(); ctx.arc(0, -rs*0.20, rs*0.17, 0, Math.PI*2); ctx.fill();
+        // Плавники
+        ctx.fillStyle = `rgba(130,190,255,${0.70*pulse})`;
+        ctx.beginPath(); ctx.moveTo(-rs*0.28, rs*0.28); ctx.lineTo(-rs*0.55, rs*0.62); ctx.lineTo(-rs*0.10, rs*0.33); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo( rs*0.28, rs*0.28); ctx.lineTo( rs*0.55, rs*0.62); ctx.lineTo( rs*0.10, rs*0.33); ctx.closePath(); ctx.fill();
+        ctx.restore();
         ctx.restore();
       }
 
@@ -6270,6 +6281,8 @@ async function processMatches(hintR, hintC) {
     const _othersInMatch = specialsInMatch.filter(s => s.special !== SPECIAL.BOMB);
     for (const {r,c,special,type} of _othersInMatch) {
       if (_matchEpoch !== _myEpoch) return;
+      // CC cascade rule: COLORING scatter suppressed after first iteration to prevent chain amplification
+      if (_loopGuard > 1 && special === SPECIAL.COLORING) continue;
       await triggerSpecial(r,c,special,type);
     }
     if (_bombsInMatch.length) {
@@ -6339,7 +6352,7 @@ async function processMatches(hintR, hintC) {
 
   if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
   state.comboCount=0; state.matchSoundLvl=0; state.matchSequenceStep=0; stopOnFire();
-  if (_cascadeWon) { state.busy=false; setTimeout(showWin, 600); return; }
+  if (_cascadeWon) { if (!state._inBonusExplosion) { state.busy=false; setTimeout(showWin, 600); } return; }
   // Финальный sweep — гарантируем отсутствие пустых клеток (баг с дырками после бонусов)
   { let hadEmpty=false;
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
@@ -9127,39 +9140,38 @@ function spawnScreenShake(amplitude=10) {
 // ══════════════════════════════════════════
 async function bonusMovesExplosion() {
   if (!state.moves || state.moves <= 0) return;
+  const _myEpoch = _matchEpoch;
   state.busy = true;
+  state._inBonusExplosion = true;
   const specials=[SPECIAL.STRIPE_H,SPECIAL.STRIPE_V,SPECIAL.BOMB];
-  // One special at a time for visual clarity; batch 2 when >12 moves remain to keep it reasonable
   while (state.moves > 0) {
-    const batchSize = state.moves > 12 ? 2 : 1;
-    const placed = [];
-    for (let b=0; b<batchSize; b++) {
-      const free=[];
-      for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
-        if (state.holes.has(`${r},${c}`)) continue;
-        const cl=state.board[r]?.[c];
-        if (cl&&!cl.stone&&!cl.chocolate&&cl.type>=0&&cl.special===SPECIAL.NONE) free.push([r,c]);
-      }
-      if (!free.length) break;
-      const [br,bc]=free[Math.floor(Math.random()*free.length)];
-      const sp=specials[Math.floor(Math.random()*specials.length)];
-      state.board[br][bc].special=sp;
-      placed.push([br,bc,sp]);
-      state.moves--;
+    if (_matchEpoch !== _myEpoch) break; // уровень сменился — прерываем
+    const free=[];
+    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+      if (state.holes.has(`${r},${c}`)) continue;
+      const cl=state.board[r]?.[c];
+      if (cl&&!cl.stone&&!cl.chocolate&&cl.type>=0&&cl.special===SPECIAL.NONE) free.push([r,c]);
     }
-    if (!placed.length) break;
+    if (!free.length) break;
+    const [br,bc]=free[Math.floor(Math.random()*free.length)];
+    const sp=specials[Math.floor(Math.random()*specials.length)];
+    state.board[br][bc].special=sp;
+    state.moves--;
     state.comboCount++;
     drawBoard(); updateHUD();
     await new Promise(r=>setTimeout(r,200)); // brief pause so player sees the placed special
-    for (const [br,bc,sp] of placed) {
-      await triggerSpecial(br,bc,sp);
-      if (state.board[br]?.[bc]) state.board[br][bc]=null;
-    }
+    if (_matchEpoch !== _myEpoch) break;
+    await triggerSpecial(br,bc,sp);
+    if (_matchEpoch !== _myEpoch) break;
+    if (state.board[br]?.[bc]) state.board[br][bc]=null;
     applyGravity(); fillFromTop(); await animateDrop(); // gems settle visually before next
+    if (_matchEpoch !== _myEpoch) break;
     const cascadeMatches = findMatches();
     if (cascadeMatches.size > 0) await processMatches();
+    if (_matchEpoch !== _myEpoch) break;
     updateHUD(); updateGoalProgress();
   }
+  state._inBonusExplosion = false;
   state.comboCount=0; state.matchSoundLvl=0; state.matchSequenceStep=0;
 }
 
@@ -9793,7 +9805,7 @@ function playLevel(n, fresh) {
     state.moves=lvl.moves; state.score=0;
     state.collectedGems={}; state.iceBroken=0; state.stonesBroken=0;
     state.comboCount=0; state.adMovesUsed=false; state.extraMovesUsed=false; state.ingredientsDelivered=0;
-    state.chocolateInitial=0; state.sodaLevel=0; state.bottlesBroken=0; state._winShowing=false; state.bearsFreed=0;
+    state.chocolateInitial=0; state.sodaLevel=0; state.bottlesBroken=0; state._winShowing=false; state.bearsFreed=0; state._inBonusExplosion=false;
     if (state.rainbowRound) { state.rainbowRound.active=false; state.rainbowRound.movesLeft=0; }
     state.lastSwap=null; state.undoUsedThisLevel=false; hideGestureHint();
     state.buffPieces=0; state.buffNukeReady=false; state.buffNukeActive=false;
@@ -11343,7 +11355,7 @@ function startTestLevel() {
   state.comboCount = 0; state.matchSequenceStep = 0; state.matchSoundLvl = 0;
   state.adMovesUsed = false; state.extraMovesUsed = false;
   state.ingredientsDelivered = 0; state.chocolateInitial = 0;
-  state.sodaLevel = 0; state.bottlesBroken = 0; state._winShowing = false;
+  state.sodaLevel = 0; state.bottlesBroken = 0; state._winShowing = false; state._inBonusExplosion = false;
   state.lastSwap = null; state.undoUsedThisLevel = false;
   state.buffPieces = 0; state.buffNukeReady = false; state.buffNukeActive = false;
   state.supersonicActive = false; state.supersonicMovesLeft = 0;

@@ -261,18 +261,32 @@ STRIPE → собрать все строки/столбцы в один Set, `P
 **Причина:**
 1. COLORING создаёт 7+ матч → новый COLORING → feedback-loop на 120 итераций (~2 мин).
 2. `processMatches` и `triggerCombinedSpecial` — async; при смене уровня старые экземпляры продолжали работать на новом поле.
+3. (Повтор бага) Несколько pre-existing COLORING на поле → cascade-triggered COLORING scatter создаёт новые матчи с ещё COLORINGs → 15+ итераций.
 
 **Исправление:**
 - `_matchEpoch` (глобал) инкрементируется в `playLevel(n, fresh)`.
 - `processMatches`, `triggerSpecial` **и `triggerCombinedSpecial`** захватывают `_myEpoch = _matchEpoch` при старте
   и после каждого `await` делают `if (_matchEpoch !== _myEpoch) return`.
 - Лимит итераций снижен с 120 до **25** (`_loopGuard > 25`).
+- CC cascade rule (два места): cascade-матчи (`_loopGuard > 1`) не создают новый COLORING (downgrade → BOMB) **и** не тригерят scatter существующих COLORING из `_othersInMatch` (continue — ячейка уже обнулена матчем, scatter подавляется).
 
 ### Несколько бомб взрывались по одному (медленно)
 **Причина:** в `processMatches` `specialsInMatch` обрабатывался циклом `for...await` — каждая бомба ждала полного завершения (фаза1 + гравитация + дым + фаза2) перед следующей.  
 **Исправление:** `_bombPhase1(r,c)` — выделена отдельная функция для первого взрыва бомбы (без гравитации).
 В `processMatches`: все бомбы из матча делают фазу1 одновременно (`Promise.all`), затем одна гравитация, затем фаза2 одновременно.  
 `triggerSpecial(BOMB)` (для одиночных бомб вне `specialsInMatch`) по-прежнему использует `_bombPhase1` + гравитация + фаза2.
+
+### Win screen появлялась до конца бонусного взрыва + каскады между уровнями
+**Причина:**
+1. `processMatches` при `_cascadeWon` вызывал `setTimeout(showWin, 600)` и сбрасывал `state.busy=false` — даже если был вызван изнутри `bonusMovesExplosion`. Экран победы появлялся пока взрывы ещё шли.
+2. `bonusMovesExplosion` не проверял `_matchEpoch` — при быстром переходе на следующий уровень взрывы продолжали работать на новом поле.
+3. При >12 оставшихся ходах ставился batch из 2 бонусов — нарушало принцип «один ход — один бонус».
+
+**Исправление:**
+- `state._inBonusExplosion` флаг: устанавливается в начале `bonusMovesExplosion`, сбрасывается в конце и в `playLevel`.
+- `processMatches`: `if (_cascadeWon)` — вызов `showWin` и сброс `busy` только при `!state._inBonusExplosion`.
+- `bonusMovesExplosion`: захватывает `_myEpoch = _matchEpoch` при старте, проверяет эпоху после каждого `await`.
+- Убран batch-of-2 (всегда один бонус за один оставшийся ход).
 
 ---
 
