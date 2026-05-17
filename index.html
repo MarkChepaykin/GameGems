@@ -5263,30 +5263,67 @@ function drawCellGem(r,c,cell) {
     // RAINBOW/COLORING are colorless — they don't rely on a gem shape
     if (!gem && cell.special!==SPECIAL.RAINBOW && cell.special!==SPECIAL.COLORING) { ctx.restore(); return; }
 
-    // ─── RAINBOW — вихрь радужных красок (уничтожает все одного цвета) ───
+    // ─── RAINBOW → ГЕОСКАНЕР — радарный экран ────────────────────────
     if (cell.special===SPECIAL.RAINBOW) {
-      const r2=cs/2-pad+2;
-      const rColors=['#ff3d6e','#ff8a3a','#ffcb3a','#34d96f','#3aa8ff','#b96bff'];
+      const r2 = cs/2-pad+2;
       const t = Date.now()/600;
-      ctx.fillStyle='#0a0414';
-      ctx.beginPath(); ctx.arc(cx,cy,r2,0,Math.PI*2); ctx.fill();
+      // Тёмный экран радара
+      ctx.fillStyle = '#001a0a';
+      ctx.beginPath(); ctx.arc(cx, cy, r2, 0, Math.PI*2); ctx.fill();
+      // Зелёное свечение фона
+      const rdg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r2);
+      rdg.addColorStop(0, 'rgba(0,255,128,0.15)');
+      rdg.addColorStop(1, 'rgba(0,80,40,0)');
+      ctx.fillStyle = rdg;
+      ctx.beginPath(); ctx.arc(cx, cy, r2, 0, Math.PI*2); ctx.fill();
       ctx.save();
-      ctx.beginPath(); ctx.arc(cx,cy,r2*0.85,0,Math.PI*2); ctx.clip();
-      // Вращающиеся радужные капли (вихрь)
-      for (let i=0;i<6;i++) {
-        const ang = (i/6)*Math.PI*2 + t * 1.2;
-        const px = cx + Math.cos(ang)*r2*0.45;
-        const py = cy + Math.sin(ang)*r2*0.45;
-        ctx.fillStyle = rColors[i];
-        ctx.beginPath(); ctx.arc(px, py, r2*0.32, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, r2*0.93, 0, Math.PI*2); ctx.clip();
+      // Концентрические кольца радара
+      for (let i=1; i<=3; i++) {
+        ctx.strokeStyle = `rgba(0,255,128,${0.18+0.06*(3-i)})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(cx, cy, r2*0.28*i, 0, Math.PI*2); ctx.stroke();
+      }
+      // Перекрестие
+      ctx.strokeStyle = 'rgba(0,255,128,0.30)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx-r2*0.88, cy); ctx.lineTo(cx+r2*0.88, cy);
+      ctx.moveTo(cx, cy-r2*0.88); ctx.lineTo(cx, cy+r2*0.88);
+      ctx.stroke();
+      // Вращающийся луч развёртки
+      const sweepAngle = t * 2.5;
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(sweepAngle);
+      const sg = ctx.createLinearGradient(0, 0, r2*0.90, 0);
+      sg.addColorStop(0, 'rgba(0,255,128,0.55)');
+      sg.addColorStop(0.55, 'rgba(0,255,128,0.18)');
+      sg.addColorStop(1, 'rgba(0,255,128,0)');
+      ctx.fillStyle = sg;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, r2*0.90, -0.22, 0.22);
+      ctx.closePath(); ctx.fill();
+      // След луча (затухание)
+      for (let i=1; i<=3; i++) {
+        ctx.save(); ctx.rotate(-i * 0.20);
+        const tg = ctx.createLinearGradient(0, 0, r2*0.90, 0);
+        tg.addColorStop(0, `rgba(0,255,128,${0.18-i*0.05})`);
+        tg.addColorStop(1, 'rgba(0,255,128,0)');
+        ctx.fillStyle = tg;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, r2*0.90, -0.12, 0.12);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
       }
       ctx.restore();
-      // Белая звезда в центре
-      ctx.fillStyle = 'rgba(255,255,255,0.90)';
-      drawStar(ctx, cx, cy, 5, r2*0.28, r2*0.12); ctx.fill();
+      ctx.restore();
+      // Яркая точка в центре
+      ctx.fillStyle = 'rgba(0,255,128,0.90)';
+      ctx.beginPath(); ctx.arc(cx, cy, r2*0.08, 0, Math.PI*2); ctx.fill();
       // Кант
-      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(0,255,128,0.75)';
+      ctx.lineWidth = Math.max(1.5, cs*0.030);
       ctx.beginPath(); ctx.arc(cx, cy, r2, 0, Math.PI*2); ctx.stroke();
       ctx.restore(); return;
     }
@@ -5337,34 +5374,62 @@ function drawCellGem(r,c,cell) {
       const pulse = 0.7 + 0.30 * Math.sin(t + cell.type);
       ctx.save();
 
-      // STRIPE — две полупрозрачные полосы через гем (показывают строку/столбец взрыва)
+      // STRIPE → БУРОВАЯ УСТАНОВКА — стальные пазы + вращающийся бур
       if (spc === SPECIAL.STRIPE_H || spc === SPECIAL.STRIPE_V) {
         const horz = spc === SPECIAL.STRIPE_H;
         ctx.save();
-        const barW = cs * 0.10;
-        const barOff = cs * 0.13;
-        ctx.shadowColor = '#ffe040'; ctx.shadowBlur = 7 * pulse;
-        ctx.globalAlpha = 0.55 + 0.20 * pulse;
-        ctx.fillStyle = 'rgba(255,240,60,0.90)';
+        const barW = cs * 0.095;
+        const barOff = cs * 0.125;
+        // Тёмная грунтовая колея
+        ctx.globalAlpha = 0.60;
+        ctx.fillStyle = 'rgba(30,18,4,0.65)';
         if (horz) {
-          roundRect(ctx, x+pad, cy - barOff - barW/2, cs-pad*2, barW, barW/2); ctx.fill();
-          roundRect(ctx, x+pad, cy + barOff - barW/2, cs-pad*2, barW, barW/2); ctx.fill();
+          roundRect(ctx, x+pad, cy-barOff-barW/2, cs-pad*2, barW, barW/2); ctx.fill();
+          roundRect(ctx, x+pad, cy+barOff-barW/2, cs-pad*2, barW, barW/2); ctx.fill();
         } else {
-          roundRect(ctx, cx - barOff - barW/2, y+pad, barW, cs-pad*2, barW/2); ctx.fill();
-          roundRect(ctx, cx + barOff - barW/2, y+pad, barW, cs-pad*2, barW/2); ctx.fill();
+          roundRect(ctx, cx-barOff-barW/2, y+pad, barW, cs-pad*2, barW/2); ctx.fill();
+          roundRect(ctx, cx+barOff-barW/2, y+pad, barW, cs-pad*2, barW/2); ctx.fill();
         }
-        // Стрелка в верхнем левом углу — направление взрыва
-        ctx.globalAlpha = 1; ctx.shadowBlur = 6 * pulse;
-        const ax = x + cs*0.21, ay = y + cs*0.21, ar = cs*0.13;
-        ctx.strokeStyle = `rgba(255,240,60,${0.95*pulse+0.05})`;
-        ctx.lineWidth = Math.max(1.5, cs*0.038); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        // Золотая центральная полоска (блестящий металл)
+        ctx.shadowColor = '#c09010'; ctx.shadowBlur = 5*pulse;
+        ctx.globalAlpha = 0.55 + 0.25*pulse;
+        ctx.fillStyle = `rgba(200,148,28,${0.80*pulse+0.12})`;
+        const cw = barW * 0.38;
+        if (horz) {
+          roundRect(ctx, x+pad, cy-barOff-cw/2, cs-pad*2, cw, cw/2); ctx.fill();
+          roundRect(ctx, x+pad, cy+barOff-cw/2, cs-pad*2, cw, cw/2); ctx.fill();
+        } else {
+          roundRect(ctx, cx-barOff-cw/2, y+pad, cw, cs-pad*2, cw/2); ctx.fill();
+          roundRect(ctx, cx+barOff-cw/2, y+pad, cw, cs-pad*2, cw/2); ctx.fill();
+        }
+        // Бур-значок — верхний левый угол
+        ctx.shadowBlur = 4*pulse; ctx.globalAlpha = 1;
+        const dx = x + cs*0.22, dy = y + cs*0.22, dr = cs*0.135;
+        ctx.fillStyle = 'rgba(18,10,0,0.72)';
+        ctx.beginPath(); ctx.arc(dx, dy, dr, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = `rgba(200,148,28,${0.75*pulse+0.12})`;
+        ctx.lineWidth = Math.max(1, cs*0.028);
+        ctx.beginPath(); ctx.arc(dx, dy, dr, 0, Math.PI*2); ctx.stroke();
+        // Вращающаяся спираль
+        const rot = (Date.now()/350) % (Math.PI*2);
+        ctx.strokeStyle = '#d4a020';
+        ctx.lineWidth = Math.max(1, cs*0.026); ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(dx, dy, dr*0.53, rot, rot+Math.PI*1.15); ctx.stroke();
+        ctx.beginPath(); ctx.arc(dx, dy, dr*0.27, rot+Math.PI, rot+Math.PI*2.15); ctx.stroke();
+        // Двусторонние стрелки — нижний правый угол
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = `rgba(255,210,70,${0.90*pulse+0.06})`;
+        ctx.lineWidth = Math.max(1.2, cs*0.032); ctx.lineCap='round'; ctx.lineJoin='round';
+        const ax = x+cs*0.78, ay = y+cs*0.78, ar = cs*0.092;
         ctx.beginPath();
         if (horz) {
-          ctx.moveTo(ax - ar, ay); ctx.lineTo(ax + ar, ay);
-          ctx.moveTo(ax + ar*0.4, ay - ar*0.6); ctx.lineTo(ax + ar, ay); ctx.lineTo(ax + ar*0.4, ay + ar*0.6);
+          ctx.moveTo(ax-ar*1.1,ay); ctx.lineTo(ax+ar*1.1,ay);
+          ctx.moveTo(ax-ar*0.4,ay-ar*0.65); ctx.lineTo(ax-ar*1.1,ay); ctx.lineTo(ax-ar*0.4,ay+ar*0.65);
+          ctx.moveTo(ax+ar*0.4,ay-ar*0.65); ctx.lineTo(ax+ar*1.1,ay); ctx.lineTo(ax+ar*0.4,ay+ar*0.65);
         } else {
-          ctx.moveTo(ax, ay - ar); ctx.lineTo(ax, ay + ar);
-          ctx.moveTo(ax - ar*0.6, ay - ar*0.4); ctx.lineTo(ax, ay - ar); ctx.lineTo(ax + ar*0.6, ay - ar*0.4);
+          ctx.moveTo(ax,ay-ar*1.1); ctx.lineTo(ax,ay+ar*1.1);
+          ctx.moveTo(ax-ar*0.65,ay-ar*0.4); ctx.lineTo(ax,ay-ar*1.1); ctx.lineTo(ax+ar*0.65,ay-ar*0.4);
+          ctx.moveTo(ax-ar*0.65,ay+ar*0.4); ctx.lineTo(ax,ay+ar*1.1); ctx.lineTo(ax+ar*0.65,ay+ar*0.4);
         }
         ctx.stroke();
         ctx.restore();
@@ -5406,69 +5471,102 @@ function drawCellGem(r,c,cell) {
           ctx.beginPath(); ctx.arc(bx, by, rr*1.25, 0, Math.PI*2); ctx.stroke();
         }
       }
-      // BOMB — красная бомба в нижнем левом углу (двойной 3×3 взрыв)
+      // BOMB → ДИНАМИТ — красный цилиндр с фитилём (двойной 3×3 взрыв)
       else if (spc === SPECIAL.BOMB) {
-        const bx = x + cs * 0.24, by = y + cs * 0.76;
-        const rr = cs * 0.17;
+        const bx = x + cs * 0.26, by = y + cs * 0.72;
+        const rr = cs * 0.16;
+        const cylW = rr * 1.08, cylH = rr * 1.85;
         ctx.save();
-        ctx.shadowColor = '#ff5020'; ctx.shadowBlur = 8 * pulse;
+        ctx.shadowColor = '#cc1010'; ctx.shadowBlur = 7*pulse;
         // Свечение
-        ctx.fillStyle = `rgba(255,80,30,${0.38*pulse+0.16})`;
-        ctx.beginPath(); ctx.arc(bx, by, rr*1.7, 0, Math.PI*2); ctx.fill();
-        // Корпус бомбы — тёмный диск
-        const bbg = ctx.createRadialGradient(bx-rr*0.3, by-rr*0.35, rr*0.1, bx, by, rr);
-        bbg.addColorStop(0, '#3a1010'); bbg.addColorStop(1, '#120408');
-        ctx.fillStyle = bbg;
-        ctx.beginPath(); ctx.arc(bx, by, rr, 0, Math.PI*2); ctx.fill();
-        // Блик
-        ctx.fillStyle = 'rgba(255,255,255,0.18)';
-        ctx.beginPath(); ctx.ellipse(bx-rr*0.25, by-rr*0.28, rr*0.32, rr*0.20, -Math.PI/4, 0, Math.PI*2); ctx.fill();
-        // Фитиль
-        ctx.strokeStyle = '#b84040'; ctx.lineWidth = Math.max(1, cs*0.028); ctx.lineCap = 'round';
+        ctx.fillStyle = `rgba(220,50,20,${0.30*pulse+0.10})`;
+        ctx.beginPath(); ctx.arc(bx, by, rr*1.8, 0, Math.PI*2); ctx.fill();
+        // Цилиндр динамита
+        ctx.fillStyle = `rgb(${180+Math.round(35*pulse)},18,18)`;
+        roundRect(ctx, bx-cylW/2, by-cylH/2, cylW, cylH, cylW*0.28);
+        ctx.fill();
+        // Металлический блик
+        const cg = ctx.createLinearGradient(bx-cylW/2, 0, bx+cylW/2, 0);
+        cg.addColorStop(0, 'rgba(0,0,0,0)');
+        cg.addColorStop(0.28, 'rgba(255,255,255,0.22)');
+        cg.addColorStop(0.55, 'rgba(255,255,255,0.08)');
+        cg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = cg;
+        roundRect(ctx, bx-cylW/2, by-cylH/2, cylW, cylH, cylW*0.28); ctx.fill();
+        // Чёрные обмотки
+        ctx.fillStyle = 'rgba(0,0,0,0.62)';
+        ctx.fillRect(bx-cylW/2+1, by-cylH*0.16, cylW-2, Math.max(2, cylH*0.12));
+        ctx.fillRect(bx-cylW/2+1, by+cylH*0.08, cylW-2, Math.max(2, cylH*0.10));
+        // Контур
+        ctx.strokeStyle = 'rgba(80,0,0,0.60)'; ctx.lineWidth = Math.max(1, cs*0.020);
+        roundRect(ctx, bx-cylW/2, by-cylH/2, cylW, cylH, cylW*0.28); ctx.stroke();
+        // Фитиль (волнистый)
+        const fuseT = Date.now()/500;
+        ctx.shadowColor = '#ff9030'; ctx.shadowBlur = 3*pulse;
+        ctx.strokeStyle = '#a06020'; ctx.lineWidth = Math.max(1, cs*0.024); ctx.lineCap='round';
         ctx.beginPath();
-        ctx.moveTo(bx + rr*0.5, by - rr*0.5);
-        ctx.quadraticCurveTo(bx + rr*0.85, by - rr*1.1, bx + rr*0.38, by - rr*1.4);
+        ctx.moveTo(bx, by-cylH/2);
+        ctx.bezierCurveTo(
+          bx + cs*0.07*Math.sin(fuseT),     by-cylH/2-rr*0.45,
+          bx - cs*0.07*Math.sin(fuseT+1.1), by-cylH/2-rr*0.90,
+          bx + cs*0.04*Math.sin(fuseT+2.2), by-cylH/2-rr*1.40
+        );
         ctx.stroke();
-        // Огонёк на фитиле
-        ctx.shadowBlur = 4 * pulse;
-        ctx.fillStyle = '#ff5020';
-        ctx.beginPath(); ctx.arc(bx + rr*0.38, by - rr*1.4, Math.max(1.5, cs*0.048*pulse), 0, Math.PI*2); ctx.fill();
-        // Два кольца — знак двойного взрыва
+        // Огонёк на конце фитиля
+        const fx2 = bx + cs*0.04*Math.sin(fuseT+2.2), fy2 = by-cylH/2-rr*1.40;
+        ctx.shadowColor='#ff6010'; ctx.shadowBlur = 5*pulse;
+        ctx.fillStyle = `rgba(255,${120+Math.round(90*pulse)},10,${0.88*pulse+0.08})`;
+        ctx.beginPath(); ctx.arc(fx2, fy2, Math.max(1.5, cs*0.038*pulse), 0, Math.PI*2); ctx.fill();
+        // Двойное кольцо взрыва
         ctx.shadowBlur = 0;
-        ctx.strokeStyle = `rgba(255,100,40,${0.80*pulse})`;
-        ctx.lineWidth = 1.2;
-        ctx.beginPath(); ctx.arc(bx, by, rr*1.28, 0, Math.PI*2); ctx.stroke();
-        ctx.strokeStyle = `rgba(255,160,80,${0.50*pulse})`;
-        ctx.beginPath(); ctx.arc(bx, by, rr*1.55, 0, Math.PI*2); ctx.stroke();
+        ctx.strokeStyle = `rgba(255,80,20,${0.72*pulse})`;
+        ctx.lineWidth = 1.3;
+        ctx.beginPath(); ctx.arc(bx, by, rr*1.35, 0, Math.PI*2); ctx.stroke();
+        ctx.strokeStyle = `rgba(255,160,60,${0.40*pulse})`;
+        ctx.beginPath(); ctx.arc(bx, by, rr*1.70, 0, Math.PI*2); ctx.stroke();
         ctx.restore();
       }
-      // ROCKET — ракета в верхнем правом углу (летит к цели)
+      // ROCKET → СИГНАЛЬНАЯ РАКЕТНИЦА — верхний правый угол
       else if (spc === SPECIAL.ROCKET) {
-        const rx = x + cs * 0.78, ry = y + cs * 0.22;
-        const rs = cs * 0.16;
+        const rx = x + cs * 0.79, ry = y + cs * 0.22;
+        const rs = cs * 0.155;
         ctx.save();
-        ctx.shadowColor = '#60aaff'; ctx.shadowBlur = 8 * pulse;
-        // Ореол
-        ctx.globalAlpha = 0.30 * pulse;
-        ctx.fillStyle = '#80c0ff';
-        ctx.beginPath(); ctx.arc(rx, ry, rs*1.5, 0, Math.PI*2); ctx.fill();
+        ctx.shadowColor = '#c0c0d0'; ctx.shadowBlur = 6*pulse;
+        ctx.globalAlpha = 0.24*pulse;
+        ctx.fillStyle = '#c0d0ff';
+        ctx.beginPath(); ctx.arc(rx, ry, rs*1.9, 0, Math.PI*2); ctx.fill();
         ctx.globalAlpha = 1;
-        // Ракета повёрнута носом вверх-влево
-        ctx.save(); ctx.translate(rx, ry); ctx.rotate(-Math.PI * 0.75);
-        // Корпус
-        ctx.fillStyle = `rgba(200,230,255,${0.95*pulse+0.05})`;
+        // Пистолет повёрнут дулом вверх-влево (~-40°)
+        ctx.save(); ctx.translate(rx, ry); ctx.rotate(-Math.PI*0.42);
+        // Рукоятка (коричневый прямоугольник)
+        ctx.fillStyle = '#7a4820';
+        roundRect(ctx, -rs*0.24, rs*0.18, rs*0.48, rs*0.76, rs*0.10); ctx.fill();
+        ctx.strokeStyle = '#4a2810'; ctx.lineWidth = Math.max(1, cs*0.020);
+        roundRect(ctx, -rs*0.24, rs*0.18, rs*0.48, rs*0.76, rs*0.10); ctx.stroke();
+        // Ствол (металлический прямоугольник)
+        const bg2 = ctx.createLinearGradient(-rs*0.30, 0, rs*0.30, 0);
+        bg2.addColorStop(0, '#707080'); bg2.addColorStop(0.35, '#d0d0e0'); bg2.addColorStop(1, '#505060');
+        ctx.fillStyle = bg2;
+        roundRect(ctx, -rs*0.30, -rs*0.26, rs*0.60, rs*0.50, rs*0.12); ctx.fill();
+        ctx.strokeStyle = '#383848'; ctx.lineWidth = Math.max(1, cs*0.020);
+        roundRect(ctx, -rs*0.30, -rs*0.26, rs*0.60, rs*0.50, rs*0.12); ctx.stroke();
+        // Дуло (конус слева)
+        ctx.fillStyle = '#606070';
         ctx.beginPath();
-        ctx.moveTo(0, -rs*0.85);
-        ctx.lineTo(-rs*0.28, rs*0.35);
-        ctx.lineTo( rs*0.28, rs*0.35);
+        ctx.moveTo(-rs*0.30, -rs*0.38); ctx.lineTo(-rs*0.54, -rs*0.20);
+        ctx.lineTo(-rs*0.54, rs*0.18);  ctx.lineTo(-rs*0.30, rs*0.26);
         ctx.closePath(); ctx.fill();
-        // Иллюминатор
-        ctx.fillStyle = `rgba(80,180,255,${0.85*pulse})`;
-        ctx.beginPath(); ctx.arc(0, -rs*0.20, rs*0.17, 0, Math.PI*2); ctx.fill();
-        // Плавники
-        ctx.fillStyle = `rgba(130,190,255,${0.70*pulse})`;
-        ctx.beginPath(); ctx.moveTo(-rs*0.28, rs*0.28); ctx.lineTo(-rs*0.55, rs*0.62); ctx.lineTo(-rs*0.10, rs*0.33); ctx.closePath(); ctx.fill();
-        ctx.beginPath(); ctx.moveTo( rs*0.28, rs*0.28); ctx.lineTo( rs*0.55, rs*0.62); ctx.lineTo( rs*0.10, rs*0.33); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#303040'; ctx.lineWidth = Math.max(1, cs*0.018);
+        ctx.beginPath();
+        ctx.moveTo(-rs*0.30, -rs*0.38); ctx.lineTo(-rs*0.54, -rs*0.20);
+        ctx.lineTo(-rs*0.54, rs*0.18);  ctx.lineTo(-rs*0.30, rs*0.26);
+        ctx.closePath(); ctx.stroke();
+        // Пламя из дула
+        ctx.shadowColor='#ff8020'; ctx.shadowBlur = 5*pulse;
+        ctx.fillStyle = `rgba(255,${120+Math.round(90*pulse)},15,${0.85*pulse+0.08})`;
+        ctx.beginPath(); ctx.arc(-rs*0.64, -rs*0.04, rs*0.21*pulse, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = `rgba(255,255,180,${0.70*pulse})`;
+        ctx.beginPath(); ctx.arc(-rs*0.64, -rs*0.04, rs*0.10*pulse, 0, Math.PI*2); ctx.fill();
         ctx.restore();
         ctx.restore();
       }
@@ -7382,28 +7480,92 @@ function animateSuperMegaBlast(r,c) {
   });
 }
 
-// ── Анимация луча-волны для полосатой ───────────────────────────────────
-function animateStripeBeam(r,c,horizontal) {
-  return new Promise(res=>{
-    const dur=200, t0=performance.now(), id=++_animOverlayId;
-    _animOverlays.set(id,(now)=>{
-      const t=Math.min((now-t0)/dur,1);
+// ── Анимация бура — два проходки в разные стороны ──────────────────────
+function animateStripeBeam(r, c, horizontal) {
+  return new Promise(res => {
+    const dur = 300, t0 = performance.now(), id = ++_animOverlayId;
+    const sx = boardOffX + c*cellSize + cellSize/2;
+    const sy = boardOffY + r*cellSize + cellSize/2;
+    const maxDist = (horizontal ? COLS : ROWS) * cellSize * 1.08;
+    const dustSpawned = new Set();
+    _animOverlays.set(id, (now) => {
+      const t = Math.min((now - t0) / dur, 1);
       ctx.save();
-      ctx.globalAlpha = (1-t)*0.85;
-      ctx.fillStyle = `rgba(255,255,120,${0.7*(1-t)})`;
-      if (horizontal) {
-        const hy = boardOffY+r*cellSize;
-        ctx.fillRect(boardOffX, hy+2, cellSize*COLS, cellSize-4);
-      } else {
-        const hx = boardOffX+c*cellSize;
-        ctx.fillRect(hx+2, boardOffY, cellSize-4, cellSize*ROWS);
+      // Вспышка по строке/столбцу в начале (t<0.25)
+      const flashAlpha = Math.max(0, 0.55 * (1 - t * 3.5));
+      if (flashAlpha > 0) {
+        ctx.globalAlpha = flashAlpha;
+        ctx.fillStyle = 'rgba(200,148,28,0.55)';
+        if (horizontal) ctx.fillRect(boardOffX, boardOffY+r*cellSize+2, cellSize*COLS, cellSize-4);
+        else            ctx.fillRect(boardOffX+c*cellSize+2, boardOffY, cellSize-4, cellSize*ROWS);
+        ctx.globalAlpha = 1;
       }
-      ctx.globalAlpha = (1-t)*0.5;
-      ctx.fillStyle = '#fff';
-      if (horizontal) { ctx.fillRect(boardOffX, boardOffY+r*cellSize+cellSize/2-2, cellSize*COLS, 4); }
-      else             { ctx.fillRect(boardOffX+c*cellSize+cellSize/2-2, boardOffY, 4, cellSize*ROWS); }
+      // Два бура — левый/правый (или вверх/вниз)
+      const dirs = horizontal ? [[-1,0],[1,0]] : [[0,-1],[0,1]];
+      for (const [dx, dy] of dirs) {
+        const dist = t * maxDist;
+        const px = sx + dx * dist;
+        const py = sy + dy * dist;
+        // Пыль в местах пробоя
+        const cellIdx = Math.floor(dist / cellSize);
+        const dustKey = (dx+2)*100 + cellIdx;
+        if (!dustSpawned.has(dustKey) && cellIdx > 0) {
+          dustSpawned.add(dustKey);
+          for (let i = 0; i < 5; i++) {
+            const a = Math.random()*Math.PI*2, sp = 2.5+Math.random()*4.5;
+            const dc = `rgba(${120+Math.floor(Math.random()*70)},${90+Math.floor(Math.random()*40)},${30+Math.floor(Math.random()*25)},0.85)`;
+            particles.push({ x:px, y:py, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-1, color:dc, life:0.75, r:2+Math.random()*3.5, dust:true });
+          }
+          // Золотая искра
+          particles.push({ x:px, y:py, vx:(Math.random()-0.5)*8, vy:-2-Math.random()*6, color:'#fff8c0', life:0.55, r:1.5+Math.random()*2, star:true });
+        }
+        if (px < boardOffX-cellSize || px > boardOffX+COLS*cellSize+cellSize ||
+            py < boardOffY-cellSize || py > boardOffY+ROWS*cellSize+cellSize) continue;
+        // Рисуем бур
+        const drillAlpha = t < 0.82 ? 1 : (1-t)/0.18;
+        ctx.globalAlpha = Math.max(0, drillAlpha);
+        ctx.save();
+        ctx.translate(px, py);
+        const angle = Math.atan2(dy, dx);
+        ctx.rotate(angle);
+        const ds = cellSize * 0.35;
+        ctx.shadowColor = '#c09010'; ctx.shadowBlur = ds*0.5;
+        // Хвост-трейл
+        const tg = ctx.createLinearGradient(-ds*0.55, 0, -ds*1.6, 0);
+        tg.addColorStop(0, 'rgba(200,148,28,0.50)');
+        tg.addColorStop(1, 'rgba(200,148,28,0)');
+        ctx.fillStyle = tg;
+        ctx.fillRect(-ds*1.6, -ds*0.18, ds*1.1, ds*0.36);
+        // Корпус бура (конус)
+        ctx.fillStyle = '#b08018';
+        ctx.beginPath();
+        ctx.moveTo(ds*0.62, 0);          // остриё
+        ctx.lineTo(-ds*0.28, -ds*0.20);
+        ctx.lineTo(-ds*0.50, -ds*0.11);
+        ctx.lineTo(-ds*0.50,  ds*0.11);
+        ctx.lineTo(-ds*0.28,  ds*0.20);
+        ctx.closePath(); ctx.fill();
+        // Металлический блик
+        const mg = ctx.createLinearGradient(-ds*0.5, -ds*0.20, -ds*0.5, ds*0.20);
+        mg.addColorStop(0,   'rgba(255,220,80,0.55)');
+        mg.addColorStop(0.45,'rgba(255,255,190,0.80)');
+        mg.addColorStop(1,   'rgba(140,100,15,0.30)');
+        ctx.fillStyle = mg;
+        ctx.beginPath();
+        ctx.moveTo(ds*0.62, 0); ctx.lineTo(-ds*0.28,-ds*0.20);
+        ctx.lineTo(-ds*0.50,-ds*0.11); ctx.lineTo(-ds*0.50,ds*0.11);
+        ctx.lineTo(-ds*0.28,ds*0.20); ctx.closePath(); ctx.fill();
+        // Спиральные пазы
+        ctx.strokeStyle = 'rgba(60,38,8,0.55)'; ctx.lineWidth = Math.max(1, cellSize*0.018); ctx.lineCap='round';
+        for (let i=0; i<3; i++) {
+          const gx = -ds*0.46 + ds*0.88*i/3;
+          ctx.beginPath(); ctx.moveTo(gx, -ds*(0.20-i*0.035)); ctx.lineTo(gx+ds*0.14, 0); ctx.lineTo(gx, ds*(0.20-i*0.035)); ctx.stroke();
+        }
+        ctx.shadowBlur = 0;
+        ctx.restore();
+      }
       ctx.restore();
-      if (t>=1) { _animOverlays.delete(id); res(); }
+      if (t >= 1) { _animOverlays.delete(id); res(); }
     });
   });
 }
@@ -7757,7 +7919,6 @@ function animateRocketFlight(fromR,fromC,toR,toC) {
     const dur=420, t0=performance.now();
     const fx=boardOffX+fromC*cellSize+cellSize/2, fy=boardOffY+fromR*cellSize+cellSize/2;
     const tx=boardOffX+toC*cellSize+cellSize/2,   ty=boardOffY+toR*cellSize+cellSize/2;
-    // Дуга: контрольная точка выше середины
     const mx=(fx+tx)/2, my=(fy+ty)/2;
     const arcH=Math.max(cellSize*2, Math.hypot(tx-fx,ty-fy)*0.55);
     const cpx=mx, cpy=my-arcH;
@@ -7776,37 +7937,80 @@ function animateRocketFlight(fromR,fromC,toR,toC) {
       const {x:px,y:py}=bezier(t);
       const {dx,dy}=bezierTangent(t);
       if (t<0.96) {
-        for (let i=0;i<3;i++) trail.push({
+        // Дымовой трейл
+        for (let i=0;i<2;i++) trail.push({
+          x:px+(Math.random()-0.5)*3, y:py+(Math.random()-0.5)*3,
+          vx:(Math.random()-0.5)*0.7, vy:-0.5-Math.random()*0.8,
+          life:1, r:2.5+Math.random()*3, smoke:true
+        });
+        // Искры пламени
+        trail.push({
           x:px+(Math.random()-0.5)*4, y:py+(Math.random()-0.5)*4,
-          vx:(Math.random()-0.5)*1.8, vy:(Math.random()-0.5)*1.8,
-          life:1, r:2+Math.random()*4,
-          hue:Math.random()*360
+          vx:(Math.random()-0.5)*2.2, vy:(Math.random()-0.5)*2.2,
+          life:0.55, r:1.5+Math.random()*2.5, hue:18+Math.random()*38
         });
       }
       ctx.save();
+      // Трейл
       for (let i=trail.length-1;i>=0;i--) {
         const p=trail[i];
-        p.x+=p.vx; p.y+=p.vy; p.vx*=0.92; p.vy*=0.92; p.life-=0.065;
+        p.x+=p.vx; p.y+=p.vy; p.vx*=0.94; p.vy*=0.94; p.life-=0.055;
         if (p.life<=0){trail.splice(i,1);continue;}
-        const rg=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
-        rg.addColorStop(0,`hsla(${p.hue},100%,92%,${p.life})`);
-        rg.addColorStop(1,`hsla(${p.hue+40},100%,55%,0)`);
-        ctx.fillStyle=rg; ctx.globalAlpha=1;
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+        ctx.globalAlpha=p.life*0.55;
+        if (p.smoke) {
+          ctx.fillStyle=`rgba(180,165,145,${p.life*0.45})`;
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.r*(1.5+0.5*(1-p.life)),0,Math.PI*2); ctx.fill();
+        } else {
+          const rg=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+          rg.addColorStop(0,`hsla(${p.hue},100%,92%,${p.life})`);
+          rg.addColorStop(1,`hsla(${p.hue+38},100%,55%,0)`);
+          ctx.fillStyle=rg; ctx.globalAlpha=1;
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+        }
       }
-      const rs=cellSize*0.42;
+      ctx.globalAlpha=1;
+      const rs=cellSize*0.36;
       ctx.translate(px,py);
-      ctx.shadowColor='rgba(255,220,50,0.95)'; ctx.shadowBlur=24;
-      const gOuter=ctx.createRadialGradient(0,0,0,0,0,rs*0.48);
-      gOuter.addColorStop(0,'rgba(255,255,200,0.8)');
-      gOuter.addColorStop(1,'rgba(255,180,0,0)');
-      ctx.fillStyle=gOuter;
-      ctx.beginPath(); ctx.arc(0,0,rs*0.48,0,Math.PI*2); ctx.fill();
-      ctx.shadowBlur=10;
-      ctx.fillStyle='#fffbe0';
-      ctx.beginPath(); ctx.arc(0,0,rs*0.24,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='rgba(255,255,255,0.85)';
-      ctx.beginPath(); ctx.arc(-rs*0.07,-rs*0.08,rs*0.09,0,Math.PI*2); ctx.fill();
+      const angle=Math.atan2(dy,dx)+Math.PI/2; // нос вперёд
+      ctx.rotate(angle);
+      // Пламя двигателя (сзади, то есть снизу после поворота)
+      const flameT=Date.now()/70;
+      const flameH=rs*(0.52+0.16*Math.sin(flameT));
+      ctx.shadowColor='rgba(255,180,50,0.80)'; ctx.shadowBlur=rs*0.5;
+      const fGrd=ctx.createLinearGradient(0,rs*0.24,0,rs*0.24+flameH);
+      fGrd.addColorStop(0,'rgba(255,255,200,0.95)');
+      fGrd.addColorStop(0.28,'rgba(255,155,15,0.90)');
+      fGrd.addColorStop(1,'rgba(255,50,0,0)');
+      ctx.fillStyle=fGrd;
+      ctx.beginPath(); ctx.ellipse(0,rs*0.24+flameH*0.5,rs*0.13,flameH*0.5,0,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      // Плавники
+      ctx.fillStyle='#2855b0';
+      ctx.beginPath(); ctx.moveTo(-rs*0.21,rs*0.04); ctx.lineTo(-rs*0.50,rs*0.36); ctx.lineTo(-rs*0.13,rs*0.28); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo( rs*0.21,rs*0.04); ctx.lineTo( rs*0.50,rs*0.36); ctx.lineTo( rs*0.13,rs*0.28); ctx.closePath(); ctx.fill();
+      // Корпус
+      const bGrd=ctx.createLinearGradient(-rs*0.21,0,rs*0.21,0);
+      bGrd.addColorStop(0,'#8888a0'); bGrd.addColorStop(0.32,'#d4d4e8'); bGrd.addColorStop(1,'#5868a0');
+      ctx.fillStyle=bGrd;
+      ctx.beginPath();
+      ctx.moveTo(0,-rs*0.72);
+      ctx.bezierCurveTo(-rs*0.21,-rs*0.40,-rs*0.23,-rs*0.10,-rs*0.19,rs*0.24);
+      ctx.lineTo(rs*0.19,rs*0.24);
+      ctx.bezierCurveTo(rs*0.23,-rs*0.10,rs*0.21,-rs*0.40,0,-rs*0.72);
+      ctx.fill();
+      // Красный носовой конус
+      ctx.fillStyle='#d82020';
+      ctx.beginPath();
+      ctx.moveTo(0,-rs*0.72);
+      ctx.bezierCurveTo(-rs*0.13,-rs*0.50,-rs*0.15,-rs*0.34,-rs*0.13,-rs*0.26);
+      ctx.lineTo(rs*0.13,-rs*0.26);
+      ctx.bezierCurveTo(rs*0.15,-rs*0.34,rs*0.13,-rs*0.50,0,-rs*0.72);
+      ctx.fill();
+      // Иллюминатор
+      ctx.fillStyle='rgba(80,210,255,0.82)';
+      ctx.beginPath(); ctx.arc(0,-rs*0.06,rs*0.12,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='rgba(200,240,255,0.90)'; ctx.lineWidth=Math.max(1,rs*0.04);
+      ctx.beginPath(); ctx.arc(0,-rs*0.06,rs*0.12,0,Math.PI*2); ctx.stroke();
       ctx.restore();
       if (t>=1) { _animOverlays.delete(id); res(); }
     });
