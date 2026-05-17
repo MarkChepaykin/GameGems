@@ -288,6 +288,15 @@ STRIPE → собрать все строки/столбцы в один Set, `P
 - `bonusMovesExplosion`: захватывает `_myEpoch = _matchEpoch` при старте, проверяет эпоху после каждого `await`.
 - Убран batch-of-2 (всегда один бонус за один оставшийся ход).
 
+### (Рецидив) showWin/бонусные взрывы переносились на следующий уровень
+**Причина:** Две дыры в эпоха-гарде:
+1. `processMatches` → `setTimeout(showWin, 600)` без проверки эпохи: если за 600мс пользователь стартовал следующий уровень, `showWin()` запускала бонусный взрыв на новом поле.
+2. `showWin()` → `bonusMovesExplosion().then(()=>_doShowWin())`: после break по эпохе Promise всё равно резолвился, `.then()` вызывал `_doShowWin()` на новом уровне — `state._winShowing` был уже сброшен в `playLevel`, поэтому guard не срабатывал.
+
+**Исправление:**
+- `processMatches` (строка ~6732): `const _ep=_myEpoch; setTimeout(()=>{ if (_matchEpoch===_ep) showWin(); }, 600)`
+- `showWin()` (строка ~9675): `const _winEpoch=_matchEpoch; bonusMovesExplosion().then(()=>{ if (_matchEpoch===_winEpoch) _doShowWin(); })`
+
 ---
 
 ## Визуальный стиль
