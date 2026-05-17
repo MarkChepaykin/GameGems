@@ -2290,6 +2290,15 @@ const PHYSICS = {
   BASE_SCORE:      20,   // базовые очки за один гем в матче
 };
 
+const _PHYSICS_BASE = Object.assign({}, PHYSICS);
+let _devAnimSpeed = 1.0;
+function setDevAnimSpeed(v) {
+  _devAnimSpeed = Math.max(0.1, Math.min(5, +v));
+  ['SWAP_MS','UNDO_MS','DROP_MS','DESTROY_MS','COLORBOMB_MS','ROCKET_MS','SHUFFLE_MS'].forEach(
+    k => { PHYSICS[k] = Math.round(_PHYSICS_BASE[k] / _devAnimSpeed); }
+  );
+}
+
 // ── Тактильная обратная связь ──
 const HAPTIC = {
   tap:     [10],
@@ -11467,6 +11476,21 @@ function initDevPanel() {
         <button onclick="devSpawnSpecial(SPECIAL.COLORING)"  style="${devBtnStyle('#064e3b')}" title="Красящий">🎨</button>
       </div>
       <button onclick="startTestLevel()" style="${devBtnStyle('#134e4a')};width:100%;margin-bottom:4px;">🧪 Тест-уровень</button>
+      <div style="margin-top:4px;margin-bottom:3px;font-size:10px;color:#64748b;">🔄 Спавн зон (только в тест-уровне):</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px;">
+        <button onclick="devSpawnZone(0)" style="${devBtnStyle('#1e40af')}" title="Горизонт. молния">⚡H</button>
+        <button onclick="devSpawnZone(1)" style="${devBtnStyle('#1e40af')}" title="Верт. молния">⚡V</button>
+        <button onclick="devSpawnZone(2)" style="${devBtnStyle('#9d174d')}" title="Бомба">🎁</button>
+        <button onclick="devSpawnZone(3)" style="${devBtnStyle('#7c3aed')}" title="Мега">💥</button>
+        <button onclick="devSpawnZone(4)" style="${devBtnStyle('#065f46')}" title="Ракета">🎆</button>
+        <button onclick="devSpawnZone(5)" style="${devBtnStyle('#1e3a5f')}" title="Радуга">🌈</button>
+        <button onclick="devSpawnZone(6)" style="${devBtnStyle('#064e3b')}" title="Красящий">🎨</button>
+        <button onclick="devSpawnZone(7)" style="${devBtnStyle('#4a1d96')}" title="Комбо (бомба+молния)">🎁⚡</button>
+      </div>
+      <div style="margin-top:4px;margin-bottom:3px;font-size:10px;color:#64748b;">⏩ Скорость анимации: <span id="dev-speed-val">1×</span></div>
+      <input type="range" min="0.1" max="5" step="0.1" value="1"
+        style="width:100%;accent-color:#a78bfa;margin-bottom:4px;"
+        oninput="setDevAnimSpeed(+this.value);document.getElementById('dev-speed-val').textContent=(+this.value).toFixed(1)+'×'">
       <button onclick="(()=>{state.questsDate='';state.weeklyQuestDate='';generateDailyQuests();renderQuestsRow();showToast('Квесты сброшены!')})()" style="${devBtnStyle('#1e3a5f')};width:100%;margin-bottom:4px;">🔄 Сбросить квесты</button>
       <button onclick="generateCampaign(113,612);showToast('Готово!')" style="${devBtnStyle('#1e3a5f')};width:100%;margin-bottom:4px;">🏭 +500 уровней</button>
       <div style="margin-top:6px;margin-bottom:3px;font-size:10px;color:#64748b;">🐾 Компаньон :</div>
@@ -11546,10 +11570,35 @@ function devBtnStyle(bg) {
   return `background:${bg};color:#fff;border:none;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:11px;`;
 }
 
-// ── Тестовый уровень: витрина всех спецфишек ─────────────────────────────
+// ── Тестовый уровень: зоны для каждого бонуса ─────────────────────────────
+// Колонка 0=⚡H 1=⚡V 2=🎁Бомба 3=💥Мега 4=🎆Ракета 5=🌈Радуга 6=🎨Красящий 7=🎁+⚡(комбо)
+const TEST_ZONE_SPECIALS = [
+  SPECIAL.STRIPE_H, SPECIAL.STRIPE_V, SPECIAL.BOMB, SPECIAL.MEGA,
+  SPECIAL.ROCKET, SPECIAL.RAINBOW, SPECIAL.COLORING, SPECIAL.BOMB,
+];
+const TEST_ZONE_LABELS = ['⚡H','⚡V','🎁','💥','🎆','🌈','🎨','🎁+⚡'];
+
+function _fillTestColumn(board, col) {
+  for (let r = ROWS - 1; r >= 0; r--) {
+    let type;
+    do { type = Math.floor(Math.random() * 5); }
+    while (r >= 2 && board[r-1][col]?.type === type && board[r-2][col]?.type === type);
+    board[r][col] = createGem(type);
+  }
+  // Спецфишка зоны в ряд 0
+  const sp = TEST_ZONE_SPECIALS[col] ?? SPECIAL.BOMB;
+  board[0][col] = createGem(col % 5);
+  board[0][col].special = sp;
+  if (sp === SPECIAL.RAINBOW) board[0][col].type = -1;
+  // Для комбо-зоны (col 7): вторая спецфишка в ряду 1 — STRIPE_H рядом с BOMB
+  if (col === 7 && ROWS > 1) {
+    board[1][col] = createGem(1);
+    board[1][col].special = SPECIAL.STRIPE_H;
+  }
+}
+
 function startTestLevel() {
-  // Виртуальный уровень (не нужен в LEVELS[])
-  const fakeLevel = { level:999, type:'score', target:100, moves:999, gems:[], iceCount:0,
+  const fakeLevel = { level:999, type:'score', target:999999999, moves:999, gems:[], iceCount:0,
     stoneCount:0, jellyCount:0, gemTypes:5, holes:[], chocolateCount:0 };
   state.currentLevel = 999;
   state._firstAttemptLevel = -1;
@@ -11569,67 +11618,38 @@ function startTestLevel() {
   state.carpetTotal = 0;
   state.iceGrid    = Array.from({length:ROWS},()=>new Array(COLS).fill(0));
   state.jellyTotal = 0; state.carpetTotal = 0;
+  state._testLevel = true;
 
-  // Заполняем поле
+  // Базовое заполнение без матчей
   const board = [];
   for (let r=0;r<ROWS;r++) {
     board[r]=[];
     for (let c=0;c<COLS;c++) {
       let type; do { type=Math.floor(Math.random()*5); } while (r>0 && (
-        (board[r-1][c]?.type===type && board[r>1?r-2:0][c]?.type===type) ||
+        (board[r-1][c]?.type===type && (r<2||board[r-2][c]?.type===type)) ||
         (c>1 && board[r][c-1]?.type===type && board[r][c-2]?.type===type)
       ));
       board[r][c] = createGem(type);
     }
   }
 
-  // Ряд 0: каждая спецфишка отдельно (8 штук = 8 колонок)
-  const SP_ROW0 = [SPECIAL.STRIPE_H, SPECIAL.STRIPE_V, SPECIAL.BOMB, SPECIAL.MEGA,
-                   SPECIAL.ROCKET, SPECIAL.BOMB, SPECIAL.RAINBOW, SPECIAL.COLORING];
-  SP_ROW0.forEach((sp,c)=>{ if(c<COLS){ board[0][c]=createGem(c%5); board[0][c].special=sp;
-    if(sp===SPECIAL.RAINBOW) board[0][c].type=-1; }});
-
-  // Ряд 2: комбо-пары для тестирования
-  const COMBOS = [
-    [SPECIAL.STRIPE_H, 0], [SPECIAL.BOMB, 1],  // молния+Бомба
-    [SPECIAL.STRIPE_V, 2], [SPECIAL.STRIPE_H, 3], // молния+молния
-    [SPECIAL.MEGA, 0],     [SPECIAL.COLORING, -1],// мега+красящий
-    [SPECIAL.ROCKET, 1],     [SPECIAL.MEGA, 2],     // фейерверк+мега
-  ];
-  COMBOS.forEach(([sp,type],c)=>{ if(c<COLS){ board[2][c]=createGem(type>=0?type:0); board[2][c].special=sp;
-    if(sp===SPECIAL.RAINBOW) board[2][c].type=-1; }});
-
-  // Ряд 4: ещё комбо: мега+мега, фейерверк+молния, bomb+bomb, радуга+Бомба
-  const COMBOS2 = [
-    [SPECIAL.MEGA, 0],     [SPECIAL.MEGA, 1],     // мега+мега
-    [SPECIAL.ROCKET, 2],     [SPECIAL.STRIPE_H, 3], // фейерверк+молния
-    [SPECIAL.BOMB, 0],  [SPECIAL.BOMB, 1],  // Bomb+Bomb
-    [SPECIAL.RAINBOW, -1], [SPECIAL.BOMB, 2],   // радуга+Бомба
-  ];
-  COMBOS2.forEach(([sp,type],c)=>{ if(c<COLS){ board[4][c]=createGem(type>=0?type:0); board[4][c].special=sp;
-    if(sp===SPECIAL.RAINBOW) board[4][c].type=-1; }});
-
-  // Препятствия в нижних рядах для тестирования
-  if (ROWS>6) { // лёд в ряду 6
-    [0,1,2,3].forEach(c=>{ state.iceGrid[6][c]=1; });
-  }
-  if (ROWS>7) { // камни в ряду 7
-    [5,6].forEach(c=>{ if(board[7]?.[c]){ board[7][c].stone=true; board[7][c].type=-1; board[7][c].special=SPECIAL.NONE; } });
-  }
-  if (ROWS>8) { // желе в ряду 8
-    [2,3,4,5].forEach(c=>{ state.jellyGrid[8][c]=2; });
-    state.jellyTotal=4;
-  }
-  if (ROWS>5) { // шоколад на краю ряда 5
-    if(board[5]?.[0]){ board[5][0].chocolate=true; board[5][0].type=-1; board[5][0].special=SPECIAL.NONE; }
-    if(board[5]?.[COLS-1]){ board[5][COLS-1].chocolate=true; board[5][COLS-1].type=-1; board[5][COLS-1].special=SPECIAL.NONE; }
-  }
+  // Расставляем спецфишки зон — каждая колонка независима
+  for (let c = 0; c < COLS; c++) _fillTestColumn(board, c);
 
   state.board = board;
   state.busy = false; state.paused = false;
   showScreen('game'); resizeCanvas(); updateHUD(); updateGoalProgress();
   drawBoard();
-  showToast('🧪 Тест-уровень: все спецфишки на ряду 0, комбо на рядах 2 и 4');
+  showToast('🧪 Тест: каждая колонка — зона бонуса. Спавнеры в dev-панели.');
+}
+
+function devSpawnZone(col) {
+  if (!state.board || state.currentLevel !== 999) {
+    showToast('Только в тест-уровне'); return;
+  }
+  _fillTestColumn(state.board, col);
+  drawBoard();
+  showToast(`${TEST_ZONE_LABELS[col] ?? col} — зона обновлена`);
 }
 
 async function devTestAllSounds() {
