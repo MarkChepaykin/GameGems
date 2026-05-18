@@ -122,8 +122,8 @@ Read index.html offset:<LINE-1> limit:150
 | applyGravity | 6500 |
 | fillFromTop | 6552 |
 | triggerSpecial | 7321 |
-| _bombPhase1 | 7260 |
-| _bombBlast3x3 | 7292 |
+| _bombPhase1 | 8011 |
+| _bombBlast3x3 | 8044 |
 | animateDestroy | 7634 |
 | animateDrop | 7743 |
 | animateSwap | 7776 |
@@ -270,6 +270,10 @@ STRIPE → собрать все строки/столбцы в один Set, `P
 - Лимит итераций снижен с 120 до **25** (`_loopGuard > 25`).
 - CC cascade rule (два места): cascade-матчи (`_loopGuard > 1`) не создают новый COLORING (downgrade → BOMB) **и** не тригерят scatter существующих COLORING из `_othersInMatch` (continue — ячейка уже обнулена матчем, scatter подавляется).
 
+### Бомба из матча взрывалась на исходной позиции (не падала)
+**Причина:** В `processMatches` бомба null'илась в строке `for (const {r,c} of cellsArr) ... state.board[r][c]=null` ДО захвата `_bombData`. Поэтому `cell: state.board[r]?.[c]` = null, трекинг по ссылке не работал, фаза 2 взрывала исходную позицию.  
+**Исправление:** `_bombsInMatch`/`_bombData` захватываются ДО animateDestroy и null-инга. Бомба исключается из `animateDestroy` и из цикла null'инга — остаётся на доске, проходит гравитацию, падает, фаза 2 по новой позиции.
+
 ### Несколько бомб взрывались по одному (медленно)
 **Причина:** в `processMatches` `specialsInMatch` обрабатывался циклом `for...await` — каждая бомба ждала полного завершения (фаза1 + гравитация + дым + фаза2) перед следующей.  
 **Исправление:** `_bombPhase1(r,c)` — выделена отдельная функция для первого взрыва бомбы (без гравитации).
@@ -310,11 +314,13 @@ STRIPE → собрать все строки/столбцы в один Set, `P
 > ⚠️ НЕ использовать `createLinearGradient` / `createRadialGradient` для тела гема —
 > пользователь считает это "уродливым 3D".
 
-### Ракета (ROCKET special)
-`animateRocketFlight` — рисуется через canvas-примитивы (не emoji):
+### Ракета / Флэр (ROCKET special)
+`animateRocketFlight(fromR,fromC,toR,toC,gemColor)` — сигнальный флэр:
 - Дуга Безье (не прямая линия)
-- Нос (красный), корпус (светлый), рули (синие), иллюминатор
-- Мерцающее пламя + трейл из частиц
+- Цилиндрическое тело В ЦВЕТ ФИШКИ, горящий нос (белое свечение), хвостовое пламя
+- Серый+чёрный дым, цветной туман, белые искры — трейл из частиц
+- Мерцание: `flicker=0.85+0.15*sin(Date.now()/32)`
+`animateRocketBlast(r,c,gemColor)` — взрыв флэра: вспышка + кольца дыма в цвет + разлёт искр
 
 ---
 
