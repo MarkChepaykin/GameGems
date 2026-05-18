@@ -53,22 +53,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
   width: 100%; height: 100%;
-  /* 80% sky → 20% pink earth, без видимого горизонтального стыка */
-  background:
-    /* Мерцающий фонарь в центре — имитация подземного освещения */
-    radial-gradient(ellipse 500px 400px at 50% 40%, rgba(180,100,20,.18) 0%, rgba(0,0,0,0) 70%),
-    /* Подземный градиент: тёмная порода сверху → тёплая земля снизу */
-    linear-gradient(180deg,
-      #050302 0%,
-      #0a0804 12%,
-      #140c06 25%,
-      #201408 38%,
-      #2c1a08 52%,
-      #3d2510 65%,
-      #4a3018 76%,
-      #3a2510 88%,
-      #1c0e04 100%);
-  background-attachment: fixed;
+  background: #0a0804;
   overflow: hidden;
   font-family: 'Nunito','Segoe UI',Arial,sans-serif;
   user-select: none;
@@ -82,24 +67,18 @@ html, body {
   background: transparent;
   overflow: hidden;
 }
-/* Декорации — сталактиты сверху, золотые блики снизу */
-body::before {
-  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background-image:
-    /* Золотые жилы / блики в породе */
-    radial-gradient(ellipse 80px 120px at 8%  20%, rgba(180,130,20,.18), transparent 70%),
-    radial-gradient(ellipse 60px 100px at 92% 15%, rgba(160,110,10,.15), transparent 70%),
-    radial-gradient(ellipse 100px 80px at 15% 70%, rgba(100,60,10,.20), transparent 70%),
-    radial-gradient(ellipse 70px  90px at 88% 75%, rgba(120,80,10,.18), transparent 70%),
-    /* Мерцающие золотые точки (руда) */
-    radial-gradient(circle 2px at 25% 30%, rgba(240,192,48,.60), transparent 60%),
-    radial-gradient(circle 2px at 72% 22%, rgba(240,192,48,.50), transparent 60%),
-    radial-gradient(circle 2.5px at 60% 80%, rgba(220,160,30,.55), transparent 60%),
-    radial-gradient(circle 1.5px at 40% 65%, rgba(200,140,20,.45), transparent 60%);
-  background-repeat: no-repeat;
-}
 /* Горизонт-полоска убрана — слив цветов плавный, без артефакта */
-#app { isolation: isolate; }
+#app { isolation: isolate; position: relative; z-index: 1; }
+#game-bg {
+  position: fixed; inset: -6%;
+  z-index: 0;
+  background: url('sprites/bg/main.png') center/cover no-repeat;
+  transition: filter 0.45s ease;
+  will-change: filter;
+}
+#game-bg.blurred {
+  filter: blur(14px);
+}
 canvas { display: block; touch-action: none; }
 /* Rainbow Round canvas animation */
 @keyframes rainbowHue { 0%{filter:hue-rotate(0deg) saturate(1.4)} 100%{filter:hue-rotate(360deg) saturate(1.4)} }
@@ -1158,6 +1137,7 @@ canvas { display: block; touch-action: none; }
 </style>
 </head>
 <body>
+<div id="game-bg"></div>
 <div id="app">
 
 <!-- ══ ЗАГРУЗКА ══ -->
@@ -2247,77 +2227,8 @@ const GEMS = [
 
 const SPECIAL = { NONE:0, STRIPE_H:1, STRIPE_V:2, RAINBOW:4, MEGA:5, ROCKET:6, BOMB:7, COLORING:8 };
 
-// Скины — цветовые палитры [gem0..gem5] для геометрических скинов
-// Для emoji-скинов цвет = фоновый оттенок за emoji
-// Правило: 6 чётко различимых оттенков с РАЗНЫМИ shape — не повторяющиеся хью + отчётливые value
-const SKINS = {
-  classic:    null,  // классические геометрические формы — берёт цвета из GEMS
-  candy:      ['#ff3d6e','#3aa8ff','#34d96f','#ffcb3a','#b96bff','#ff8a3a'],
-  animals:    ['#ef4444','#1a3aff','#22c55e','#f59e0b','#a855f7','#00d4ff'],
-  fruits:     ['#ef4444','#3b82f6','#22c55e','#f59e0b','#a855f7','#00d4ff'],
-  fire:       ['#ff2a2a','#ff7800','#ffd000','#ff5fc0','#cc1144','#ffaa44'],
-  ice_pal:    ['#0ea5e9','#a78bfa','#34d399','#fef08a','#f472b6','#ffffff'],
-  space:      ['#9b59b6','#22d3ee','#ef4444','#fbbf24','#10b981','#ff5ec3'],
-  planets:    ['#2563eb','#22c55e','#f59e0b','#a855f7','#ef4444','#06b6d4'],
-  halloween:  ['#ff6600','#9333ea','#22c55e','#dc2626','#fbbf24','#94a3b8'],
-  christmas:  ['#dc2626','#16a34a','#fbbf24','#2563eb','#f9a8d4','#a78bfa'],
-  ocean:      ['#0284c7','#22d3ee','#14b8a6','#fbbf24','#ec4899','#a78bfa'],
-  robots:     ['#9ca3af','#3b82f6','#ef4444','#fbbf24','#8b5cf6','#10b981'],
-  dinos:      ['#22c55e','#a3e635','#0d9488','#fbbf24','#dc2626','#a78bfa'],
-  flowers:    ['#f43f5e','#fb923c','#fbbf24','#a3e635','#22d3ee','#a855f7'],
-  vegetables: ['#22c55e','#f97316','#dc2626','#eab308','#a855f7','#f43f5e'],
-  sports:     ['#f59e0b','#3b82f6','#ef4444','#22c55e','#a855f7','#f97316'],
-  cats:       ['#f97316','#a78bfa','#6b7280','#f59e0b','#ec4899','#14b8a6'],
-  neon:       ['#ff00ff','#00ffff','#ff0080','#00ff80','#8000ff','#ffff00'],
-};
-// Emoji для тематических скинов
-const SKIN_EMOJI = {
-  candy:      ['💎','🔮','💠','✨','🔷','💫'],
-  animals:    ['🐶','🐱','🐸','🦊','🐼','🦁'],
-  fruits:     ['🍎','🍊','🍋','🍇','🍓','🍑'],
-  planets:    ['🌍','🪐','⭐','🌙','☄️','🌟'],
-  halloween:  ['🎃','👻','🕷️','🦇','💀','🕸️'],
-  christmas:  ['🎄','⛄','🎁','🔔','🦌','⭐'],
-  ocean:      ['🐠','🦀','🐙','🦈','🐳','🐬'],
-  robots:     ['🤖','⚙️','🔧','💡','🛸','🔩'],
-  dinos:      ['🦕','🦖','🐉','🦎','🐊','🦴'],
-  flowers:    ['🌸','🌺','🌻','🌹','🌷','💐'],
-  vegetables: ['🥦','🥕','🍅','🌽','🧅','🍆'],
-  sports:     ['⚽','🏀','🎾','🏐','🎱','🏓'],
-  cats:       ['🐱','😺','😸','🙀','😹','😻'],
-};
-const SKIN_DISPLAY = {
-  classic:'Классика', candy:'Кристаллы', animals:'Зверюшки',
-  fruits:'Фрукты', fire:'Огонь', ice_pal:'Лёд', space:'Космос',
-  planets:'Планеты', halloween:'Хэллоуин', christmas:'Новый год',
-  ocean:'Океан', robots:'Роботы', dinos:'Динозавры', flowers:'Цветы',
-  vegetables:'Овощи', sports:'Спорт', cats:'Котики', neon:'Неон',
-};
-// Условия разблокировки скинов
-const SKIN_META = {
-  classic:    { unlock:'free' },
-  candy:      { unlock:'free' },
-  animals:    { unlock:'free' },
-  fruits:     { unlock:'free' },
-  fire:       { unlock:'free' },
-  ice_pal:    { unlock:'free' },
-  space:      { unlock:'free' },
-  planets:    { unlock:'shop', price:15, currency:'crystals' },
-  halloween:  { unlock:'shop', price:15, currency:'crystals' },
-  christmas:  { unlock:'shop', price:15, currency:'crystals' },
-  ocean:      { unlock:'shop', price:20, currency:'crystals' },
-  sports:     { unlock:'shop', price:20, currency:'crystals' },
-  robots:     { unlock:'shop', price:25, currency:'crystals' },
-  neon:       { unlock:'shop', price:25, currency:'crystals' },
-  dinos:      { unlock:'battlepass', bpLevel:10 },
-  cats:       { unlock:'battlepass', bpLevel:20 },
-  vegetables: { unlock:'achievement', achId:'special_50' },
-  flowers:    { unlock:'achievement', achId:'streak_7' },
-};
 function getSkinColor(gemType) {
-  const pal = SKINS[state.activeSkin];
-  if (!pal) return GEMS[gemType]?.color || '#fff';
-  return pal[gemType] ?? GEMS[gemType]?.color ?? '#fff';
+  return GEMS[gemType]?.color || '#fff';
 }
 
 // LEVELS array is loaded from levels.js
@@ -2876,9 +2787,6 @@ const state = {
   // Динамическая сложность
   recentResults: [],       // последние 5 результатов: 'win'|'lose'
 
-  // Скины
-  activeSkin: 'classic',
-  unlockedSkins: ['classic','candy','animals','fruits','fire','ice_pal','space'],  // все бесплатные скины открыты сразу
 
   // Sidekick (компаньон-помощник)
   sidekick: { id: null, charge: 0, maxCharge: 20 },
@@ -2940,8 +2848,6 @@ function buildSaveObj() {
     totalSpecials:    state.totalSpecials,
     totalIceBroken:   state.totalIceBroken,
     totalStonesBroken:state.totalStonesBroken,
-    activeSkin:       state.activeSkin,
-    unlockedSkins:    state.unlockedSkins,
     recentResults:    state.recentResults,
 
     sidekickId:       state.sidekick.id,
@@ -2960,7 +2866,7 @@ const SAVE_FIELDS = ['coins','crystals','lives','livesTimestamp','lives24hUntil'
   'quests','questsDate','weeklyQuestDate','achievements','piggyFill',
   'levelAttempts','firstAttemptWins','tutorialDone','tutorialSeen','specialOfferShown','lastPlayedAt','totalSpecials',
   'totalIceBroken','totalStonesBroken',
-  'activeSkin','unlockedSkins','trophies','totalWins','shopOfferExpiry','recentResults',
+  'trophies','totalWins','shopOfferExpiry','recentResults',
   'sidekickId',
   'chestStreak','lastChestDate'];
 
@@ -2971,14 +2877,6 @@ function applySaveObj(s) {
   if (!s.ingameBoosters && !s.maxUnlocked) {
     state.ingameBoosters = { hammer:2, colorbomb:1 };
   }
-  // Гарантируем наличие базовых (бесплатных) скинов у всех игроков
-  const FREE_SKINS = Object.entries(SKIN_META).filter(([,m])=>m.unlock==='free').map(([id])=>id);
-  if (!Array.isArray(state.unlockedSkins) || !state.unlockedSkins.length) {
-    state.unlockedSkins = [...FREE_SKINS];
-  }
-  FREE_SKINS.forEach(s => { if (!state.unlockedSkins.includes(s)) state.unlockedSkins.push(s); });
-  if (!state.unlockedSkins.includes('classic')) state.unlockedSkins.unshift('classic');
-  if (!SKINS[state.activeSkin]) state.activeSkin = 'classic';
   // restore sidekick id
   if (s.sidekickId !== undefined) {
     const skDef = SIDEKICKS[s.sidekickId];
@@ -3346,6 +3244,7 @@ function showScreen(name) {
     }
   });
   state.screen = name;
+  document.getElementById('game-bg').classList.toggle('blurred', name !== 'loading');
   if (name === 'game') {
     // Переходим в игру: fade MENU_BGM → start BGM
     if (MENU_BGM.isPlaying()) { MENU_BGM.stop(); }
@@ -3528,71 +3427,8 @@ function refreshSettings() {
   if (smv) smv.textContent = state.musicVol + '%';
   if (ss) ss.value = state.sfxVol;
   if (ssv) ssv.textContent = state.sfxVol + '%';
-  renderSkinSelector();
 }
 
-function renderSkinSelector() {
-  const wrap = document.getElementById('skin-selector');
-  if (!wrap) return;
-  // Скрываем старые скины без emoji (кроме классики)
-  const HIDDEN_SKINS = new Set(['fire','ice_pal','space']);
-  const allSkins = Object.keys(SKINS).filter(id => !HIDDEN_SKINS.has(id));
-  wrap.innerHTML = allSkins.map(id => {
-    const unlocked = state.unlockedSkins.includes(id);
-    const active   = state.activeSkin === id;
-    const meta     = SKIN_META[id] || { unlock:'free' };
-    const pal      = SKINS[id];
-    const cls   = `skin-swatch${active?' active':''}${!unlocked?' locked':''}`;
-    const label = SKIN_DISPLAY[id] || id;
-    const emojiSet = SKIN_EMOJI[id];
-    // Neutral dark background for all swatches; show emoji or colored dots
-    const bg = '#1e1b3a';
-    let preview;
-    if (emojiSet) {
-      preview = `<span style="font-size:16px;line-height:1;">${emojiSet[0]}${emojiSet[2]}</span>`;
-    } else {
-      const colors = pal ? pal : GEMS.map(g => g.color);
-      preview = `<div style="display:flex;flex-wrap:wrap;gap:2px;width:30px;">${colors.slice(0,4).map(c=>`<div style="width:12px;height:12px;border-radius:50%;background:${c};"></div>`).join('')}</div>`;
-    }
-    let lockHtml = '';
-    if (!unlocked) {
-      if (meta.unlock==='shop') lockHtml = `<span style="font-size:10px;color:#ffe066;text-shadow:0 1px 2px #000;">${meta.price}💎</span>`;
-      else if (meta.unlock==='battlepass') lockHtml = `<span style="font-size:9px;color:#a855f7;">Пропуск</span>`;
-      else if (meta.unlock==='achievement') lockHtml = `<span style="font-size:9px;color:#38bdf8;">Ачив.</span>`;
-      else lockHtml = '<span class="sk-lock">🔒</span>';
-    }
-    const clickAction = unlocked ? `selectSkin('${id}')` : (meta.unlock==='shop' ? `buySkin('${id}')` : '');
-    return `<div class="${cls}" style="background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;" title="${label}"
-      onclick="${clickAction}">
-      ${preview}${lockHtml}
-      <span style="font-size:9px;color:#fff;text-shadow:0 1px 2px #000;margin-top:2px;">${label}</span>
-    </div>`;
-  }).join('');
-}
-
-function buySkin(id) {
-  const meta = SKIN_META[id];
-  if (!meta || meta.unlock!=='shop') return;
-  if (state.unlockedSkins.includes(id)) { selectSkin(id); return; }
-  if (meta.currency==='crystals') {
-    if (state.crystals < meta.price) { showToast(`Нужно ${meta.price} 💎`); return; }
-    state.crystals -= meta.price;
-    state.unlockedSkins.push(id);
-    saveGame();
-    selectSkin(id);
-    showToast(`🎨 Разблокирован скин: ${SKIN_DISPLAY[id]||id}!`);
-  }
-}
-
-function selectSkin(id) {
-  if (!state.unlockedSkins.includes(id)) return;
-  state.activeSkin = id;
-  if (typeof invalidateGemCache === 'function') invalidateGemCache();
-  saveGame();
-  renderSkinSelector();
-  if (state.screen === 'game' && state.board.length) drawBoard();
-  showToast('🎨 Скин: ' + (SKIN_DISPLAY[id] || id));
-}
 
 function toggleSetting(k) {
   if (k==='sound') state.soundOn = !state.soundOn;
@@ -3604,58 +3440,13 @@ function toggleSetting(k) {
 
 // Переключение вкладок магазина
 function switchTab(name) {
-  ['coins','crystals','boosters','themes','special'].forEach(t => {
+  ['coins','crystals','boosters','special'].forEach(t => {
     document.getElementById('tab-'+t)?.classList.toggle('active', t===name);
   });
   document.querySelectorAll('.tab-btn').forEach((b,i) => {
-    const names = ['coins','crystals','boosters','themes','special'];
+    const names = ['coins','crystals','boosters','special'];
     b.classList.toggle('active', names[i]===name);
   });
-  if (name === 'themes') renderShopThemes();
-}
-
-function renderShopThemes() {
-  const grid = document.getElementById('themes-grid');
-  if (!grid) return;
-  const HIDDEN_SKINS = new Set(['fire','ice_pal','space']);
-  const allSkins = Object.keys(SKINS).filter(id => !HIDDEN_SKINS.has(id));
-  grid.innerHTML = allSkins.map(id => {
-    const unlocked = state.unlockedSkins.includes(id);
-    const active   = state.activeSkin === id;
-    const meta     = SKIN_META[id] || { unlock:'free' };
-    const label    = SKIN_DISPLAY[id] || id;
-    const emojiSet = SKIN_EMOJI[id];
-    // Preview: emoji skins show 3 emoji; classic shows colored circles
-    let previewHtml;
-    if (emojiSet) {
-      previewHtml = `<div style="font-size:26px;line-height:1.3;letter-spacing:4px;">${emojiSet[0]}${emojiSet[1]}${emojiSet[2]}</div>`;
-    } else {
-      const pal = SKINS[id] ? SKINS[id] : GEMS.map(g=>g.color);
-      previewHtml = `<div style="display:flex;gap:4px;justify-content:center;">${pal.slice(0,4).map(c=>`<div style="width:18px;height:18px;border-radius:50%;background:${c};"></div>`).join('')}</div>`;
-    }
-    let statusHtml;
-    if (active) {
-      statusHtml = `<button class="btn btn-green btn-sm" style="font-size:11px;padding:4px 12px;" disabled>✓ Активна</button>`;
-    } else if (unlocked) {
-      statusHtml = `<button class="btn btn-gold btn-sm" style="font-size:11px;padding:4px 12px;" onclick="selectSkin('${id}')">Выбрать</button>`;
-    } else if (meta.unlock==='shop') {
-      const cur = meta.currency==='crystals' ? '💎' : '🪙';
-      statusHtml = `<button class="btn btn-blue btn-sm" style="font-size:11px;padding:4px 12px;" onclick="buySkin('${id}')">${meta.price} ${cur}</button>`;
-    } else if (meta.unlock==='battlepass') {
-      statusHtml = `<div style="font-size:11px;color:#a855f7;">🎟 Боевой пропуск</div>`;
-    } else if (meta.unlock==='achievement') {
-      statusHtml = `<div style="font-size:11px;color:#38bdf8;">🏆 Достижение</div>`;
-    } else {
-      statusHtml = `<div style="font-size:11px;color:#aaa;">🔒 Заблокировано</div>`;
-    }
-    return `<div style="background:rgba(255,255,255,.07);border:1.5px solid ${active?'#f59e0b':'rgba(255,255,255,.12)'};
-      border-radius:16px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;
-      ${active?'box-shadow:0 0 14px rgba(245,158,11,.4);':''}">
-      ${previewHtml}
-      <div style="font-size:13px;font-weight:700;color:#fff;">${label}</div>
-      ${statusHtml}
-    </div>`;
-  }).join('');
 }
 
 // ══════════════════════════════════════════
@@ -6286,14 +6077,14 @@ async function loadTexturePack() {
   const jobs = [];
   for (let gi=0; gi<6; gi++) {
     const fwd=_TP_FWD[gi], rev=_TP_REV[gi], g=gi;
-    jobs.push(_loadTPImg(`sprites/${fwd}.png`).then(img=>{        if(img) TEXTURE_PACK.sprites.gem[g]=img;      }));
-    jobs.push(_loadTPImg(`sprites/${7+rev}.png`).then(img=>{      if(img) TEXTURE_PACK.sprites.coloring[g]=img; }));
-    jobs.push(_loadTPImg(`sprites/${14+fwd}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.bomb[g]=img;     }));
-    jobs.push(_loadTPImg(`sprites/${21+rev}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.rocket[g]=img;   }));
-    jobs.push(_loadTPImg(`sprites/${28+fwd}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.stripe_h[g]=img; }));
-    jobs.push(_loadTPImg(`sprites/${35+rev}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.stripe_v[g]=img; }));
+    jobs.push(_loadTPImg(`sprites/squares/${fwd}.png`).then(img=>{        if(img) TEXTURE_PACK.sprites.gem[g]=img;      }));
+    jobs.push(_loadTPImg(`sprites/squares/${7+rev}.png`).then(img=>{      if(img) TEXTURE_PACK.sprites.coloring[g]=img; }));
+    jobs.push(_loadTPImg(`sprites/squares/${14+fwd}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.bomb[g]=img;     }));
+    jobs.push(_loadTPImg(`sprites/squares/${21+rev}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.rocket[g]=img;   }));
+    jobs.push(_loadTPImg(`sprites/squares/${28+fwd}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.stripe_h[g]=img; }));
+    jobs.push(_loadTPImg(`sprites/squares/${35+rev}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.stripe_v[g]=img; }));
   }
-  jobs.push(_loadTPImg('sprites/42.png').then(img=>{ if(img) TEXTURE_PACK.sprites.rainbow=img; }));
+  jobs.push(_loadTPImg('sprites/squares/42.png').then(img=>{ if(img) TEXTURE_PACK.sprites.rainbow=img; }));
   await Promise.all(jobs);
   invalidateGemCache();
   const cats = ['gem','coloring','bomb','rocket','stripe_h','stripe_v'];
@@ -6303,7 +6094,7 @@ async function loadTexturePack() {
 }
 
 
-function _renderGemSprite(shape, color, size, gemType, skin) {
+function _renderGemSprite(shape, color, size, gemType) {
   const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
   const pad = Math.ceil(size * 0.28);  // увеличен padding для glow
   const w = Math.ceil(size + pad*2);
@@ -6315,18 +6106,8 @@ function _renderGemSprite(shape, color, size, gemType, skin) {
   const r = size/2, cx = pad + r, cy = pad + r;
 
   // PNG override
-  if (gemType !== undefined && GEM_IMAGES[gemType] && !SKIN_EMOJI[skin]) {
+  if (gemType !== undefined && GEM_IMAGES[gemType]) {
     c.drawImage(GEM_IMAGES[gemType], pad, pad, size, size);
-    return { canvas: cv, pad, size, w };
-  }
-
-  const emojiSet = SKIN_EMOJI[skin];
-  if (emojiSet && gemType !== undefined && emojiSet[gemType]) {
-    c.font = `${size*.78}px Arial`; c.textAlign='center'; c.textBaseline='middle';
-    c.strokeStyle = gemContrastStroke(color);
-    c.lineWidth = Math.max(2, size*0.06); c.lineJoin='round';
-    c.strokeText(emojiSet[gemType], cx, cy+1);
-    c.fillText(emojiSet[gemType], cx, cy+1);
     return { canvas: cv, pad, size, w };
   }
 
@@ -6422,12 +6203,11 @@ function _renderGemSprite(shape, color, size, gemType, skin) {
 }
 
 function _getGemSprite(shape, color, size, gemType) {
-  const skin = state.activeSkin;
   const sizeKey = Math.round(size);
-  const key = `${skin}|${gemType}|${shape}|${color}|${sizeKey}`;
+  const key = `${gemType}|${shape}|${color}|${sizeKey}`;
   let s = _gemSpriteCache.get(key);
   if (!s) {
-    s = _renderGemSprite(shape, color, sizeKey, gemType, skin);
+    s = _renderGemSprite(shape, color, sizeKey, gemType);
     _gemSpriteCache.set(key, s);
   }
   return s;
@@ -7275,7 +7055,7 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
   // Coloring+Coloring → все фишки становятся одного цвета (цвет первой красящей)
   if (sp1===SPECIAL.COLORING&&sp2===SPECIAL.COLORING) {
     const col1 = (_t1>=0) ? _t1 : Math.floor(Math.random()*_activeGemTypes);
-    await animateColoringWave(r1, c1);
+    await animateColoringWave(r1, c1, col1);
     if (_matchEpoch !== _myEpoch) return;
     for(let rr=0;rr<ROWS;rr++) for(let cc=0;cc<COLS;cc++){
       const cl=state.board[rr]?.[cc];
@@ -7290,7 +7070,7 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     const megaR=sp1===SPECIAL.MEGA?r1:r2, megaC=sp1===SPECIAL.MEGA?c1:c2;
     const rawTgtCol=sp1===SPECIAL.COLORING?_t1:_t2;
     const tgtCol=(rawTgtCol>=0)?rawTgtCol:Math.floor(Math.random()*_activeGemTypes);
-    await animateColoringWave(megaR,megaC);
+    await animateColoringWave(megaR,megaC,tgtCol);
     if (_matchEpoch !== _myEpoch) return;
     for(let rr=0;rr<ROWS;rr++) for(let cc=0;cc<COLS;cc++){
       const cl=state.board[rr]?.[cc];
@@ -7329,7 +7109,7 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     const coloringType = (rawCol>=0) ? rawCol : Math.floor(Math.random()*_activeGemTypes);
     const partnerSp = sp1===SPECIAL.COLORING ? sp2 : sp1;
     if (partnerSp===SPECIAL.STRIPE_H||partnerSp===SPECIAL.STRIPE_V||partnerSp===SPECIAL.BOMB||partnerSp===SPECIAL.ROCKET) {
-      await animateColoringWave(r1, c1);
+      await animateColoringWave(r1, c1, coloringType);
       if (_matchEpoch !== _myEpoch) return;
       const targets=[];
       for(let rr=0;rr<ROWS;rr++) for(let cc=0;cc<COLS;cc++){
@@ -7414,7 +7194,9 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     if (otherSp===SPECIAL.RAINBOW || otherSp===SPECIAL.COLORING) {
       // Rainbow + Rainbow / Rainbow + Coloring → clear everything
       getAllPositions().forEach(([r,c])=>td.add(`${r},${c}`));
-      if (otherSp===SPECIAL.COLORING) showToast('🎨🌈 ВСЕ УНИЧТОЖЕНО!');
+      showToast(otherSp===SPECIAL.COLORING?'🎨🌈 ВСЕ УНИЧТОЖЕНО!':'🌈🌈 РАДУЖНЫЙ ВЗРЫВ!');
+      await animateFullBoardClear(r1,c1);
+      if (_matchEpoch !== _myEpoch) return;
     } else {
       // Rainbow + Special → convert all gems of partner color to partner special, chain-activate
       const tt = otherType>=0 ? otherType : (()=>{
@@ -7424,7 +7206,8 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
           if(t>=0){counts[t]=(counts[t]||0)+1;if(counts[t]>bestN){bestN=counts[t];best=t;}}
         } return best>=0?best:0;
       })();
-      await animateRainbowBurst(tt);
+      const _rbSrcR=sp1===SPECIAL.RAINBOW?r1:r2, _rbSrcC=sp1===SPECIAL.RAINBOW?c1:c2;
+      await animateRainbowBurst(tt, _rbSrcR, _rbSrcC);
       if (_matchEpoch !== _myEpoch) return;
       const targets=[];
       for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
@@ -7789,33 +7572,71 @@ function animateMegaBlast(r,c) {
   });
 }
 
-// ── Радужная волна для Coloring ───────────────────────────────────────────
-function animateColoringWave(r,c) {
+// ── Paint Barrel — цветная краска разлетается брызгами ───────────────────
+function animateColoringWave(r,c,gemType) {
+  const paintColor=(gemType!=null&&gemType>=0)?getSkinColor(gemType):null;
   return new Promise(res=>{
     const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
-    const dur=_d(340), t0=performance.now(), hue0=Math.random()*360, _ep=_matchEpoch, id=++_animOverlayId;
+    const dur=_d(420), t0=performance.now(), _ep=_matchEpoch, id=++_animOverlayId;
+    // Pre-generate paint drop trajectories
+    const numDrops=22;
+    const drops=Array.from({length:numDrops},(_,i)=>{
+      const angle=i/numDrops*Math.PI*2+(Math.random()-0.5)*0.30;
+      const dist=cellSize*(1.2+Math.random()*2.5);
+      const delay=Math.random()*0.28;
+      const color=paintColor||`hsl(${(i*47)%360|0},95%,60%)`;
+      return {angle,dist,delay,color,sz:cellSize*(0.08+Math.random()*0.10)};
+    });
+    // Initial burst particles
+    for(let i=0;i<14;i++){
+      const a=Math.random()*Math.PI*2, sp=3+Math.random()*5;
+      const col=paintColor||`hsl(${Math.random()*360|0},95%,58%)`;
+      particles.push({x:bx+(Math.random()-0.5)*cellSize*0.3,y:by+(Math.random()-0.5)*cellSize*0.3,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,color:col,life:0.72,r:3+Math.random()*5,smoke:true});
+    }
     _animOverlays.set(id,(now)=>{
       if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
-      if (t<0.22) {
-        ctx.globalAlpha=(0.22-t)/0.22*0.8;
-        const grd=ctx.createRadialGradient(bx,by,0,bx,by,cellSize*1.2);
-        grd.addColorStop(0,'#fff'); grd.addColorStop(1,'rgba(200,120,255,0)');
-        ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(bx,by,cellSize*1.2,0,Math.PI*2); ctx.fill();
+      // Central burst flash
+      if(t<0.22){
+        const fl=(0.22-t)/0.22;
+        ctx.globalAlpha=fl*0.88;
+        const grd=ctx.createRadialGradient(bx,by,0,bx,by,cellSize*1.5);
+        grd.addColorStop(0,'#ffffff');
+        grd.addColorStop(0.30,paintColor||'rgba(200,120,255,0.8)');
+        grd.addColorStop(1,'rgba(0,0,0,0)');
+        ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(bx,by,cellSize*1.5,0,Math.PI*2); ctx.fill();
       }
-      for (let i=0;i<4;i++) {
-        const off=i*0.09;
+      // Expanding paint wave rings
+      for(let i=0;i<3;i++){
+        const off=i*0.08;
         const lt=Math.min(Math.max(t-off,0)/(1-off||0.01),1);
-        const hue=(hue0+i*80+t*180)%360;
-        ctx.globalAlpha=Math.max(0,(1-lt)*0.78);
-        ctx.strokeStyle=`hsl(${hue},100%,65%)`;
-        ctx.lineWidth=(5-i)*(1-lt)+0.5;
-        ctx.shadowColor=`hsl(${hue},100%,65%)`; ctx.shadowBlur=10;
-        ctx.beginPath(); ctx.arc(bx,by,cellSize*(0.35+lt*3.0),0,Math.PI*2); ctx.stroke();
+        const col=paintColor||`hsl(${(i*110)%360},100%,62%)`;
+        ctx.globalAlpha=Math.max(0,(1-lt)*0.80*(1-i*0.15));
+        ctx.strokeStyle=col; ctx.lineWidth=(6-i*1.8)*(1-lt)+0.4;
+        ctx.shadowColor=col; ctx.shadowBlur=cellSize*0.30*(1-lt);
+        ctx.beginPath(); ctx.arc(bx,by,cellSize*(0.22+lt*3.0+i*0.25),0,Math.PI*2); ctx.stroke();
       }
-      ctx.restore();
-      if (t>=1) { _animOverlays.delete(id); res(); }
+      ctx.shadowBlur=0;
+      // Flying paint blobs on parabolic arcs
+      drops.forEach(drop=>{
+        const dt=Math.max(0,(t-drop.delay)/(1-drop.delay||0.01));
+        if(dt<=0||dt>=1) return;
+        const px=bx+Math.cos(drop.angle)*drop.dist*dt;
+        const py=by+Math.sin(drop.angle)*drop.dist*dt - cellSize*0.65*Math.sin(dt*Math.PI);
+        const alpha=dt>0.80?Math.max(0,(1-dt)/0.20):1;
+        ctx.globalAlpha=alpha*0.90;
+        ctx.fillStyle=drop.color; ctx.shadowColor=drop.color; ctx.shadowBlur=5;
+        ctx.beginPath(); ctx.arc(px,py,drop.sz*(1-dt*0.35),0,Math.PI*2); ctx.fill();
+        // Splat ellipse on landing
+        if(dt>0.78){
+          const st=(dt-0.78)/0.22;
+          ctx.globalAlpha=alpha*(1-st)*0.60;
+          ctx.beginPath(); ctx.ellipse(px,py+drop.sz*0.4,drop.sz*(1+st*2.8),drop.sz*(0.40-st*0.25),0,0,Math.PI*2); ctx.fill();
+        }
+      });
+      ctx.shadowBlur=0; ctx.restore();
+      if(t>=1) { _animOverlays.delete(id); res(); }
     });
   });
 }
@@ -7846,6 +7667,43 @@ function animateSuperMegaBlast(r,c) {
       }
       ctx.restore();
       if (t>=1) { _animOverlays.delete(id); res(); }
+    });
+  });
+}
+
+// ── Полный сброс поля — Rainbow+Rainbow ──────────────────────────────────
+function animateFullBoardClear(r,c) {
+  return new Promise(res=>{
+    const bx=boardOffX+c*cellSize+cellSize/2, by=boardOffY+r*cellSize+cellSize/2;
+    const dur=_d(560), t0=performance.now(), _ep=_matchEpoch, id=++_animOverlayId;
+    const cols=['#ffffff','#ff80ff','#80ffff','#ffff80','#ff9090','#90ff90'];
+    for(let i=0;i<48;i++){
+      const a=Math.random()*Math.PI*2, sp=3+Math.random()*7;
+      particles.push({x:bx+(Math.random()-0.5)*COLS*cellSize*0.6,y:by+(Math.random()-0.5)*ROWS*cellSize*0.4,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,color:cols[Math.random()*cols.length|0],life:0.90,r:2.5+Math.random()*5,star:true});
+    }
+    _animOverlays.set(id,(now)=>{
+      if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
+      const t=Math.min((now-t0)/dur,1);
+      ctx.save();
+      // White flash
+      if(t<0.20){
+        ctx.globalAlpha=(0.20-t)/0.20*0.95;
+        ctx.fillStyle='#ffffff';
+        ctx.fillRect(boardOffX,boardOffY,COLS*cellSize,ROWS*cellSize);
+      }
+      // 8 rainbow energy rings expanding from center
+      for(let i=0;i<8;i++){
+        const off=i*0.055;
+        const lt=Math.min(Math.max(t-off,0)/(1-off||0.01),1);
+        const hue=(i*45+t*200)%360;
+        ctx.globalAlpha=Math.max(0,(1-lt)*0.82*(1-i*0.06));
+        ctx.strokeStyle=`hsl(${hue},100%,68%)`;
+        ctx.lineWidth=(10-i)*(1-lt)+0.5;
+        ctx.shadowColor=`hsl(${hue},100%,68%)`; ctx.shadowBlur=cellSize*0.45*(1-lt);
+        ctx.beginPath(); ctx.arc(bx,by,cellSize*(0.08+lt*7.0+i*0.28),0,Math.PI*2); ctx.stroke();
+      }
+      ctx.shadowBlur=0; ctx.restore();
+      if(t>=1) { _animOverlays.delete(id); res(); }
     });
   });
 }
@@ -7965,24 +7823,69 @@ function animateStripeBeam(r, c, horizontal) {
   });
 }
 
-function animateRainbowBurst(targetType) {
+// ── Сканнер — радарный импульс, захват целей, уничтожение ────────────────
+function animateRainbowBurst(targetType, srcR, srcC) {
+  if (srcR==null) srcR=Math.floor(ROWS/2); if (srcC==null) srcC=Math.floor(COLS/2);
   return new Promise(res=>{
     const targets=[];
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
       const cl=state.board[r]?.[c];
-      if (cl && (targetType===-1 || cl.type===targetType||cl.special===SPECIAL.RAINBOW)) targets.push({r,c,cl});
+      if (cl&&(targetType===-1||cl.type===targetType||cl.special===SPECIAL.RAINBOW)) targets.push({r,c,cl,locked:false});
     }
     if (!targets.length) { res(); return; }
-    const dur=_d(300), t0=performance.now(), _ep=_matchEpoch;
-    function f(now) {
-      if (_matchEpoch!==_ep) { targets.forEach(({cl})=>{ cl.anim={}; }); res(); return; }
+    const srcX=boardOffX+srcC*cellSize+cellSize/2, srcY=boardOffY+srcR*cellSize+cellSize/2;
+    const maxDist=Math.hypot(Math.max(srcC,COLS-1-srcC)*cellSize+cellSize, Math.max(srcR,ROWS-1-srcR)*cellSize+cellSize)*1.15;
+    const dur=_d(700), t0=performance.now(), _ep=_matchEpoch, id=++_animOverlayId;
+    _animOverlays.set(id,(now)=>{
+      if (_matchEpoch!==_ep) { _animOverlays.delete(id); targets.forEach(({cl})=>{cl.anim={};}); res(); return; }
       const t=Math.min((now-t0)/dur,1);
-      const pulse=Math.sin(t*Math.PI);
-      targets.forEach(({cl})=>{ cl.anim={scale:1+pulse*0.35}; });
-      if (t<1) requestAnimationFrame(f);
-      else { targets.forEach(({cl})=>{ cl.anim={}; }); res(); }
-    }
-    requestAnimationFrame(f);
+      ctx.save();
+      // Dark radar overlay — fades in/out
+      const ova=0.20*Math.min(t*5,1)*Math.max(0,1-(t-0.78)/0.22);
+      if(ova>0){ ctx.globalAlpha=ova; ctx.fillStyle='#001808'; ctx.fillRect(boardOffX,boardOffY,COLS*cellSize,ROWS*cellSize); }
+      // Expanding scan ring (phase 0→0.65)
+      const scanPhase=Math.min(t/0.65,1);
+      const scanRadius=scanPhase*maxDist;
+      // Glow trail
+      ctx.globalAlpha=Math.max(0,(1-scanPhase)*0.28);
+      ctx.strokeStyle='#00ff66'; ctx.lineWidth=cellSize*0.12; ctx.shadowBlur=0;
+      ctx.beginPath(); ctx.arc(srcX,srcY,Math.max(0,scanRadius-cellSize*0.55),0,Math.PI*2); ctx.stroke();
+      // Main scan ring
+      ctx.globalAlpha=Math.max(0,(1-scanPhase*0.55)*0.95);
+      ctx.strokeStyle='#00ff88'; ctx.lineWidth=2.8;
+      ctx.shadowColor='#00ff88'; ctx.shadowBlur=cellSize*0.38;
+      ctx.beginPath(); ctx.arc(srcX,srcY,scanRadius,0,Math.PI*2); ctx.stroke();
+      ctx.shadowBlur=0;
+      // Lock-on targets as scan ring reaches them
+      targets.forEach(target=>{
+        const tx=boardOffX+target.c*cellSize+cellSize/2, ty=boardOffY+target.r*cellSize+cellSize/2;
+        const dist=Math.hypot(tx-srcX,ty-srcY);
+        if(dist<=scanRadius+cellSize*0.35&&!target.locked){
+          target.locked=true;
+          for(let i=0;i<5;i++){const a=Math.random()*Math.PI*2;particles.push({x:tx+(Math.random()-0.5)*cellSize*0.4,y:ty+(Math.random()-0.5)*cellSize*0.4,vx:Math.cos(a)*2.5,vy:Math.sin(a)*2.5-1,color:'#00ff88',life:0.55,r:1.8+Math.random()*2,star:true});}
+        }
+        if(target.locked){
+          const fo=t>0.82?Math.max(0,(1-t)/0.18):1;
+          const cs2=cellSize*0.38, arm=cs2*0.32;
+          ctx.globalAlpha=0.90*fo;
+          ctx.strokeStyle='#00ff88'; ctx.lineWidth=1.8; ctx.lineCap='square';
+          ctx.shadowColor='#00ff88'; ctx.shadowBlur=7;
+          ctx.beginPath();
+          ctx.moveTo(tx-cs2,ty-cs2+arm); ctx.lineTo(tx-cs2,ty-cs2); ctx.lineTo(tx-cs2+arm,ty-cs2);
+          ctx.moveTo(tx+cs2-arm,ty-cs2); ctx.lineTo(tx+cs2,ty-cs2); ctx.lineTo(tx+cs2,ty-cs2+arm);
+          ctx.moveTo(tx+cs2,ty+cs2-arm); ctx.lineTo(tx+cs2,ty+cs2); ctx.lineTo(tx+cs2-arm,ty+cs2);
+          ctx.moveTo(tx-cs2+arm,ty+cs2); ctx.lineTo(tx-cs2,ty+cs2); ctx.lineTo(tx-cs2,ty+cs2-arm);
+          ctx.stroke();
+          const pulse2=0.5+0.5*Math.sin(now/70+target.r*1.4+target.c*0.9);
+          ctx.globalAlpha=0.62*fo; ctx.fillStyle='#00ff88'; ctx.shadowBlur=4;
+          ctx.beginPath(); ctx.arc(tx,ty,cellSize*0.058*(0.6+pulse2*0.4),0,Math.PI*2); ctx.fill();
+          ctx.shadowBlur=0;
+          target.cl.anim={scale:1+Math.sin(now/55+target.r+target.c)*0.07};
+        }
+      });
+      ctx.lineCap='butt'; ctx.restore();
+      if(t>=1){ _animOverlays.delete(id); targets.forEach(({cl})=>{cl.anim={};}); res(); }
+    });
   });
 }
 
@@ -8067,7 +7970,7 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
     }
     const targetType = partnerType>=0 ? partnerType :
       ((state.board[r]?.[c]?.type ?? -1) >= 0 ? state.board[r][c].type : _mostCommonType());
-    await animateRainbowBurst(targetType);
+    await animateRainbowBurst(targetType, r, c);
     if (_matchEpoch !== _myEpoch) return;
     let pts=0;
     const _rbChains=[];
@@ -8091,7 +7994,8 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
   }
   // Coloring — перекрашивает все гемы своего цвета в цвет партнёра
   if (special===SPECIAL.COLORING) {
-    await animateColoringWave(r, c);
+    const _clrGemType = state.board[r]?.[c]?.type ?? (partnerType >= 0 ? partnerType : -1);
+    await animateColoringWave(r, c, _clrGemType);
     if (_matchEpoch !== _myEpoch) return;
     const cellOnBoard = state.board[r]?.[c];
     // srcColor: if cell has a real color use it; otherwise use partnerType; else random
@@ -8744,7 +8648,7 @@ async function trySwap(r1,c1,r2,c2) {
 
     // Радуга + Радуга = очистить весь экран
     if (other.special===SPECIAL.RAINBOW) {
-      await animateRainbowBurst(-1); // -1 = все гемы
+      await animateRainbowBurst(-1, r1, c1); // -1 = все гемы
       let pts=0;
       for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
         const cl=state.board[r][c]; if(!cl||cl.stone||cl.ingredient) continue;
@@ -8771,7 +8675,8 @@ async function trySwap(r1,c1,r2,c2) {
       const rawTT=other.type;
       let tt=rawTT>=0?rawTT:(()=>{const counts={};let best=-1,bestN=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const t=state.board[r]?.[c]?.type;if(t>=0){counts[t]=(counts[t]||0)+1;if(counts[t]>bestN){bestN=counts[t];best=t;}}}return best>=0?best:0;})();
       const bonusSp=other.special;
-      await animateRainbowBurst(tt);
+      const _rbSwapSrcR=cl1.special===SPECIAL.RAINBOW?r1:r2, _rbSwapSrcC=cl1.special===SPECIAL.RAINBOW?c1:c2;
+      await animateRainbowBurst(tt, _rbSwapSrcR, _rbSwapSrcC);
       showSpecialComboLabel(SPECIAL.RAINBOW, bonusSp);
       const targets=[];
       for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
@@ -8801,7 +8706,8 @@ async function trySwap(r1,c1,r2,c2) {
 
     // Радуга + обычный гем = удалить все гемы этого цвета
     const tt=other.type;
-    await animateRainbowBurst(tt);
+    const _rbNormSrcR=cl1.special===SPECIAL.RAINBOW?r1:r2, _rbNormSrcC=cl1.special===SPECIAL.RAINBOW?c1:c2;
+    await animateRainbowBurst(tt, _rbNormSrcR, _rbNormSrcC);
     let rainbowPts=0;
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
       const cl=state.board[r][c]; if (!cl) continue;
@@ -9703,10 +9609,8 @@ function updateGoalProgress() {
       if (gems.length>0) { gems.forEach(g=>tot+=(state.collectedGems[g]||0)); }
       else { Object.values(state.collectedGems||{}).forEach(v=>tot+=v); }
       prog=Math.min(tot/lvl.target,1);
-      const emojiSet=SKIN_EMOJI[state.activeSkin];
       const dots=gems.map(g=>{
         const gem=GEMS[g]; if(!gem) return '';
-        if (emojiSet && emojiSet[g]) return `<span style="font-size:17px;line-height:1;">${emojiSet[g]}</span>`;
         return `<span style="color:${getSkinColor(g)};font-size:15px;">●</span>`;
       }).join(' ');
       html=`${dots} ${Math.min(tot,lvl.target)} / ${lvl.target}`; break;
@@ -11294,10 +11198,6 @@ function claimSeasonReward(track, idx) {
   if (r.coins)    state.coins    += r.coins;
   if (r.crystals) state.crystals += r.crystals;
   if (r.lives)    state.lives = Math.min(MAX_LIVES, state.lives + r.lives);
-  if (r.skin) {
-    if (!Array.isArray(state.unlockedSkins)) state.unlockedSkins = ['classic','candy','animals','fruits','fire','ice_pal','space'];
-    if (!state.unlockedSkins.includes(r.skin)) state.unlockedSkins.push(r.skin);
-  }
   saveGame();
   SFX.reward();
   showToast('✓ ' + r.text);
@@ -12709,15 +12609,6 @@ function checkTrophies() {
 function unlockAchievement(id) {
   if (state.achievements.includes(id)) return;
   state.achievements.push(id);
-  // Проверяем скины привязанные к ачивментам
-  Object.entries(SKIN_META).forEach(([skinId, meta]) => {
-    if (meta.unlock==='achievement' && meta.achId===id) {
-      if (!state.unlockedSkins.includes(skinId)) {
-        state.unlockedSkins.push(skinId);
-        showToast(`🎨 Скин "${SKIN_DISPLAY[skinId]||skinId}" разблокирован!`);
-      }
-    }
-  });
   saveGame();
   const def = ACHIEVEMENT_LIST.find(a => a.id === id);
   if (def) showAchievementToast(def.icon, def.title);
