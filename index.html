@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Ore Rush — Match-3 Excavation</title>
+<link rel="preload" as="audio" href="audio/menubgm.ogg" type="audio/ogg">
+<link rel="preload" as="audio" href="audio/levelbgm.ogg" type="audio/ogg">
 <link rel="preload" as="audio" href="audio/menu.mp3">
 <link rel="preload" as="audio" href="audio/bgm.mp3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2089,12 +2091,14 @@ function getBgmAC(){
   if(!_bgmAC)_bgmAC=new(window.AudioContext||window.webkitAudioContext)();
   return _bgmAC;
 }
-// ── MP3-плеер для BGM (factory) ──────────────────────────────────
-function _makeMp3Bgm(src) {
-  const _el = new Audio(src);
+// ── BGM-плеер (factory): OGG первым, MP3 как запасной ────────────
+function _makeBgm(oggSrc, mp3Src) {
+  const _el = document.createElement('audio');
   _el.loop = true;
   _el.preload = 'auto';
   _el.volume = 0.8;
+  if (oggSrc) { const s = document.createElement('source'); s.src = oggSrc; s.type = 'audio/ogg'; _el.appendChild(s); }
+  if (mp3Src) { const s = document.createElement('source'); s.src = mp3Src; s.type = 'audio/mpeg'; _el.appendChild(s); }
   return {
     start() {
       _el.volume = (state && state.musicVol != null) ? state.musicVol / 100 : 0.8;
@@ -2112,10 +2116,10 @@ function _makeMp3Bgm(src) {
 }
 
 // ── Музыка для меню ───────────────────────────────────────────────
-const MENU_BGM = _makeMp3Bgm('audio/menu.mp3');
+const MENU_BGM = _makeBgm('audio/menubgm.ogg', 'audio/menu.mp3');
 
 // ── Музыка для уровней ────────────────────────────────────────────
-const BGM = _makeMp3Bgm('audio/bgm.mp3');
+const BGM = _makeBgm('audio/levelbgm.ogg', 'audio/bgm.mp3');
 
 // ── 3-слойная адаптивная музыка + тональные переходы ──────────────
 // stub: MIDI-layered adaptive BGM disabled (was producing oscillator-based cascade music)
