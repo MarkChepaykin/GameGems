@@ -363,7 +363,7 @@ canvas { display: block; touch-action: none; }
   box-shadow: 0 2px 8px rgba(20,10,0,.35);
   flex-shrink: 0;
 }
-#hud-ingame-boosters { display:flex; gap:3px; align-items:center; }
+#hud-ingame-boosters { display:none; }
 .hud-bst-btn {
   background:rgba(255,255,255,0.16); border:1.5px solid rgba(255,255,255,0.30);
   border-radius:12px; padding:4px 6px; font-size:17px; cursor:pointer; position:relative;
@@ -374,11 +374,39 @@ canvas { display: block; touch-action: none; }
 .hud-bst-btn.active-booster { background:rgba(255,200,0,0.25); border-color:#f59e0b; box-shadow:0 0 10px #f59e0b; }
 .hud-bst-btn span { font-size:9px; color:#ffe066; font-weight:bold; vertical-align:super; margin-left:1px; }
 .hud-bst-btn { animation: floatIdle 2.5s ease-in-out infinite; }
-#hbst-hammer    { animation-delay: 0s;    }
-#hbst-colorbomb { animation-delay: 0.8s;  }
-#hbst-shuffle   { animation-delay: 1.6s;  }
-#hbst-extramoves{ animation-delay: 0.4s;  }
-#hbst-striped   { animation-delay: 1.2s;  }
+#hbst-hammer     { animation-delay: 0s;   }
+#hbst-shuffle    { animation-delay: 0.6s; }
+#hbst-drill      { animation-delay: 1.2s; }
+#hbst-drillclick { animation-delay: 1.8s; }
+#hbst-swap       { animation-delay: 2.4s; }
+/* Нижняя панель in-game бустеров */
+#ingame-booster-bar {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 6px 8px max(8px, env(safe-area-inset-bottom));
+  background: rgba(14,9,3,.88);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-top: 1.5px solid rgba(200,160,80,.40);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -4px 20px rgba(10,5,0,.65);
+  pointer-events: none;
+}
+#ingame-booster-bar .hud-bst-btn {
+  pointer-events: all;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 7px 10px 5px;
+  font-size: 22px;
+  border-radius: 14px;
+  min-width: 52px;
+}
+#ingame-booster-bar .hud-bst-btn span.bst-cnt {
+  font-size: 10px; color: #ffe066; font-weight: 800;
+  vertical-align: initial; margin-left: 0; line-height: 1;
+}
+#ingame-booster-bar .hud-bst-btn .bst-lbl {
+  font-size: 9px; color: rgba(255,255,255,.65); line-height: 1;
+  white-space: nowrap; letter-spacing: .2px;
+}
 
 /* Попап подтверждения покупки бустера */
 #booster-confirm-overlay {
@@ -1319,15 +1347,7 @@ canvas { display: block; touch-action: none; }
         <span class="hud-moves-lbl">ходов</span>
         <span class="hud-moves" id="hud-moves">20</span>
       </div>
-      <div id="hud-ingame-boosters">
-        <button class="hud-bst-btn" id="hbst-hammer"     onclick="activateInGameBooster('hammer')"     title="Кирка">⛏️<span id="hbst-hammer-cnt">0</span></button>
-        <button class="hud-bst-btn" id="hbst-colorbomb"  onclick="activateInGameBooster('colorbomb')"  title="Сканер">📡<span id="hbst-colorbomb-cnt">0</span></button>
-        <button class="hud-bst-btn" id="hbst-shuffle"    onclick="activateInGameBooster('shuffle')"    title="Перемешать">🔀<span id="hbst-shuffle-cnt">0</span></button>
-        <button class="hud-bst-btn" id="hbst-extramoves" onclick="activateInGameBooster('extramoves')" title="+5 ходов">⚡<span id="hbst-extramoves-cnt">0</span></button>
-        <button class="hud-bst-btn" id="hbst-striped"    onclick="activateInGameBooster('striped')"    title="Молния">⚡<span id="hbst-striped-cnt">0</span></button>
-        <button class="hud-bst-btn" id="hbst-supersonic" onclick="activateSupersonic()" title="Суперсоник (5 ходов)" style="display:none;">🚀</button>
-        <button id="hud-undo-btn" class="hud-bst-btn" onclick="applyUndo()" title="Отмена хода" style="display:none;opacity:0.5;pointer-events:none;">↩️</button>
-      </div>
+      <div id="hud-ingame-boosters"></div>
       <div id="hud-pause-btn" onclick="togglePause()">⏸</div>
     </div>
     <!-- Строка 2: цель + прогресс звёзд + счёт -->
@@ -1365,6 +1385,15 @@ canvas { display: block; touch-action: none; }
   <div id="onboarding-tip" class="hidden">
     <span class="ob-hand">👆</span>
     <div id="ob-text"></div>
+  </div>
+  <!-- Нижняя панель бустеров (как в CCSS) -->
+  <div id="ingame-booster-bar">
+    <button class="hud-bst-btn" id="hbst-hammer"     onclick="activateInGameBooster('hammer')"     title="Молоток">⛏️<span class="bst-cnt" id="hbst-hammer-cnt">0</span><span class="bst-lbl">Молоток</span></button>
+    <button class="hud-bst-btn" id="hbst-shuffle"    onclick="activateInGameBooster('shuffle')"    title="Перемешать">🔀<span class="bst-cnt" id="hbst-shuffle-cnt">0</span><span class="bst-lbl">Мешать</span></button>
+    <button class="hud-bst-btn" id="hbst-drill"      onclick="activateInGameBooster('drill')"      title="Дрель">🔩<span class="bst-cnt" id="hbst-drill-cnt">0</span><span class="bst-lbl">Дрель</span></button>
+    <button class="hud-bst-btn" id="hbst-drillclick" onclick="activateInGameBooster('drillclick')" title="Дрель по клику">🎯<span class="bst-cnt" id="hbst-drillclick-cnt">0</span><span class="bst-lbl">Дрель ×</span></button>
+    <button class="hud-bst-btn" id="hbst-swap"       onclick="activateInGameBooster('swap')"       title="Поменять местами">↔️<span class="bst-cnt" id="hbst-swap-cnt">0</span><span class="bst-lbl">Своп</span></button>
+    <button class="hud-bst-btn" id="hbst-supersonic" onclick="activateSupersonic()" title="Суперсоник" style="display:none;">🚀<span class="bst-cnt">!</span><span class="bst-lbl">Соник</span></button>
   </div>
   <div id="pause-overlay" class="hidden">
     <h2 data-i18n="pause">⏸ Пауза</h2>
@@ -2721,8 +2750,9 @@ const state = {
   carpetTotal: 0,      // общее число клеток ковра на старте
   iceGrid: [],         // [r][c] = 0|1 — лёд на клетке (не перемещается с гемом)
   holes: new Set(),    // Set<"r,c"> — позиции дыр (не заполняются)
-  ingameBoosters: { hammer:0, colorbomb:0, shuffle:0, extramoves:0, striped:0 }, // in-game запасы
-  activeIngameBooster: null, // 'hammer'|'colorbomb'|null
+  ingameBoosters: { hammer:0, shuffle:0, drill:0, drillclick:0, swap:0 }, // in-game запасы
+  activeIngameBooster: null, // 'hammer'|'drillclick'|'swap'|null
+  _swapFirst: null, // первая ячейка swap-бустера
   ingredientsDelivered: 0,  // доставлено ингредиентов на дно
   chocolateInitial: 0,      // шоколадок на старте уровня (для type:'chocolate')
   sodaLevel: 0,             // сколько строк снизу залито содой
@@ -2873,10 +2903,15 @@ const SAVE_FIELDS = ['coins','crystals','lives','livesTimestamp','lives24hUntil'
 
 function applySaveObj(s) {
   SAVE_FIELDS.forEach(k => { if (s[k] !== undefined) state[k] = s[k]; });
-  if (s.ingameBoosters) state.ingameBoosters = { ...state.ingameBoosters, ...s.ingameBoosters };
+  if (s.ingameBoosters) {
+    // migrate old keys: striped→drill, colorbomb stays but not shown in new panel
+    const ib = { ...s.ingameBoosters };
+    if (ib.striped && !ib.drill) { ib.drill = ib.striped; delete ib.striped; }
+    state.ingameBoosters = { ...state.ingameBoosters, ...ib };
+  }
   // Новым игрокам даём стартовые бустеры
   if (!s.ingameBoosters && !s.maxUnlocked) {
-    state.ingameBoosters = { hammer:2, colorbomb:1 };
+    state.ingameBoosters = { hammer:2, drill:1 };
   }
   // restore sidekick id
   if (s.sidekickId !== undefined) {
@@ -4649,8 +4684,12 @@ function resizeCanvas() {
   const hudEl = document.getElementById('hud');
   const hudH = (hudEl && hudEl.offsetHeight > 20) ? hudEl.offsetHeight + 4 : 110;
 
+  // Measure booster bar height; fall back to 72
+  const boostEl = document.getElementById('ingame-booster-bar');
+  const boostH = (boostEl && boostEl.offsetHeight > 10) ? boostEl.offsetHeight + 4 : 72;
+
   const csFromW = Math.floor((W - pad * 2) / COLS);
-  const csFromH = Math.floor((H - hudH - pad) / ROWS);
+  const csFromH = Math.floor((H - hudH - boostH - pad) / ROWS);
   const csMin = isLandscape ? 32 : 38;
   const csMax = isLandscape ? 90 : 70;
   cellSize = Math.max(csMin, Math.min(csMax, Math.min(csFromW, csFromH)));
@@ -4669,7 +4708,7 @@ function resizeCanvas() {
   pCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   boardOffX = Math.floor((W - bw) / 2);
-  boardOffY = Math.max(hudH, hudH + Math.floor((H - hudH - bh) / 2));
+  boardOffY = Math.max(hudH, hudH + Math.floor((H - hudH - boostH - bh) / 2));
 }
 
 // ══════════════════════════════════════════
@@ -5026,6 +5065,16 @@ function drawBoard() {
     ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.globalAlpha=0.8;
     roundRect(ctx, boardOffX+sc*cs+2, boardOffY+sr*cs+2, cs-4, cs-4, 8);
     ctx.stroke(); ctx.globalAlpha=1;
+  }
+  // Подсветка первой выбранной ячейки swap-бустера
+  if (state._swapFirst && state.activeIngameBooster === 'swap') {
+    const [sr,sc]=state._swapFirst;
+    ctx.strokeStyle='#67e8f9'; ctx.lineWidth=3.5; ctx.globalAlpha=0.9;
+    roundRect(ctx, boardOffX+sc*cs+2, boardOffY+sr*cs+2, cs-4, cs-4, 8);
+    ctx.stroke();
+    ctx.globalAlpha=0.18; ctx.fillStyle='#67e8f9';
+    roundRect(ctx, boardOffX+sc*cs+2, boardOffY+sr*cs+2, cs-4, cs-4, 8);
+    ctx.fill(); ctx.globalAlpha=1;
   }
 
   // Path Mode overlay
@@ -6077,17 +6126,11 @@ async function loadTexturePack() {
   for (let gi=0; gi<6; gi++) {
     const fwd=_TP_FWD[gi], rev=_TP_REV[gi], g=gi;
     jobs.push(_loadTPImg(`sprites/squares/${fwd}.png`).then(img=>{        if(img) TEXTURE_PACK.sprites.gem[g]=img;      }));
-    jobs.push(_loadTPImg(`sprites/squares/${7+rev}.png`).then(img=>{      if(img) TEXTURE_PACK.sprites.coloring[g]=img; }));
-    jobs.push(_loadTPImg(`sprites/squares/${14+fwd}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.bomb[g]=img;     }));
-    jobs.push(_loadTPImg(`sprites/squares/${21+rev}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.rocket[g]=img;   }));
-    jobs.push(_loadTPImg(`sprites/squares/${28+fwd}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.stripe_h[g]=img; }));
-    jobs.push(_loadTPImg(`sprites/squares/${35+rev}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.stripe_v[g]=img; }));
   }
   jobs.push(_loadTPImg('sprites/squares/42.png').then(img=>{ if(img) TEXTURE_PACK.sprites.rainbow=img; }));
   await Promise.all(jobs);
   invalidateGemCache();
-  const cats = ['gem','coloring','bomb','rocket','stripe_h','stripe_v'];
-  const n = cats.reduce((s,t)=>s+TEXTURE_PACK.sprites[t].filter(Boolean).length, 0)+(TEXTURE_PACK.sprites.rainbow?1:0);
+  const n = TEXTURE_PACK.sprites.gem.filter(Boolean).length+(TEXTURE_PACK.sprites.rainbow?1:0);
   console.log('[TP] Загружено:', n, 'спрайтов');
   if (n>0 && typeof showToast==='function') showToast('Текстур-пак: '+n+' спрайтов');
 }
@@ -7462,6 +7505,7 @@ function animateBombBlast(r,c) {
     const dur=220, t0=performance.now(), _ep=_matchEpoch, id=++_animOverlayId;
     _animOverlays.set(id,(now)=>{
       if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
+      if (state.screen!=='game') { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       if (t<0.25) {
@@ -7496,6 +7540,7 @@ function animateRocketBlast(r,c,gemColor) {
     const sparkSpeeds=Array.from({length:numSparks},()=>cellSize*(0.8+Math.random()*0.9));
     _animOverlays.set(id,(now)=>{
       if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
+      if (state.screen!=='game') { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       // Яркая вспышка в цвет флэра
@@ -7548,6 +7593,7 @@ function animateMegaBlast(r,c) {
     const dur=320, t0=performance.now(), _ep=_matchEpoch, id=++_animOverlayId;
     _animOverlays.set(id,(now)=>{
       if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
+      if (state.screen!=='game') { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       if (t<0.28) {
@@ -7594,6 +7640,7 @@ function animateColoringWave(r,c,gemType) {
     }
     _animOverlays.set(id,(now)=>{
       if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
+      if (state.screen!=='game') { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       // Central burst flash
@@ -7647,6 +7694,7 @@ function animateSuperMegaBlast(r,c) {
     const dur=440, t0=performance.now(), _ep=_matchEpoch, id=++_animOverlayId;
     _animOverlays.set(id,(now)=>{
       if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
+      if (state.screen!=='game') { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       if (t<0.22) {
@@ -7682,6 +7730,7 @@ function animateFullBoardClear(r,c) {
     }
     _animOverlays.set(id,(now)=>{
       if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
+      if (state.screen!=='game') { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       // White flash
@@ -7717,6 +7766,7 @@ function animateStripeBeam(r, c, horizontal) {
     const dustSpawned = new Set();
     _animOverlays.set(id, (now) => {
       if (_matchEpoch !== _ep) { _animOverlays.delete(id); res(); return; }
+      if (state.screen !== 'game') { _animOverlays.delete(id); res(); return; }
       const t = Math.min((now - t0) / dur, 1);
       ctx.save();
       // Вспышка по строке/столбцу в начале (t<0.22)
@@ -7837,6 +7887,7 @@ function animateRainbowBurst(targetType, srcR, srcC) {
     const dur=_d(700), t0=performance.now(), _ep=_matchEpoch, id=++_animOverlayId;
     _animOverlays.set(id,(now)=>{
       if (_matchEpoch!==_ep) { _animOverlays.delete(id); targets.forEach(({cl})=>{cl.anim={};}); res(); return; }
+      if (state.screen!=='game') { _animOverlays.delete(id); targets.forEach(({cl})=>{cl.anim={};}); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       ctx.save();
       // Dark radar overlay — fades in/out
@@ -8053,7 +8104,7 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
     }
     if(_matchEpoch!==_myEpoch)return;
     // Phase 2: remove bomb and blast 3×3 at landed position
-    state.board[_br][_bc]=null;
+    if (bombCell && state.board[_br]?.[_bc] === bombCell) state.board[_br][_bc]=null;
     await _bombBlast3x3(_br,_bc);
     return;
   }
@@ -8229,6 +8280,7 @@ function animateRocketFlight(fromR,fromC,toR,toC,gemColor) {
     const _ep=_matchEpoch, id=++_animOverlayId;
     _animOverlays.set(id,(now)=>{
       if (_matchEpoch!==_ep) { _animOverlays.delete(id); res(); return; }
+      if (state.screen!=='game') { _animOverlays.delete(id); res(); return; }
       const t=Math.min((now-t0)/dur,1);
       const {x:px,y:py}=bezier(t);
       const {dx,dy}=bezierTangent(t);
@@ -9078,8 +9130,18 @@ function onPD(e) {
   if (state.busy||state.paused) return;
   const [x,y]=getXY(e); const cell=cellXY(x,y); if (!cell) return;
   if (state.buffNukeActive) { fireBuffNuke(cell[0],cell[1]); return; }
-  if (state.activeIngameBooster === 'hammer') { applyHammerBooster(cell[0],cell[1]); return; }
-  if (state.activeIngameBooster === 'colorbomb') { applyColorBombBooster(cell[0],cell[1]); return; }
+  if (state.activeIngameBooster === 'hammer')     { applyHammerBooster(cell[0],cell[1]); return; }
+  if (state.activeIngameBooster === 'drillclick') { applyDrillClickBooster(cell[0],cell[1]); return; }
+  if (state.activeIngameBooster === 'swap') {
+    if (!state._swapFirst) {
+      state._swapFirst = cell; drawBoard(); return;
+    } else {
+      const [r1,c1] = state._swapFirst;
+      state._swapFirst = null;
+      if (r1 === cell[0] && c1 === cell[1]) { updateHUD(); drawBoard(); return; }
+      applySwapBooster(r1, c1, cell[0], cell[1]); return;
+    }
+  }
   if (state.iceGrid[cell[0]]?.[cell[1]]) { shakeCell(cell[0],cell[1]); return; }
   // Double-tap activates special gem directly
   const now=Date.now();
@@ -9098,7 +9160,7 @@ async function activateSpecialByTap(r, c) {
   state.busy=true;
   spendMove();
   const sp=gem.special, tp=gem.type;
-  state.board[r][c]=null;
+  if (sp !== SPECIAL.BOMB) state.board[r][c]=null;
   spawnParticles(r,c,getSkinColor(tp>=0?tp:0),12);
   await triggerSpecial(r,c,sp,tp);
   applyGravity(); fillFromTop(); await animateDrop();
@@ -9158,14 +9220,18 @@ function updateHUD() {
   _updateMascot();
   // Обновляем счётчики in-game бустеров
   const b = state.ingameBoosters;
-  ['hammer','colorbomb','shuffle','extramoves','striped'].forEach(id => {
+  ['hammer','shuffle','drill','drillclick','swap'].forEach(id => {
     const cnt = document.getElementById(`hbst-${id}-cnt`);
     const btn = document.getElementById(`hbst-${id}`);
     const unlockLvl = BOOSTER_UNLOCK_LEVELS[id] || 0;
     const isLocked = unlockLvl > 0 && (state.maxUnlocked||1) < unlockLvl;
     if (cnt) cnt.textContent = isLocked ? '🔒' : (b[id] || 0);
     if (btn) {
-      btn.classList.toggle('active-booster', !isLocked && state.activeIngameBooster === id);
+      const isActive = !isLocked && (
+        state.activeIngameBooster === id ||
+        (id === 'swap' && state._swapFirst && state.activeIngameBooster === 'swap')
+      );
+      btn.classList.toggle('active-booster', isActive);
       btn.style.opacity = isLocked ? '0.35' : (b[id]||0) > 0 ? '1' : '0.4';
       btn.title = isLocked ? `Откроется на L${unlockLvl}` : (BOOSTER_META[id]?.name || id);
       btn.disabled = isLocked;
@@ -9250,15 +9316,15 @@ async function activateSidekick() {
 }
 
 const BOOSTER_META = {
-  hammer:     { icon:'🔨', name:'Молоток',    desc:'Уничтожает любую фишку', price:50 },
-  colorbomb:  { icon:'🌈', name:'Радуга',     desc:'Убирает все фишки одного цвета', price:100 },
-  shuffle:    { icon:'🔀', name:'Перемешать', desc:'Перемешивает все фишки на поле', price:30 },
-  extramoves: { icon:'⏱️', name:'+5 ходов',   desc:'Добавляет 5 ходов прямо сейчас', price:80 },
-  striped:    { icon:'⚡', name:'Молния',     desc:'Ставит молнию на случайную клетку', price:40 },
+  hammer:     { icon:'⛏️', name:'Молоток',         desc:'Уничтожает любую фишку', price:50 },
+  shuffle:    { icon:'🔀', name:'Перемешать',       desc:'Перемешивает все фишки на поле', price:30 },
+  drill:      { icon:'🔩', name:'Дрель',            desc:'Ставит полосу на случайную клетку', price:40 },
+  drillclick: { icon:'🎯', name:'Дрель по клику',   desc:'Тапни на клетку — поставит туда полосу', price:40 },
+  swap:       { icon:'↔️', name:'Поменять местами', desc:'Поменяй любые две фишки местами', price:60 },
 };
 
 // уровни разблокировки бустеров
-const BOOSTER_UNLOCK_LEVELS = { hammer:5, striped:10, colorbomb:16 };
+const BOOSTER_UNLOCK_LEVELS = { hammer:5, drill:10, drillclick:14, swap:18 };
 
 function checkBoosterUnlocks(prevMax, newMax) {
   Object.entries(BOOSTER_UNLOCK_LEVELS).forEach(([id, lvl]) => {
@@ -9406,9 +9472,10 @@ function activateInGameBooster(type) {
     } else {
       state.activeIngameBooster = type;
     }
-    if (type === 'shuffle') { state.activeIngameBooster = null; doShuffleBooster(); }
-    if (type === 'extramoves') { state.activeIngameBooster = null; applyExtraMovesBooster(); }
-    if (type === 'striped') { state.activeIngameBooster = null; applyStripedBooster(); }
+    if (type === 'shuffle')    { state.activeIngameBooster = null; doShuffleBooster(); }
+    if (type === 'drill')      { state.activeIngameBooster = null; applyDrillBooster(); }
+    if (type === 'drillclick') { /* ждём клика на поле */ }
+    if (type === 'swap')       { state._swapFirst = null; /* ждём двух кликов */ }
     updateHUD();
     return;
   }
@@ -9439,9 +9506,10 @@ function confirmBoosterBuy() {
   } else {
     state.activeIngameBooster = type;
   }
-  if (type === 'shuffle') { state.activeIngameBooster = null; doShuffleBooster(); }
-  if (type === 'extramoves') { state.activeIngameBooster = null; applyExtraMovesBooster(); }
-  if (type === 'striped') { state.activeIngameBooster = null; applyStripedBooster(); }
+  if (type === 'shuffle')    { state.activeIngameBooster = null; doShuffleBooster(); }
+  if (type === 'drill')      { state.activeIngameBooster = null; applyDrillBooster(); }
+  if (type === 'drillclick') { /* ждём клика на поле */ }
+  if (type === 'swap')       { state._swapFirst = null; /* ждём двух кликов */ }
   updateHUD();
 }
 
@@ -9518,9 +9586,9 @@ function applyExtraMovesBooster() {
   spawnParticles(Math.floor(ROWS/2), Math.floor(COLS/2), '#ffe066', 15);
 }
 
-function applyStripedBooster() {
+function applyDrillBooster() {
   if (state.busy) return;
-  state.ingameBoosters.striped = Math.max(0, (state.ingameBoosters.striped||0) - 1);
+  state.ingameBoosters.drill = Math.max(0, (state.ingameBoosters.drill||0) - 1);
   const free=[];
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
     if (state.holes.has(`${r},${c}`)) continue;
@@ -9529,11 +9597,37 @@ function applyStripedBooster() {
   }
   if (!free.length) { showToast('Нет свободных клеток!'); return; }
   const [r,c]=free[Math.floor(Math.random()*free.length)];
-  const sp=Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V;
-  state.board[r][c].special=sp;
+  state.board[r][c].special=Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V;
   spawnParticles(r,c,'#ffe066',10);
   drawBoard(); updateHUD();
-  showToast('⚡ Молния на поле!');
+  showToast('🔩 Дрель на поле!');
+}
+
+function applyDrillClickBooster(r, c) {
+  const cl = state.board[r]?.[c];
+  if (!cl || cl.stone || cl.chocolate || cl.type < 0 || cl.special !== SPECIAL.NONE) {
+    showToast('Нельзя поставить сюда!'); return;
+  }
+  state.activeIngameBooster = null;
+  state.ingameBoosters.drillclick = Math.max(0, (state.ingameBoosters.drillclick||0) - 1);
+  cl.special = Math.random() < 0.5 ? SPECIAL.STRIPE_H : SPECIAL.STRIPE_V;
+  spawnParticles(r, c, '#ffe066', 10);
+  drawBoard(); updateHUD();
+  showToast('🎯 Дрель установлена!');
+}
+
+async function applySwapBooster(r1, c1, r2, c2) {
+  const a = state.board[r1]?.[c1], b = state.board[r2]?.[c2];
+  if (!a || !b || a.stone || b.stone || a.ingredient || b.ingredient) {
+    showToast('Нельзя поменять эти фишки!'); updateHUD(); return;
+  }
+  state.activeIngameBooster = null;
+  state.ingameBoosters.swap = Math.max(0, (state.ingameBoosters.swap||0) - 1);
+  spawnParticles(r1, c1, '#67e8f9', 8);
+  spawnParticles(r2, c2, '#67e8f9', 8);
+  doSwap(r1, c1, r2, c2);
+  drawBoard(); updateHUD();
+  await processMatches();
 }
 
 async function doShuffleBooster() {
@@ -10608,7 +10702,7 @@ function playLevel(n, fresh) {
     state.comboCount=0; state.adMovesUsed=false; state.extraMovesUsed=false; state.ingredientsDelivered=0;
     state.chocolateInitial=0; state.sodaLevel=0; state.bottlesBroken=0; state._winShowing=false; state.bearsFreed=0; state._inBonusExplosion=false;
     if (state.rainbowRound) { state.rainbowRound.active=false; state.rainbowRound.movesLeft=0; }
-    state.lastSwap=null; state.undoUsedThisLevel=false; hideGestureHint();
+    state.lastSwap=null; state.undoUsedThisLevel=false; state.activeIngameBooster=null; state._swapFirst=null; hideGestureHint();
     state.buffPieces=0; state.buffNukeReady=false; state.buffNukeActive=false;
     state.supersonicActive=false; state.supersonicMovesLeft=0;
     // reset sidekick charge on new level
