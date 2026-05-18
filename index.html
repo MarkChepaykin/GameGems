@@ -247,12 +247,33 @@ canvas { display: block; touch-action: none; }
 .levels-title { font-size: var(--fs-lg); color: #f0c030; font-weight: 800; text-align: center; padding: 16px 0 8px; text-shadow: 0 2px 0 #804800; }
 .level-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 4px 16px 16px; max-width: 380px; width: 100%; }
 
-/* ── карта эпизодов ── */
+/* ── карта эпизодов / слои Земли ── */
 .episode-map {
   display: grid; grid-template-columns: repeat(2,1fr);
   gap: 10px; padding: 8px 12px 80px;
   width: 100%; max-width: 380px; overflow-y: auto;
 }
+.episode-map.layers-mode {
+  grid-template-columns: 1fr; gap: 0; padding: 6px 12px 80px;
+}
+.layer-card {
+  width: 100%; border: none; cursor: pointer;
+  padding: 10px 14px; text-align: left;
+  display: flex; align-items: center; gap: 12px;
+  border-radius: 0; border-bottom: 1px solid rgba(255,255,255,.07);
+  transition: filter .12s;
+}
+.layer-card:first-child { border-radius: 12px 12px 0 0; }
+.layer-card:last-child  { border-radius: 0 0 12px 12px; border-bottom: none; }
+.layer-card:active:not(:disabled) { filter: brightness(1.35); }
+.layer-card:disabled { opacity: .35; cursor: default; }
+.lc-icon { font-size: 24px; flex-shrink: 0; width: 34px; text-align: center; }
+.lc-body { flex: 1; min-width: 0; }
+.lc-name { font-size: 13px; color: #fff; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lc-sub  { font-size: 10px; color: rgba(255,255,255,.55); margin-top: 1px; }
+.lc-bar-bg   { height: 3px; background: rgba(255,255,255,.15); border-radius: 2px; margin-top: 5px; }
+.lc-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg,#ffe066,#f59e0b); transition: width .4s; }
+.lc-right { font-size: 15px; flex-shrink: 0; opacity: .75; }
 .ep-card {
   border-radius: 16px; border: none; cursor: pointer;
   padding: 10px 12px 28px; text-align: left;
@@ -1366,21 +1387,21 @@ canvas { display: block; touch-action: none; }
   </div>
 </div>
 
-<!-- ══ УРОВНИ ══ -->
+<!-- ══ УРОВНИ / СЛОИ ЗЕМЛИ ══ -->
 <div id="screen-levels" class="screen hidden" style="justify-content:flex-start;">
   <div class="top-bar">
-    <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;" data-i18n="back">← Назад</button>
-    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800,0 0 8px rgba(200,160,40,.4);" data-i18n="choose_level">Выбор уровня</div>
+    <button id="lvl-back-btn" class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
+    <div id="lvl-screen-title" style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800,0 0 8px rgba(200,160,40,.4);">Выбор уровня</div>
     <div class="cur-pill">🪙 <span id="lvl-coins">0</span></div>
     <div class="cur-pill">❤️ <span id="lvl-lives">5</span></div>
   </div>
-  <!-- Мини-бар прогресса острова -->
+  <!-- Глубина бурения -->
   <div class="island-mini-bar-wrap">
-    <span>🏝️</span>
+    <span id="lvl-depth-icon">⛏️</span>
     <div class="island-mini-bar-bg">
       <div class="island-mini-bar-fill" id="lvl-island-bar" style="width:0%"></div>
     </div>
-    <span id="lvl-island-pct">0%</span>
+    <span id="lvl-island-pct">0 км</span>
   </div>
   <div class="episode-map" id="episode-map" style="margin-top:4px;"></div>
 </div>
@@ -1388,7 +1409,7 @@ canvas { display: block; touch-action: none; }
 <!-- ══ ЭКРАН ЭПИЗОДА ══ -->
 <div id="screen-episode" class="screen hidden" style="justify-content:flex-start;">
   <div class="top-bar">
-    <button class="btn btn-gray btn-sm" onclick="showLevels()" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
+    <button class="btn btn-gray btn-sm" onclick="goBackToLayer()" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
     <div id="ep-title" style="font-size:16px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800;">Эпизод</div>
     <div class="cur-pill">🪙 <span id="ep-coins">0</span></div>
     <div class="cur-pill">❤️ <span id="ep-lives">5</span></div>
@@ -3633,14 +3654,16 @@ function refreshLevelsCurrency() {
   const ll = document.getElementById('lvl-lives');  if (ll) ll.textContent = livesDisplay();
   const ec = document.getElementById('ep-coins');   if (ec) ec.textContent = state.coins;
   const el = document.getElementById('ep-lives');   if (el) el.textContent = livesDisplay();
-  // Island mini-bar
-  const unlockedCount = Object.keys(state.islandTiles || {}).length;
-  const totalCount = ISLAND_TILES.length;
-  const pct = totalCount > 0 ? Math.round(unlockedCount / totalCount * 100) : 0;
-  const barEl = document.getElementById('lvl-island-bar');
-  const pctEl = document.getElementById('lvl-island-pct');
-  if (barEl) barEl.style.width = pct + '%';
-  if (pctEl) pctEl.textContent = pct + '%';
+  // Earth depth mini-bar
+  if (typeof _getDepthInfo !== 'undefined') {
+    const di = _getDepthInfo();
+    const barEl  = document.getElementById('lvl-island-bar');
+    const pctEl  = document.getElementById('lvl-island-pct');
+    const iconEl = document.getElementById('lvl-depth-icon');
+    if (barEl)  barEl.style.width = di.pct + '%';
+    if (pctEl)  pctEl.textContent = di.label;
+    if (iconEl) iconEl.textContent = di.icon;
+  }
 }
 
 // Timed Shop Offers
@@ -4392,9 +4415,78 @@ function closeStarterPopup() {
 }
 
 // ══════════════════════════════════════════
-//  КАРТА ЭПИЗОДОВ
+//  КАРТА ЭПИЗОДОВ / СЛОИ ЗЕМЛИ
 // ══════════════════════════════════════════
 let _currentEpisodeId = 1;
+let _currentLayerIdx  = 0;
+let _levelsMode       = 'layers'; // 'layers' | 'episodes'
+
+const TOTAL_LEVELS = 20110;
+
+const EARTH_LAYERS = [
+  {name:'Поверхность',          emoji:'🌿', bg:'#1e4d1a,#0d2509',  depth:'0 м'},
+  {name:'Дёрн',                 emoji:'🌱', bg:'#2a3a14,#121808',  depth:'5 м'},
+  {name:'Гумус',                emoji:'🪱', bg:'#3a2410,#1a0e06',  depth:'15 м'},
+  {name:'Глина',                emoji:'🏺', bg:'#6a3820,#381008',  depth:'30 м'},
+  {name:'Песчаник',             emoji:'🧱', bg:'#705228,#3a2410',  depth:'60 м'},
+  {name:'Вечная мерзлота',      emoji:'❄️', bg:'#2a4060,#121828',  depth:'100 м'},
+  {name:'Водоносный пласт',     emoji:'💧', bg:'#183070,#080e40',  depth:'200 м'},
+  {name:'Известняк',            emoji:'🪨', bg:'#706050,#382e20',  depth:'400 м'},
+  {name:'Угольный пласт',       emoji:'⛏️', bg:'#282030,#101018',  depth:'800 м'},
+  {name:'Медные руды',          emoji:'🟤', bg:'#6a3010,#301408',  depth:'1.2 км'},
+  {name:'Железные жилы',        emoji:'🔩', bg:'#4a3828,#201814',  depth:'2 км'},
+  {name:'Серебряный пласт',     emoji:'🥈', bg:'#505870,#202838',  depth:'3 км'},
+  {name:'Мраморные гроты',      emoji:'🏛️', bg:'#6a6050,#302818',  depth:'5 км'},
+  {name:'Светящийся лес',       emoji:'🍄', bg:'#1a5020,#081e0a',  depth:'7 км'},
+  {name:'Морские пещеры',       emoji:'🌊', bg:'#0a2878,#040e3c',  depth:'10 км'},
+  {name:'Изумрудные жилы',      emoji:'💚', bg:'#145028,#06200e',  depth:'13 км'},
+  {name:'Кристальные гроты',    emoji:'🔮', bg:'#2a1868,#100630',  depth:'17 км'},
+  {name:'Золотые жилы',         emoji:'🥇', bg:'#684808,#302004',  depth:'21 км'},
+  {name:'Алмазный пласт',       emoji:'💎', bg:'#102070,#060838',  depth:'26 км'},
+  {name:'Тёмные пещеры',        emoji:'🌑', bg:'#0e0e14,#06060c',  depth:'32 км'},
+  {name:'Ледяные катакомбы',    emoji:'🧊', bg:'#182840,#081018',  depth:'40 км'},
+  {name:'Костяной ярус',        emoji:'🦴', bg:'#504038,#201810',  depth:'50 км'},
+  {name:'Забытые шахты',        emoji:'🏚️', bg:'#3a2c1c,#181008',  depth:'60 км'},
+  {name:'Светокамень',          emoji:'⚗️', bg:'#2a5020,#102008',  depth:'75 км'},
+  {name:'Метеоритный слой',     emoji:'☄️', bg:'#303040,#141418',  depth:'90 км'},
+  {name:'Вулканические трубки', emoji:'🌋', bg:'#701800,#300800',  depth:'120 км'},
+  {name:'Тепловые жилы',        emoji:'🔥', bg:'#7a2000,#380800',  depth:'160 км'},
+  {name:'Подземный океан',      emoji:'🫧', bg:'#082080,#040840',  depth:'220 км'},
+  {name:'Адский камень',        emoji:'🔴', bg:'#780800,#380400',  depth:'300 км'},
+  {name:'Преддверие ада',       emoji:'💀', bg:'#580010,#280008',  depth:'400 км'},
+  {name:'Верхняя мантия',       emoji:'🟠', bg:'#683000,#301000',  depth:'600 км'},
+  {name:'Расплавленная порода', emoji:'💫', bg:'#883800,#401400',  depth:'900 км'},
+  {name:'Нижняя мантия',        emoji:'🌀', bg:'#540e0e,#240606',  depth:'1500 км'},
+  {name:'Зона Д″',              emoji:'🔴', bg:'#700808,#300404',  depth:'2500 км'},
+  {name:'Внешнее ядро',         emoji:'🌊', bg:'#0a1468,#040830',  depth:'3000 км'},
+  {name:'Железный вихрь',       emoji:'⚡', bg:'#081a78,#040838',  depth:'3500 км'},
+  {name:'Граница ядра',         emoji:'💠', bg:'#060890,#020444',  depth:'4500 км'},
+  {name:'Внутреннее ядро',      emoji:'✨', bg:'#44445c,#1c1c2a',  depth:'5100 км'},
+  {name:'Сердце Земли',         emoji:'❤️', bg:'#680606,#280202',  depth:'6000 км'},
+  {name:'Нулевая точка',        emoji:'🌍', bg:'#0c0c0c,#040404',  depth:'Центр'},
+];
+
+function getLayerRange(i) {
+  const n = EARTH_LAYERS.length;
+  return {
+    lvl1: Math.floor(i * TOTAL_LEVELS / n) + 1,
+    lvlN: Math.floor((i + 1) * TOTAL_LEVELS / n),
+  };
+}
+
+function _getDepthInfo() {
+  const maxLvl = state.maxUnlocked || 1;
+  let idx = 0;
+  for (let i = 0; i < EARTH_LAYERS.length; i++) {
+    const { lvl1 } = getLayerRange(i);
+    if (maxLvl >= lvl1) idx = i; else break;
+  }
+  return {
+    icon:  EARTH_LAYERS[idx].emoji,
+    label: EARTH_LAYERS[idx].depth,
+    pct:   Math.round(idx / (EARTH_LAYERS.length - 1) * 100),
+  };
+}
 
 const TYPE_ICON = {
   bears:'🐻', collect:'💎', soda:'🫧', ingredients:'🌿',
@@ -4402,53 +4494,117 @@ const TYPE_ICON = {
 };
 
 function goBackToLevels() {
-  showEpisode(_currentEpisodeId);
+  showLayer(_currentLayerIdx);
+}
+
+function goBackToLayer() {
+  showLevels();
 }
 
 function showLevels() {
   if (typeof EPISODES === 'undefined') {
-    showToast('⏳ Загружаем...');
-    return;
+    showToast('⏳ Загружаем...'); return;
   }
+  _levelsMode = 'layers';
   showScreen('levels');
+  refreshLevelsCurrency();
+
+  const titleEl = document.getElementById('lvl-screen-title');
+  if (titleEl) titleEl.textContent = 'Выбор уровня';
+  const backBtn = document.getElementById('lvl-back-btn');
+  if (backBtn) backBtn.onclick = () => showScreen('menu');
+
   const map = document.getElementById('episode-map');
   map.innerHTML = '';
+  map.classList.add('layers-mode');
 
-  for (const ep of EPISODES) {
-    const epLvls = LEVELS.filter(l => l.level >= ep.start && l.level <= ep.end);
-    if (!epLvls.length) continue;
+  EARTH_LAYERS.forEach((layer, i) => {
+    const { lvl1, lvlN } = getLayerRange(i);
+    const locked = lvl1 > (state.maxUnlocked || 1);
+    const layerLvls = (typeof LEVELS !== 'undefined')
+      ? LEVELS.filter(l => l.level >= lvl1 && l.level <= lvlN) : [];
+    const done  = layerLvls.filter(l => (state.levelStars[l.level] || 0) > 0).length;
+    const total = layerLvls.length || (lvlN - lvl1 + 1);
+    const pct   = total > 0 ? Math.round(done / total * 100) : 0;
 
-    const locked = epLvls[0].level > state.maxUnlocked;
-    const played = epLvls.filter(l => (state.levelStars[l.level] || 0) > 0);
-    const allDone = played.length === epLvls.length;
-    const types = [...new Set(epLvls.map(l => l.type))];
-    const typeIcons = types.map(t => TYPE_ICON[t] || '').join('');
-
-    let cardClass = 'ep-card';
-    if (locked)          cardClass += ' locked';
-    else if (allDone && played.length) cardClass += ' complete';
-    else if (played.length)            cardClass += ' partial';
-
+    const [bg1, bg2] = layer.bg.split(',');
     const card = document.createElement('button');
-    card.className = cardClass;
-    if (!locked) card.onclick = () => showEpisode(ep.id);
-    else card.disabled = true;
-
+    card.className = 'layer-card';
+    card.style.background = `linear-gradient(135deg,${bg1} 0%,${bg2} 100%)`;
+    card.disabled = locked;
     card.innerHTML =
-      `<div class="ep-num">#${ep.id}</div>` +
-      `<div class="ep-name">${getEpName(ep)}</div>` +
-      `<div class="ep-types">${typeIcons}</div>` +
-      `<div class="ep-stars">${played.length}/${epLvls.length} ⭐</div>`;
-
+      `<div class="lc-icon">${locked ? '🔒' : layer.emoji}</div>` +
+      `<div class="lc-body">` +
+        `<div class="lc-name">${locked ? layer.name : layer.name}</div>` +
+        `<div class="lc-sub">${layer.depth} · Ур. ${lvl1}–${lvlN}${locked ? ' · Закрыт' : ' · ' + pct + '%'}</div>` +
+        `<div class="lc-bar-bg"><div class="lc-bar-fill" style="width:${locked?0:pct}%"></div></div>` +
+      `</div>` +
+      `<div class="lc-right">${locked ? '' : '›'}</div>`;
+    if (!locked) card.onclick = () => showLayer(i);
     map.appendChild(card);
+  });
+
+  // Scroll to current layer
+  let curIdx = 0;
+  for (let i = 0; i < EARTH_LAYERS.length; i++) {
+    if (getLayerRange(i).lvl1 <= (state.maxUnlocked || 1)) curIdx = i; else break;
+  }
+  setTimeout(() => {
+    if (map.children[curIdx]) map.children[curIdx].scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 80);
+}
+
+function showLayer(i) {
+  _currentLayerIdx = i;
+  const layer = EARTH_LAYERS[i];
+  const { lvl1, lvlN } = getLayerRange(i);
+
+  showScreen('episode');
+  const titleEl = document.getElementById('ep-title');
+  if (titleEl) titleEl.textContent = `${layer.emoji} ${layer.name}`;
+  const ec = document.getElementById('ep-coins'); if (ec) ec.textContent = state.coins;
+  const el = document.getElementById('ep-lives'); if (el) el.textContent = livesDisplay();
+
+  const grid = document.getElementById('episode-level-grid');
+  grid.innerHTML = '';
+
+  // Load chunks covering this layer (may span two 1000-level chunks)
+  const c1 = Math.max(1, Math.ceil(lvl1 / 1000));
+  const c2 = Math.max(1, Math.ceil(lvlN / 1000));
+  const loaded = typeof LEVELS !== 'undefined' && LEVELS.some(l => l.level >= lvl1 && l.level <= lvlN);
+  if (!loaded) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,.6);padding:20px;font-size:13px;">⏳ Загружаем уровни...</div>';
+    const loads = [_loadScript(`levels-c${String(c1).padStart(3,'0')}.js`)];
+    if (c2 !== c1) loads.push(_loadScript(`levels-c${String(c2).padStart(3,'0')}.js`));
+    Promise.all(loads).then(() => showLayer(i));
+    return;
   }
 
-  // Scroll to the last partially-played episode
-  setTimeout(() => {
-    const cards = map.querySelectorAll('.ep-card.partial, .ep-card:not(.locked):not(.complete)');
-    const target = [...cards].pop() || map.querySelector('.ep-card:not(.locked)');
-    if (target) target.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }, 80);
+  const layerLvls = LEVELS.filter(l => l.level >= lvl1 && l.level <= lvlN);
+  for (const lvl of layerLvls) {
+    const stars    = state.levelStars[lvl.level] || 0;
+    const locked   = lvl.level > (state.maxUnlocked || 1);
+    const tier     = getDifficultyTier(lvl);
+    const tierClass = tier>=3 ? 'tier-ultrahard' : tier>=2 ? 'tier-superhard' : tier>=1 ? 'tier-hard' : '';
+    const badgeIcon = tier>=3 ? '☠️' : tier>=2 ? '💥' : tier>=1 ? '🔥' : '';
+
+    const btn = document.createElement('button');
+    btn.dataset.level = lvl.level;
+    btn.className = 'level-btn ' + (locked ? 'locked' : stars > 0 ? 'complete' : 'unlocked') + (tierClass ? ' ' + tierClass : '');
+
+    if (locked) {
+      btn.innerHTML = `<span>🔒</span><span style="font-size:11px">${lvl.level}</span>`;
+    } else {
+      const faWin = state.firstAttemptWins?.[lvl.level];
+      const badge = badgeIcon ? `<span class="level-diff-badge">${badgeIcon}</span>` : '';
+      btn.innerHTML = `${badge}<span>${lvl.level}${faWin ? '<span style="font-size:8px;position:absolute;top:2px;right:3px;">🏆</span>' : ''}</span><div class="level-stars">${'⭐'.repeat(stars)}</div>`;
+      btn.onclick = () => selectLevel(lvl.level);
+    }
+    grid.appendChild(btn);
+  }
+
+  const lastBtn = grid.querySelector(`[data-level="${state.maxUnlocked}"]`);
+  if (lastBtn) setTimeout(() => lastBtn.scrollIntoView({ block: 'center', behavior: 'smooth' }), 80);
 }
 
 function showEpisode(epId) {
@@ -5530,6 +5686,19 @@ function drawCellGem(r,c,cell) {
     // RAINBOW/COLORING are colorless — they don't rely on a gem shape
     if (!gem && cell.special!==SPECIAL.RAINBOW && cell.special!==SPECIAL.COLORING) { ctx.restore(); return; }
 
+    // ─── ТЕКСТУР-ПАК ──────────────────────────────────────────────────
+    { const _spc=cell.special, _ct=cell.type; let _tpImg=null;
+      if (!_spc||_spc===SPECIAL.NONE)      _tpImg=TEXTURE_PACK.sprites.gem[_ct];
+      else if (_spc===SPECIAL.STRIPE_H)    _tpImg=TEXTURE_PACK.sprites.stripe_h[_ct];
+      else if (_spc===SPECIAL.STRIPE_V)    _tpImg=TEXTURE_PACK.sprites.stripe_v[_ct];
+      else if (_spc===SPECIAL.BOMB)        _tpImg=TEXTURE_PACK.sprites.bomb[_ct];
+      else if (_spc===SPECIAL.ROCKET)      _tpImg=TEXTURE_PACK.sprites.rocket[_ct];
+      else if (_spc===SPECIAL.COLORING)    _tpImg=TEXTURE_PACK.sprites.coloring[_ct];
+      else if (_spc===SPECIAL.RAINBOW)     _tpImg=TEXTURE_PACK.sprites.rainbow;
+      else if (_spc===SPECIAL.MEGA)        _tpImg=TEXTURE_PACK.sprites.mega;
+      if (_tpImg instanceof HTMLImageElement) { ctx.drawImage(_tpImg,x+2,y+2,cs-4,cs-4); ctx.restore(); return; }
+    }
+
     // ─── RAINBOW → ГЕОСКАНЕР — радарный экран ────────────────────────
     if (cell.special===SPECIAL.RAINBOW) {
       const r2 = cs/2-pad+2;
@@ -6315,6 +6484,52 @@ function loadGemImage(gemIndex, url) {
   img.onload = () => { GEM_IMAGES[gemIndex] = img; invalidateGemCache(); };
   img.src = url;
 }
+
+// ══════════════════════════════════════════
+//  ТЕКСТУР-ПАК — кастомный спрайтшит
+// ══════════════════════════════════════════
+const TEXTURE_PACK = {
+  sprites: {
+    gem:      [null,null,null,null,null,null],
+    stripe_h: [null,null,null,null,null,null],
+    stripe_v: [null,null,null,null,null,null],
+    coloring: [null,null,null,null,null,null],
+    bomb:     [null,null,null,null,null,null],
+    rocket:   [null,null,null,null,null,null],
+    rainbow:  null,
+    mega:     null,
+  }
+};
+// Новые спрайты 0-42: 7 цветов на категорию (0=красный..6=фиолетовый или наоборот)
+// gem 0=gold 1=cyan 2=green 3=red 4=purple 5=orange
+// FWD-категории (красный=+0, фиолетовый=+6): камни (0-6), TNT (14-20), stripe_h (28-34)
+// REV-категории (фиолетовый=+0, красный=+6): бочки (7-13), ракеты (21-27), stripe_v (35-41)
+const _TP_FWD = [2, 4, 3, 0, 6, 1]; // gem type 0-5 → позиция в FWD-категории
+const _TP_REV = [4, 2, 3, 6, 0, 5]; // gem type 0-5 → позиция в REV-категории
+
+function _loadTPImg(src) {
+  return new Promise(res => { const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(null); i.src=src; });
+}
+async function loadTexturePack() {
+  const jobs = [];
+  for (let gi=0; gi<6; gi++) {
+    const fwd=_TP_FWD[gi], rev=_TP_REV[gi], g=gi;
+    jobs.push(_loadTPImg(`sprites/${fwd}.png`).then(img=>{        if(img) TEXTURE_PACK.sprites.gem[g]=img;      }));
+    jobs.push(_loadTPImg(`sprites/${7+rev}.png`).then(img=>{      if(img) TEXTURE_PACK.sprites.coloring[g]=img; }));
+    jobs.push(_loadTPImg(`sprites/${14+fwd}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.bomb[g]=img;     }));
+    jobs.push(_loadTPImg(`sprites/${21+rev}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.rocket[g]=img;   }));
+    jobs.push(_loadTPImg(`sprites/${28+fwd}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.stripe_h[g]=img; }));
+    jobs.push(_loadTPImg(`sprites/${35+rev}.png`).then(img=>{     if(img) TEXTURE_PACK.sprites.stripe_v[g]=img; }));
+  }
+  jobs.push(_loadTPImg('sprites/42.png').then(img=>{ if(img) TEXTURE_PACK.sprites.rainbow=img; }));
+  await Promise.all(jobs);
+  invalidateGemCache();
+  const cats = ['gem','coloring','bomb','rocket','stripe_h','stripe_v'];
+  const n = cats.reduce((s,t)=>s+TEXTURE_PACK.sprites[t].filter(Boolean).length, 0)+(TEXTURE_PACK.sprites.rainbow?1:0);
+  console.log('[TP] Загружено:', n, 'спрайтов');
+  if (n>0 && typeof showToast==='function') showToast('Текстур-пак: '+n+' спрайтов');
+}
+
 
 function _renderGemSprite(shape, color, size, gemType, skin) {
   const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -9614,10 +9829,13 @@ function updateGoalProgress() {
       prog=Math.min(state.score/lvl.target,1);
       html=`🎯 ${lvl.target.toLocaleString()}`; break;
     case 'collect': {
-      let tot=0; lvl.gems.forEach(g=>tot+=(state.collectedGems[g]||0));
+      let tot=0;
+      const gems=lvl.gems||[];
+      if (gems.length>0) { gems.forEach(g=>tot+=(state.collectedGems[g]||0)); }
+      else { Object.values(state.collectedGems||{}).forEach(v=>tot+=v); }
       prog=Math.min(tot/lvl.target,1);
       const emojiSet=SKIN_EMOJI[state.activeSkin];
-      const dots=lvl.gems.map(g=>{
+      const dots=gems.map(g=>{
         const gem=GEMS[g]; if(!gem) return '';
         if (emojiSet && emojiSet[g]) return `<span style="font-size:17px;line-height:1;">${emojiSet[g]}</span>`;
         return `<span style="color:${getSkinColor(g)};font-size:15px;">●</span>`;
@@ -9724,7 +9942,7 @@ function checkWin() {
   let mainWin = false;
   switch(lvl.type) {
     case 'score':   mainWin = state.score >= lvl.target; break;
-    case 'collect': { let t=0; lvl.gems.forEach(g=>t+=(state.collectedGems[g]||0)); mainWin = t>=lvl.target; break; }
+    case 'collect': { let t=0; const _cg=lvl.gems||[]; if (_cg.length>0) { _cg.forEach(g=>t+=(state.collectedGems[g]||0)); } else { Object.values(state.collectedGems||{}).forEach(v=>t+=v); } mainWin = t>=lvl.target; break; }
     case 'ice':     mainWin = state.iceBroken>=lvl.target; break;
     case 'stone':   mainWin = state.stonesBroken>=lvl.target; break;
     case 'jelly':        mainWin = countJellyRemaining()===0; break;
@@ -9763,7 +9981,7 @@ function calcStars() {
       if (state.score >= lvl.target * 2.0) return 3;
       if (state.score >= lvl.target * 1.5) return 2;
       return 1;
-    case 'collect': { let t=0; lvl.gems.forEach(g=>t+=(state.collectedGems[g]||0)); prog=Math.min(t/lvl.target,1); break; }
+    case 'collect': { let t=0; const _cg2=lvl.gems||[]; if (_cg2.length>0) { _cg2.forEach(g=>t+=(state.collectedGems[g]||0)); } else { Object.values(state.collectedGems||{}).forEach(v=>t+=v); } prog=Math.min(t/lvl.target,1); break; }
     case 'ice': prog=Math.min(state.iceBroken/lvl.target,1); break;
     case 'stone': prog=Math.min(state.stonesBroken/lvl.target,1); break;
     case 'jelly': prog=state.jellyTotal>0?Math.max(0,1-countJellyRemaining()/state.jellyTotal):1; break;
@@ -11517,6 +11735,7 @@ async function loadingScreen() {
   bar.style.width = '90%';
 
   loadGame();
+  loadTexturePack();
   applyLang();
   await syncCloud();
 
@@ -12105,6 +12324,11 @@ function initDevPanel() {
         <button onclick="SFX.loseJingle()"  style="${devBtnStyle('#7f1d1d')}">loseJngl</button>
       </div>
       <button onclick="devTestAllSounds()" style="${devBtnStyle('#1e3a5f')};width:100%;margin-bottom:4px;">▶ Тест всех звуков</button>
+      <div style="margin-top:6px;margin-bottom:3px;font-size:10px;color:#64748b;">🖼️ Текстур-пак:</div>
+      <div style="display:flex;gap:3px;margin-bottom:4px;">
+        <button onclick="loadTexturePack()" style="${devBtnStyle('#1e3a5f')};flex:1;">↺ Перезагрузить</button>
+        <button onclick="Object.keys(TEXTURE_PACK.sprites).forEach(k=>{ const v=TEXTURE_PACK.sprites[k]; if(Array.isArray(v))v.fill(null); else TEXTURE_PACK.sprites[k]=null; }); invalidateGemCache(); showToast('Сброшено')" style="${devBtnStyle('#7f1d1d')};padding:3px 6px;">✖ Сброс</button>
+      </div>
     </div>
   `;
   document.getElementById('app').appendChild(panel);
