@@ -5696,7 +5696,13 @@ function drawCellGem(r,c,cell) {
       else if (_spc===SPECIAL.COLORING)    _tpImg=TEXTURE_PACK.sprites.coloring[_ct];
       else if (_spc===SPECIAL.RAINBOW)     _tpImg=TEXTURE_PACK.sprites.rainbow;
       else if (_spc===SPECIAL.MEGA)        _tpImg=TEXTURE_PACK.sprites.mega;
-      if (_tpImg instanceof HTMLImageElement) { ctx.drawImage(_tpImg,x+2,y+2,cs-4,cs-4); ctx.restore(); return; }
+      if (_tpImg instanceof HTMLImageElement) {
+        const sz=cs-4, iw=_tpImg.naturalWidth||sz, ih=_tpImg.naturalHeight||sz;
+        const sc=Math.min(sz/iw, sz/ih);
+        const dw=iw*sc, dh=ih*sc;
+        ctx.drawImage(_tpImg, x+2+(sz-dw)/2, y+2+(sz-dh)/2, dw, dh);
+        ctx.restore(); return;
+      }
     }
 
     // ─── RAINBOW → ГЕОСКАНЕР — радарный экран ────────────────────────
@@ -7392,7 +7398,7 @@ function fillFromTop() {
         // Pick color that avoids creating an immediate 3-in-a-row
         let _ft = randGem();
         for (let _fa=0; _fa<_activeGemTypes && wouldMatch(state.board,r,c,_ft); _fa++) _ft=(_ft+1)%_activeGemTypes;
-        const g=createGem(_ft); g.anim={oy:-emptyCount*cellSize,alpha:1};
+        const g=createGem(_ft); g.anim={oy:-(r+1)*cellSize,alpha:1};
         // Bears: spawn honey cell if we still need more bears freed
         if (honeyNeeded>0) { g.honey=2; g.special=SPECIAL.NONE; honeyNeeded--; }
         // Rainbow Round — 30% chance to spawn RAINBOW gem
