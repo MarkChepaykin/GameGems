@@ -2817,7 +2817,7 @@ const LEVEL_DESC = {
   ice:         lvl => `Разбей ${lvl.target} льдинок`,
   stone:       lvl => `Убери ${lvl.target} камней`,
   jelly:       lvl => `Расчисти все гелевые ячейки`,
-  ingredients: lvl => `Доставь ${lvl.target} артефактов`,
+  ingredients: lvl => `Опусти ${lvl.target} вёдер с камнями`,
   chocolate:   lvl => `Рассей всю тьму`,
   soda:        lvl => `Разбей ${lvl.target} кристальных колб`,
   carpet:      lvl => `Покрась всё поле 🎨`,
@@ -4519,7 +4519,7 @@ function selectLevel(n) {
       return `<span style="color:${gem.color};font-size:22px;">●</span> ${gem.name}`;
     }).join('  ');
   } else if (lvl.type === 'ingredients') {
-    pgDesc.innerHTML = '🌿 🔮 🌟 💫 — опускай артефакты вниз';
+    pgDesc.innerHTML = '🪣 Опускай вёдра с камнями вниз';
   } else if (lvl.type === 'jelly') {
     pgDesc.innerHTML = '🟦 Разбивай гемы на гелевых ячейках';
   } else if (lvl.type === 'ice') {
@@ -4638,8 +4638,7 @@ function createGem(type) {
   return { type: type ?? randGem(), special: SPECIAL.NONE, stone: false, chocolate: false, marmalade: false, ingredient: false, locked: false, mystery: false, bottle: false, licorice: 0, honey: 0, anim: {} };
 }
 function createIngredient() {
-  const icons = ['🍒','🌰','🍋','🍓'];
-  return { type: -2, special: SPECIAL.NONE, ice:false, stone:false, chocolate:false, marmalade:false, ingredient:true, icon: icons[Math.floor(Math.random()*icons.length)], anim:{} };
+  return { type: -2, special: SPECIAL.NONE, ice:false, stone:false, chocolate:false, marmalade:false, ingredient:true, anim:{} };
 }
 let _activeGemTypes = GEM_TYPES;
 let _matchEpoch = 0; // инкрементируется при старте нового уровня — прерывает зависшие async-цепочки
@@ -5402,14 +5401,49 @@ function drawCellGem(r,c,cell) {
   if (sc!==1) { ctx.translate(cx,cy); ctx.scale(sc,sc); ctx.translate(-cx,-cy); }
 
   if (cell.ingredient) {
-    const ico=cell.icon||'🍒';
-    ctx.font=`${cs*.72}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
-    // Same rendering as emoji gems: outline follows emoji contour
-    ctx.strokeStyle='rgba(255,220,80,0.7)';
-    ctx.lineWidth=Math.max(2,cs*0.05); ctx.lineJoin='round';
-    ctx.strokeText(ico,cx,cy);
-    ctx.fillText(ico,cx,cy);
-    // Golden border — marks it as ingredient
+    // Ведро с камнями (flat canvas)
+    const topW=cs*0.70, botW=cs*0.50;
+    const topX=cx-topW/2, botX=cx-botW/2;
+    const topY=y+cs*0.28, botY=y+cs*0.87;
+    ctx.shadowBlur=10; ctx.shadowColor='#607d8b';
+    // Тело ведра
+    ctx.fillStyle='#546e7a';
+    ctx.beginPath();
+    ctx.moveTo(topX,topY); ctx.lineTo(topX+topW,topY);
+    ctx.lineTo(botX+botW,botY); ctx.lineTo(botX,botY);
+    ctx.closePath(); ctx.fill();
+    // Ободок
+    ctx.shadowBlur=0;
+    ctx.fillStyle='#78909c';
+    ctx.fillRect(topX-cs*0.035,topY-cs*0.05,topW+cs*0.07,cs*0.07);
+    // Ручка
+    ctx.beginPath();
+    ctx.arc(cx,topY-cs*0.02,cs*0.23,Math.PI,0);
+    ctx.strokeStyle='#90a4ae'; ctx.lineWidth=Math.max(2,cs*0.07); ctx.stroke();
+    // Камни (с клиппингом по телу ведра)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(topX,topY); ctx.lineTo(topX+topW,topY);
+    ctx.lineTo(botX+botW,botY); ctx.lineTo(botX,botY);
+    ctx.closePath(); ctx.clip();
+    [[cx-cs*.17,topY+cs*.20,cs*.10,cs*.075,'#9e9e9e'],
+     [cx+cs*.10,topY+cs*.26,cs*.11,cs*.08,'#757575'],
+     [cx-cs*.02,topY+cs*.38,cs*.09,cs*.07,'#bdbdbd'],
+     [cx+cs*.19,topY+cs*.35,cs*.08,cs*.062,'#616161'],
+     [cx-cs*.18,topY+cs*.47,cs*.07,cs*.055,'#8d8d8d']].forEach(([sx,sy,rx,ry,col])=>{
+      ctx.fillStyle=col; ctx.beginPath(); ctx.ellipse(sx,sy,rx,ry,0,0,Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+    // Белый контур
+    ctx.strokeStyle='rgba(255,255,255,0.28)'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(topX,topY); ctx.lineTo(topX+topW,topY);
+    ctx.lineTo(botX+botW,botY); ctx.lineTo(botX,botY);
+    ctx.closePath(); ctx.stroke();
+    // Блик
+    ctx.fillStyle='rgba(255,255,255,0.20)';
+    ctx.beginPath(); ctx.ellipse(topX+topW*0.22,topY+cs*0.07,topW*0.15,cs*0.04,-0.3,0,Math.PI*2); ctx.fill();
+    // Золотая рамка
     ctx.strokeStyle='rgba(255,185,10,0.9)'; ctx.lineWidth=2.5;
     roundRect(ctx,x+2,y+2,cs-4,cs-4,10); ctx.stroke();
   } else if (cell.chocolate) {
@@ -5607,62 +5641,57 @@ function drawCellGem(r,c,cell) {
       const pulse = 0.7 + 0.30 * Math.sin(t + cell.type);
       ctx.save();
 
-      // STRIPE → БУРОВАЯ УСТАНОВКА — стальные пазы + вращающийся бур
+      // STRIPE → КРИСТАЛЬНЫЕ ОСКОЛКИ — 3 парящих кристалла в цвет гема
       if (spc === SPECIAL.STRIPE_H || spc === SPECIAL.STRIPE_V) {
         const horz = spc === SPECIAL.STRIPE_H;
+        const gemCol = getSkinColor(cell.type);
+        const gcLight = blendColor(gemCol, 255, 0.52);
+        const gcDark  = blendColor(gemCol, 0,   0.42);
         ctx.save();
-        const barW = cs * 0.095;
-        const barOff = cs * 0.125;
-        // Тёмная грунтовая колея
-        ctx.globalAlpha = 0.60;
-        ctx.fillStyle = 'rgba(30,18,4,0.65)';
-        if (horz) {
-          roundRect(ctx, x+pad, cy-barOff-barW/2, cs-pad*2, barW, barW/2); ctx.fill();
-          roundRect(ctx, x+pad, cy+barOff-barW/2, cs-pad*2, barW, barW/2); ctx.fill();
-        } else {
-          roundRect(ctx, cx-barOff-barW/2, y+pad, barW, cs-pad*2, barW/2); ctx.fill();
-          roundRect(ctx, cx+barOff-barW/2, y+pad, barW, cs-pad*2, barW/2); ctx.fill();
-        }
-        // Золотая центральная полоска (блестящий металл)
-        ctx.shadowColor = '#c09010'; ctx.shadowBlur = 5*pulse;
-        ctx.globalAlpha = 0.55 + 0.25*pulse;
-        ctx.fillStyle = `rgba(200,148,28,${0.80*pulse+0.12})`;
-        const cw = barW * 0.38;
-        if (horz) {
-          roundRect(ctx, x+pad, cy-barOff-cw/2, cs-pad*2, cw, cw/2); ctx.fill();
-          roundRect(ctx, x+pad, cy+barOff-cw/2, cs-pad*2, cw, cw/2); ctx.fill();
-        } else {
-          roundRect(ctx, cx-barOff-cw/2, y+pad, cw, cs-pad*2, cw/2); ctx.fill();
-          roundRect(ctx, cx+barOff-cw/2, y+pad, cw, cs-pad*2, cw/2); ctx.fill();
-        }
-        // Бур-значок — верхний левый угол
-        ctx.shadowBlur = 4*pulse; ctx.globalAlpha = 1;
-        const dx = x + cs*0.22, dy = y + cs*0.22, dr = cs*0.135;
-        ctx.fillStyle = 'rgba(18,10,0,0.72)';
-        ctx.beginPath(); ctx.arc(dx, dy, dr, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = `rgba(200,148,28,${0.75*pulse+0.12})`;
-        ctx.lineWidth = Math.max(1, cs*0.028);
-        ctx.beginPath(); ctx.arc(dx, dy, dr, 0, Math.PI*2); ctx.stroke();
-        // Вращающаяся спираль
-        const rot = (Date.now()/350) % (Math.PI*2);
-        ctx.strokeStyle = '#d4a020';
-        ctx.lineWidth = Math.max(1, cs*0.026); ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.arc(dx, dy, dr*0.53, rot, rot+Math.PI*1.15); ctx.stroke();
-        ctx.beginPath(); ctx.arc(dx, dy, dr*0.27, rot+Math.PI, rot+Math.PI*2.15); ctx.stroke();
-        // Двусторонние стрелки — нижний правый угол
+        const shardDefs = horz
+          ? [[x+cs*0.22, y+cs*0.20, cs*0.120, -0.48], [x+cs*0.50, y+cs*0.16, cs*0.098, 0.18], [x+cs*0.78, y+cs*0.22, cs*0.108, -0.22]]
+          : [[x+cs*0.20, y+cs*0.22, cs*0.108, 0.28],  [x+cs*0.16, y+cs*0.50, cs*0.098, -0.12], [x+cs*0.22, y+cs*0.78, cs*0.120, 0.42]];
+        shardDefs.forEach(([sx, sy, sr, srot]) => {
+          ctx.save();
+          ctx.translate(sx, sy);
+          ctx.rotate(srot);
+          ctx.shadowColor = gemCol; ctx.shadowBlur = sr * 1.5;
+          const sh = sr * 1.85, sw = sr * 1.10;
+          const sg = ctx.createLinearGradient(-sw*0.45, -sh*0.52, sw*0.45, sh*0.52);
+          sg.addColorStop(0,    gcLight);
+          sg.addColorStop(0.38, gemCol);
+          sg.addColorStop(0.78, gcDark);
+          sg.addColorStop(1,    blendColor(gemCol, 0, 0.68));
+          ctx.beginPath();
+          ctx.moveTo(0, -sh*0.52);
+          ctx.lineTo(sw*0.48, sh*0.42);
+          ctx.lineTo(-sw*0.48, sh*0.42);
+          ctx.closePath();
+          ctx.fillStyle = sg; ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.52)';
+          ctx.lineWidth = Math.max(0.8, sr*0.10);
+          ctx.beginPath(); ctx.moveTo(-sw*0.12, -sh*0.30); ctx.lineTo(sw*0.20, sh*0.20); ctx.stroke();
+          ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+          ctx.lineWidth = Math.max(0.8, sr*0.07); ctx.lineJoin = 'round';
+          ctx.beginPath();
+          ctx.moveTo(0, -sh*0.52); ctx.lineTo(sw*0.48, sh*0.42); ctx.lineTo(-sw*0.48, sh*0.42); ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
+        });
         ctx.shadowBlur = 0;
-        ctx.strokeStyle = `rgba(255,210,70,${0.90*pulse+0.06})`;
-        ctx.lineWidth = Math.max(1.2, cs*0.032); ctx.lineCap='round'; ctx.lineJoin='round';
-        const ax = x+cs*0.78, ay = y+cs*0.78, ar = cs*0.092;
+        const arx = x+cs*0.78, ary = y+cs*0.78, arr = cs*0.092;
+        ctx.globalAlpha = 0.90 * pulse;
+        ctx.strokeStyle = `rgba(255,218,60,0.92)`;
+        ctx.lineWidth = Math.max(1.2, cs*0.028); ctx.lineCap='round'; ctx.lineJoin='round';
         ctx.beginPath();
         if (horz) {
-          ctx.moveTo(ax-ar*1.1,ay); ctx.lineTo(ax+ar*1.1,ay);
-          ctx.moveTo(ax-ar*0.4,ay-ar*0.65); ctx.lineTo(ax-ar*1.1,ay); ctx.lineTo(ax-ar*0.4,ay+ar*0.65);
-          ctx.moveTo(ax+ar*0.4,ay-ar*0.65); ctx.lineTo(ax+ar*1.1,ay); ctx.lineTo(ax+ar*0.4,ay+ar*0.65);
+          ctx.moveTo(arx-arr*1.1,ary); ctx.lineTo(arx+arr*1.1,ary);
+          ctx.moveTo(arx-arr*0.4,ary-arr*0.65); ctx.lineTo(arx-arr*1.1,ary); ctx.lineTo(arx-arr*0.4,ary+arr*0.65);
+          ctx.moveTo(arx+arr*0.4,ary-arr*0.65); ctx.lineTo(arx+arr*1.1,ary); ctx.lineTo(arx+arr*0.4,ary+arr*0.65);
         } else {
-          ctx.moveTo(ax,ay-ar*1.1); ctx.lineTo(ax,ay+ar*1.1);
-          ctx.moveTo(ax-ar*0.65,ay-ar*0.4); ctx.lineTo(ax,ay-ar*1.1); ctx.lineTo(ax+ar*0.65,ay-ar*0.4);
-          ctx.moveTo(ax-ar*0.65,ay+ar*0.4); ctx.lineTo(ax,ay+ar*1.1); ctx.lineTo(ax+ar*0.65,ay+ar*0.4);
+          ctx.moveTo(arx,ary-arr*1.1); ctx.lineTo(arx,ary+arr*1.1);
+          ctx.moveTo(arx-arr*0.65,ary-arr*0.4); ctx.lineTo(arx,ary-arr*1.1); ctx.lineTo(arx+arr*0.65,ary-arr*0.4);
+          ctx.moveTo(arx-arr*0.65,ary+arr*0.4); ctx.lineTo(arx,ary+arr*1.1); ctx.lineTo(arx+arr*0.65,ary+arr*0.4);
         }
         ctx.stroke();
         ctx.restore();
@@ -5704,118 +5733,155 @@ function drawCellGem(r,c,cell) {
           ctx.beginPath(); ctx.arc(bx, by, rr*1.25, 0, Math.PI*2); ctx.stroke();
         }
       }
-      // BOMB → ДИНАМИТ — красный цилиндр с фитилём (двойной 3×3 взрыв)
+      // BOMB → ДИНАМИТ — красный цилиндр с надписью TNT и фитилём
       else if (spc === SPECIAL.BOMB) {
         const bx = x + cs * 0.26, by = y + cs * 0.72;
-        const rr = cs * 0.16;
-        const cylW = rr * 1.08, cylH = rr * 1.85;
+        const rr = cs * 0.17;
+        const cylW = rr * 1.12, cylH = rr * 2.0;
         ctx.save();
-        ctx.shadowColor = '#cc1010'; ctx.shadowBlur = 7*pulse;
+        ctx.shadowColor = '#cc1010'; ctx.shadowBlur = 8*pulse;
         // Свечение
-        ctx.fillStyle = `rgba(220,50,20,${0.30*pulse+0.10})`;
-        ctx.beginPath(); ctx.arc(bx, by, rr*1.8, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = `rgba(220,50,20,${0.35*pulse+0.12})`;
+        ctx.beginPath(); ctx.arc(bx, by, rr*2.0, 0, Math.PI*2); ctx.fill();
         // Цилиндр динамита
         ctx.fillStyle = `rgb(${180+Math.round(35*pulse)},18,18)`;
-        roundRect(ctx, bx-cylW/2, by-cylH/2, cylW, cylH, cylW*0.28);
+        roundRect(ctx, bx-cylW/2, by-cylH/2, cylW, cylH, cylW*0.26);
         ctx.fill();
         // Металлический блик
         const cg = ctx.createLinearGradient(bx-cylW/2, 0, bx+cylW/2, 0);
         cg.addColorStop(0, 'rgba(0,0,0,0)');
-        cg.addColorStop(0.28, 'rgba(255,255,255,0.22)');
-        cg.addColorStop(0.55, 'rgba(255,255,255,0.08)');
+        cg.addColorStop(0.28, 'rgba(255,255,255,0.24)');
+        cg.addColorStop(0.55, 'rgba(255,255,255,0.09)');
         cg.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = cg;
-        roundRect(ctx, bx-cylW/2, by-cylH/2, cylW, cylH, cylW*0.28); ctx.fill();
+        roundRect(ctx, bx-cylW/2, by-cylH/2, cylW, cylH, cylW*0.26); ctx.fill();
         // Чёрные обмотки
-        ctx.fillStyle = 'rgba(0,0,0,0.62)';
-        ctx.fillRect(bx-cylW/2+1, by-cylH*0.16, cylW-2, Math.max(2, cylH*0.12));
-        ctx.fillRect(bx-cylW/2+1, by+cylH*0.08, cylW-2, Math.max(2, cylH*0.10));
+        ctx.fillStyle = 'rgba(0,0,0,0.65)';
+        ctx.fillRect(bx-cylW/2+1, by-cylH*0.18, cylW-2, Math.max(2, cylH*0.13));
+        ctx.fillRect(bx-cylW/2+1, by+cylH*0.06, cylW-2, Math.max(2, cylH*0.11));
+        // Надпись TNT
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,235,50,0.95)';
+        ctx.font = `bold ${Math.max(5, Math.round(cylH*0.22))}px Arial`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('TNT', bx, by+1);
         // Контур
-        ctx.strokeStyle = 'rgba(80,0,0,0.60)'; ctx.lineWidth = Math.max(1, cs*0.020);
-        roundRect(ctx, bx-cylW/2, by-cylH/2, cylW, cylH, cylW*0.28); ctx.stroke();
+        ctx.strokeStyle = 'rgba(80,0,0,0.62)'; ctx.lineWidth = Math.max(1, cs*0.020);
+        roundRect(ctx, bx-cylW/2, by-cylH/2, cylW, cylH, cylW*0.26); ctx.stroke();
         // Фитиль (волнистый)
         const fuseT = Date.now()/500;
-        ctx.shadowColor = '#ff9030'; ctx.shadowBlur = 3*pulse;
+        ctx.shadowColor = '#ff9030'; ctx.shadowBlur = 4*pulse;
         ctx.strokeStyle = '#a06020'; ctx.lineWidth = Math.max(1, cs*0.024); ctx.lineCap='round';
         ctx.beginPath();
         ctx.moveTo(bx, by-cylH/2);
         ctx.bezierCurveTo(
           bx + cs*0.07*Math.sin(fuseT),     by-cylH/2-rr*0.45,
           bx - cs*0.07*Math.sin(fuseT+1.1), by-cylH/2-rr*0.90,
-          bx + cs*0.04*Math.sin(fuseT+2.2), by-cylH/2-rr*1.40
+          bx + cs*0.04*Math.sin(fuseT+2.2), by-cylH/2-rr*1.38
         );
         ctx.stroke();
         // Огонёк на конце фитиля
-        const fx2 = bx + cs*0.04*Math.sin(fuseT+2.2), fy2 = by-cylH/2-rr*1.40;
-        ctx.shadowColor='#ff6010'; ctx.shadowBlur = 5*pulse;
+        const fx2 = bx + cs*0.04*Math.sin(fuseT+2.2), fy2 = by-cylH/2-rr*1.38;
+        ctx.shadowColor='#ff6010'; ctx.shadowBlur = 6*pulse;
         ctx.fillStyle = `rgba(255,${120+Math.round(90*pulse)},10,${0.88*pulse+0.08})`;
-        ctx.beginPath(); ctx.arc(fx2, fy2, Math.max(1.5, cs*0.038*pulse), 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(fx2, fy2, Math.max(1.5, cs*0.040*pulse), 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = `rgba(255,255,180,${0.72*pulse})`;
+        ctx.beginPath(); ctx.arc(fx2, fy2, Math.max(1, cs*0.020*pulse), 0, Math.PI*2); ctx.fill();
         // Двойное кольцо взрыва
         ctx.shadowBlur = 0;
         ctx.strokeStyle = `rgba(255,80,20,${0.72*pulse})`;
         ctx.lineWidth = 1.3;
-        ctx.beginPath(); ctx.arc(bx, by, rr*1.35, 0, Math.PI*2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(bx, by, rr*1.50, 0, Math.PI*2); ctx.stroke();
         ctx.strokeStyle = `rgba(255,160,60,${0.40*pulse})`;
-        ctx.beginPath(); ctx.arc(bx, by, rr*1.70, 0, Math.PI*2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(bx, by, rr*1.88, 0, Math.PI*2); ctx.stroke();
         ctx.restore();
       }
-      // ROCKET → СИГНАЛЬНАЯ РАКЕТНИЦА — верхний правый угол
+      // ROCKET → РАКЕТА — аэродинамический снаряд в правом верхнем углу
       else if (spc === SPECIAL.ROCKET) {
-        const rx = x + cs * 0.79, ry = y + cs * 0.22;
-        const rs = cs * 0.155;
+        const rx = x + cs * 0.80, ry = y + cs * 0.22;
+        const rs = cs * 0.165;
         ctx.save();
-        ctx.shadowColor = '#c0c0d0'; ctx.shadowBlur = 6*pulse;
-        ctx.globalAlpha = 0.24*pulse;
-        ctx.fillStyle = '#c0d0ff';
-        ctx.beginPath(); ctx.arc(rx, ry, rs*1.9, 0, Math.PI*2); ctx.fill();
-        ctx.globalAlpha = 1;
-        // Пистолет повёрнут дулом вверх-влево (~-40°)
-        ctx.save(); ctx.translate(rx, ry); ctx.rotate(-Math.PI*0.42);
-        // Рукоятка (коричневый прямоугольник)
-        ctx.fillStyle = '#7a4820';
-        roundRect(ctx, -rs*0.24, rs*0.18, rs*0.48, rs*0.76, rs*0.10); ctx.fill();
-        ctx.strokeStyle = '#4a2810'; ctx.lineWidth = Math.max(1, cs*0.020);
-        roundRect(ctx, -rs*0.24, rs*0.18, rs*0.48, rs*0.76, rs*0.10); ctx.stroke();
-        // Ствол (металлический прямоугольник)
-        const bg2 = ctx.createLinearGradient(-rs*0.30, 0, rs*0.30, 0);
-        bg2.addColorStop(0, '#707080'); bg2.addColorStop(0.35, '#d0d0e0'); bg2.addColorStop(1, '#505060');
-        ctx.fillStyle = bg2;
-        roundRect(ctx, -rs*0.30, -rs*0.26, rs*0.60, rs*0.50, rs*0.12); ctx.fill();
-        ctx.strokeStyle = '#383848'; ctx.lineWidth = Math.max(1, cs*0.020);
-        roundRect(ctx, -rs*0.30, -rs*0.26, rs*0.60, rs*0.50, rs*0.12); ctx.stroke();
-        // Дуло (конус слева)
-        ctx.fillStyle = '#606070';
+        ctx.translate(rx, ry);
+        ctx.rotate(-Math.PI * 0.22);
+        ctx.shadowColor = '#ff7030'; ctx.shadowBlur = rs*2.0*pulse;
+        const bW = rs*0.50, bH = rs*1.95;
+        // Корпус ракеты
+        const rktGrd = ctx.createLinearGradient(-bW/2, 0, bW/2, 0);
+        rktGrd.addColorStop(0, '#484858');
+        rktGrd.addColorStop(0.28, '#d2d2e5');
+        rktGrd.addColorStop(0.68, '#8888a0');
+        rktGrd.addColorStop(1, '#303040');
+        ctx.fillStyle = rktGrd;
+        roundRect(ctx, -bW/2, -bH/2, bW, bH, bW*0.28); ctx.fill();
+        // Носовой конус
+        const coneG = ctx.createLinearGradient(-bW/2, -bH/2, bW/2, -bH/2);
+        coneG.addColorStop(0, '#585868'); coneG.addColorStop(0.35, '#e2e2f2'); coneG.addColorStop(1, '#383848');
+        ctx.fillStyle = coneG;
         ctx.beginPath();
-        ctx.moveTo(-rs*0.30, -rs*0.38); ctx.lineTo(-rs*0.54, -rs*0.20);
-        ctx.lineTo(-rs*0.54, rs*0.18);  ctx.lineTo(-rs*0.30, rs*0.26);
+        ctx.moveTo(0, -bH/2 - rs*0.68);
+        ctx.lineTo(bW*0.50, -bH/2);
+        ctx.lineTo(-bW*0.50, -bH/2);
         ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = '#303040'; ctx.lineWidth = Math.max(1, cs*0.018);
+        ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = Math.max(0.8, rs*0.06); ctx.stroke();
+        // Стабилизаторы-фины
+        ctx.fillStyle = '#707080';
+        ctx.beginPath(); ctx.moveTo(-bW*0.50, bH*0.36); ctx.lineTo(-bW*0.50-rs*0.42, bH*0.50+rs*0.14); ctx.lineTo(-bW*0.50, bH*0.50); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(bW*0.50, bH*0.36); ctx.lineTo(bW*0.50+rs*0.42, bH*0.50+rs*0.14); ctx.lineTo(bW*0.50, bH*0.50); ctx.closePath(); ctx.fill();
+        // Двигатель
+        ctx.fillStyle = '#222230';
+        roundRect(ctx, -bW*0.38, bH*0.36, bW*0.76, bH*0.16, bW*0.12); ctx.fill();
+        // Факел двигателя
+        const fuseT3 = Date.now()/400;
+        ctx.shadowColor = '#ff5500'; ctx.shadowBlur = rs*2.8*pulse;
+        ctx.fillStyle = `rgba(255,${Math.round(95+85*pulse)},20,${0.82*pulse+0.14})`;
         ctx.beginPath();
-        ctx.moveTo(-rs*0.30, -rs*0.38); ctx.lineTo(-rs*0.54, -rs*0.20);
-        ctx.lineTo(-rs*0.54, rs*0.18);  ctx.lineTo(-rs*0.30, rs*0.26);
-        ctx.closePath(); ctx.stroke();
-        // Пламя из дула
-        ctx.shadowColor='#ff8020'; ctx.shadowBlur = 5*pulse;
-        ctx.fillStyle = `rgba(255,${120+Math.round(90*pulse)},15,${0.85*pulse+0.08})`;
-        ctx.beginPath(); ctx.arc(-rs*0.64, -rs*0.04, rs*0.21*pulse, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = `rgba(255,255,180,${0.70*pulse})`;
-        ctx.beginPath(); ctx.arc(-rs*0.64, -rs*0.04, rs*0.10*pulse, 0, Math.PI*2); ctx.fill();
-        ctx.restore();
+        ctx.moveTo(-bW*0.30, bH*0.50);
+        ctx.bezierCurveTo(-bW*0.18, bH*0.50+rs*(0.52+0.26*Math.sin(fuseT3)), bW*0.18, bH*0.50+rs*(0.52+0.26*Math.sin(fuseT3+1.3)), bW*0.30, bH*0.50);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = `rgba(255,235,100,${0.78*pulse})`;
+        ctx.beginPath();
+        ctx.moveTo(-bW*0.14, bH*0.50);
+        ctx.bezierCurveTo(-bW*0.07, bH*0.50+rs*(0.26+0.14*Math.sin(fuseT3+0.8)), bW*0.07, bH*0.50+rs*(0.26+0.14*Math.sin(fuseT3+2.1)), bW*0.14, bH*0.50);
+        ctx.closePath(); ctx.fill();
+        // Контур корпуса
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'rgba(255,255,255,0.20)'; ctx.lineWidth = Math.max(0.8, rs*0.06);
+        roundRect(ctx, -bW/2, -bH/2, bW, bH, bW*0.28); ctx.stroke();
         ctx.restore();
       }
 
       ctx.restore();
     }
 
-    // COLORING с цветом — радужная корона поверх обычной фишки
+    // COLORING с цветом — цветная бочка OIL в углу (перекраска)
     if (cell.special===SPECIAL.COLORING && gem) {
-      const rColors=['#ff3d6e','#ff8a3a','#ffcb3a','#34d96f','#3aa8ff','#b96bff'];
+      const gc = getSkinColor(cell.type);
+      const bx2 = x + cs*0.74, by2 = y + cs*0.74;
+      const bW = cs*0.24, bH = cs*0.28;
       ctx.save();
-      ctx.beginPath(); ctx.arc(cx,cy,cs*0.42,0,Math.PI*2); ctx.clip();
-      rColors.forEach((col,i)=>{
-        ctx.strokeStyle=col; ctx.lineWidth=cs*0.06; ctx.globalAlpha=0.5;
-        ctx.beginPath(); ctx.arc(cx,cy,cs*(0.12+i*0.05),0,Math.PI*2); ctx.stroke();
+      ctx.globalAlpha = (cell.anim?.alpha ?? 1);
+      ctx.shadowColor = gc; ctx.shadowBlur = 6;
+      const og = ctx.createLinearGradient(bx2-bW/2, 0, bx2+bW/2, 0);
+      og.addColorStop(0,    blendColor(gc, 0, 0.38));
+      og.addColorStop(0.28, blendColor(gc, 255, 0.18));
+      og.addColorStop(0.62, gc);
+      og.addColorStop(1,    blendColor(gc, 0, 0.48));
+      ctx.fillStyle = og;
+      roundRect(ctx, bx2-bW/2, by2-bH/2, bW, bH, bW*0.22); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = blendColor(gc, 0, 0.55); ctx.lineWidth = Math.max(1, bH*0.10); ctx.lineCap='square';
+      [by2-bH*0.28, by2, by2+bH*0.28].forEach(hy => {
+        ctx.beginPath(); ctx.moveTo(bx2-bW/2+1.5, hy); ctx.lineTo(bx2+bW/2-1.5, hy); ctx.stroke();
       });
+      ctx.fillStyle = 'rgba(255,255,255,0.94)';
+      ctx.strokeStyle = blendColor(gc, 0, 0.62); ctx.lineWidth = Math.max(0.8, bH*0.06);
+      ctx.font = `bold ${Math.max(5, Math.round(bH*0.25))}px Arial`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.strokeText('OIL', bx2, by2+0.5); ctx.fillText('OIL', bx2, by2+0.5);
+      ctx.fillStyle = blendColor(gc, 255, 0.08);
+      ctx.beginPath(); ctx.ellipse(bx2, by2-bH/2, bW/2-1.5, bH*0.11, 0, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = blendColor(gc, 255, 0.30); ctx.lineWidth = Math.max(0.8, bW*0.05);
+      roundRect(ctx, bx2-bW/2, by2-bH/2, bW, bH, bW*0.22); ctx.stroke();
       ctx.restore(); ctx.globalAlpha=cell.anim?.alpha??1;
     }
   }
@@ -7894,6 +7960,7 @@ async function _bombPhase1(r, c) {
     else if(cl.licorice>0){cl.licorice=0;spawnParticles(nr,nc,'#b45309',6);}
     else if(cl.honey>0){cl.honey=0;freeBear(nr,nc);}
     else if(cl.mystery){}
+    else if(cl.ingredient){}
     else{if(cl.special!==SPECIAL.NONE)_ch1.push({r:nr,c:nc,special:cl.special,type:cl.type});state.board[nr][nc]=null;_pts1+=30;breakAdjacentChocolate(nr,nc);}
     if(!cl.ingredient){clearJellyAt(nr,nc);clearCarpetAt(nr,nc,false);}
     if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
@@ -8549,7 +8616,13 @@ async function trySwap(r1,c1,r2,c2) {
   const cl1=state.board[r1][c1], cl2=state.board[r2][c2];
   if (!cl1||!cl2||cl1.stone||cl2.stone||cl1.chocolate||cl2.chocolate||cl1.marmalade||cl2.marmalade||cl1.locked||cl2.locked||cl1.mystery||cl2.mystery) return;
   haptic('tap');
-  if (cl1.ingredient || cl2.ingredient) return;
+  if (cl1.ingredient || cl2.ingredient) {
+    // Разрешить только если партнёр образует матч на новой позиции
+    doSwap(r1,c1,r2,c2);
+    const _ingMatch = findMatches().size > 0;
+    doSwap(r1,c1,r2,c2);
+    if (!_ingMatch) return;
+  }
 
   // Лёд: замороженная клетка не двигается ни как источник, ни как цель свапа.
   // Матч с ней образуется только когда соседние незамёрзшие создают 3+ в ряд.
@@ -9253,7 +9326,7 @@ async function fireBuffNuke(r, c) {
       if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
       if (state.holes.has(`${nr},${nc}`)) continue;
       const cell = state.board[nr][nc];
-      if (!cell || cell.stone || cell.chocolate) continue;
+      if (!cell || cell.stone || cell.chocolate || cell.ingredient) continue;
       await new Promise(res => setTimeout(res, 80 + Math.abs(dr + dc) * 40));
       spawnParticles(nr, nc, cell.type >= 0 ? getSkinColor(cell.type) : '#fff');
       if (cell.type >= 0) pts += PHYSICS.BASE_SCORE;
@@ -10763,6 +10836,16 @@ function findBestHint() {
     if (!canSwap(r,c)||!canSwap(nr,nc)) continue;
     doSwap(r,c,nr,nc); const m=findMatches().size; doSwap(r,c,nr,nc);
     if (m>0) return [r,c,nr,nc];
+  }
+  // Ведро с камнями — можно сдвинуть если партнёр создаёт матч
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) for (const [dr,dc] of [[0,1],[1,0]]) {
+    const nr=r+dr, nc=c+dc; if(nr>=ROWS||nc>=COLS) continue;
+    const cl=state.board[r]?.[c], cl2=state.board[nr]?.[nc];
+    if (!cl||!cl2) continue;
+    if ((cl.ingredient&&canSwap(nr,nc))||(cl2.ingredient&&canSwap(r,c))) {
+      doSwap(r,c,nr,nc); const m=findMatches().size; doSwap(r,c,nr,nc);
+      if (m>0) return [r,c,nr,nc];
+    }
   }
   return null;
 }
