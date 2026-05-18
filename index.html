@@ -4872,10 +4872,8 @@ function drawBoard() {
   if (!canvas||!ctx) return;
   ctx.clearRect(0,0,canvasLogW,canvasLogH);
 
-  // Biome background
   const _biome = getBiome(state.currentLevel);
   const _bmCfg = BIOME_CONFIG[_biome] || BIOME_CONFIG.meadow;
-  drawBiomeBG(_biome, _bmCfg);
 
   // Screen shake
   const _doShake = _screenShakeDur > 0;
@@ -6960,7 +6958,7 @@ function fillFromTop() {
         // Pick color that avoids creating an immediate 3-in-a-row
         let _ft = randGem();
         for (let _fa=0; _fa<_activeGemTypes && wouldMatch(state.board,r,c,_ft); _fa++) _ft=(_ft+1)%_activeGemTypes;
-        const g=createGem(_ft); g.anim={oy:-(r+1)*cellSize,alpha:1};
+        const g=createGem(_ft); g.anim={oy:-(r+1)*cellSize,alpha:1,_new:1};
         // Bears: spawn honey cell if we still need more bears freed
         if (honeyNeeded>0) { g.honey=2; g.special=SPECIAL.NONE; honeyNeeded--; }
         // Rainbow Round — 30% chance to spawn RAINBOW gem
@@ -8483,14 +8481,19 @@ function spawnExplosionSparks(r, c, count=18, color='#ff8800') {
 }
 
 function animateDrop() {
-  // Per-column animation: each column uses duration proportional to its max fall distance
+  const STAGGER = 45; // ms between sequential new gems per column (deepest first)
   const colData=[];
   for (let c=0;c<COLS;c++) {
     const drops=[];
-    let maxAbs=0;
-    for (let r=0;r<ROWS;r++) {
+    let maxAbs=0, newIdx=0;
+    // Bottom-to-top so deepest new gems get the smallest delay (enter first)
+    for (let r=ROWS-1;r>=0;r--) {
       const cl=state.board[r]?.[c];
-      if (cl?.anim?.oy) { drops.push({cl,startOy:cl.anim.oy}); maxAbs=Math.max(maxAbs,Math.abs(cl.anim.oy)); }
+      if (cl?.anim?.oy) {
+        const delay = cl.anim._new ? (newIdx++ * STAGGER) : 0;
+        drops.push({cl,startOy:cl.anim.oy,delay});
+        maxAbs=Math.max(maxAbs,Math.abs(cl.anim.oy));
+      }
     }
     if (drops.length) {
       const scale=Math.min(1, 0.35+maxAbs/(cellSize*ROWS*0.55));
@@ -8504,13 +8507,17 @@ function animateDrop() {
       if (_matchEpoch!==_ep) { colData.forEach(({drops})=>drops.forEach(({cl})=>{if(cl.anim)cl.anim.oy=0;})); res(); return; }
       let allDone=true;
       for (const {drops,dur} of colData){
-        const t=Math.min((now-t0)/dur,1);
-        if(t<1) allDone=false;
-        const ease=EASE.outBounce(t);
-        drops.forEach(({cl,startOy})=>{ if(cl.anim) cl.anim.oy=startOy*(1-ease); });
+        drops.forEach(({cl,startOy,delay})=>{
+          const elapsed=now-t0-delay;
+          if(elapsed<=0){allDone=false;return;}
+          const t=Math.min(elapsed/dur,1);
+          if(t<1) allDone=false;
+          const ease=EASE.outBounce(t);
+          if(cl.anim) cl.anim.oy=startOy*(1-ease);
+        });
       }
       if(!allDone) requestAnimationFrame(f);
-      else { colData.forEach(({drops})=>drops.forEach(({cl})=>{if(cl.anim)cl.anim.oy=0;})); res(); }
+      else { colData.forEach(({drops})=>drops.forEach(({cl})=>{if(cl.anim){cl.anim.oy=0;delete cl.anim._new;}})); res(); }
     }
     requestAnimationFrame(f);
   });
