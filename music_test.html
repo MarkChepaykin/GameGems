@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>GameGems — Тест музыки</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a0a2e;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 24px;
+    padding: 24px;
+  }
+  h1 { font-size: 1.4rem; color: #c8a0ff; text-align: center; }
+  .track {
+    background: #2d1a4a;
+    border-radius: 16px;
+    padding: 20px 24px;
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .track-name { font-size: 1.1rem; font-weight: bold; color: #e0c8ff; }
+  .controls { display: flex; gap: 10px; }
+  button {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  button:active { opacity: 0.7; }
+  .btn-play { background: #7c3aed; color: #fff; }
+  .btn-stop { background: #4a2080; color: #ccc; }
+  .btn-play.active { background: #a855f7; }
+  .vol-row { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #a08ab8; }
+  input[type=range] {
+    flex: 1;
+    accent-color: #a855f7;
+    cursor: pointer;
+  }
+  .status {
+    font-size: 0.8rem;
+    color: #888;
+    text-align: center;
+  }
+  .status.playing { color: #a855f7; }
+</style>
+</head>
+<body>
+
+<h1>GameGems<br>Тест музыки</h1>
+
+<div class="track" id="t-menu">
+  <div class="track-name">Menu BGM</div>
+  <div class="controls">
+    <button class="btn-play" onclick="play('menu')">▶ Играть</button>
+    <button class="btn-stop" onclick="stop('menu')">■ Стоп</button>
+  </div>
+  <div class="vol-row">
+    🔊 <input type="range" min="0" max="100" value="80" oninput="setVol('menu',this.value)">
+  </div>
+  <div class="status" id="st-menu">остановлено</div>
+</div>
+
+<div class="track" id="t-bgm">
+  <div class="track-name">Game BGM</div>
+  <div class="controls">
+    <button class="btn-play" onclick="play('bgm')">▶ Играть</button>
+    <button class="btn-stop" onclick="stop('bgm')">■ Стоп</button>
+  </div>
+  <div class="vol-row">
+    🔊 <input type="range" min="0" max="100" value="80" oninput="setVol('bgm',this.value)">
+  </div>
+  <div class="status" id="st-bgm">остановлено</div>
+</div>
+
+<script>
+  function makeTrack(ogg) {
+    const el = document.createElement('audio');
+    el.loop = true; el.preload = 'auto';
+    const s = document.createElement('source'); s.src = ogg; s.type = 'audio/ogg'; el.appendChild(s);
+    return el;
+  }
+  const tracks = {
+    menu: makeTrack('audio/menubgm.ogg'),
+    bgm:  makeTrack('audio/levelbgm.ogg'),
+  };
+  Object.values(tracks).forEach(a => { a.loop = true; a.preload = 'auto'; });
+
+  function play(id) {
+    // Останавливаем все остальные
+    Object.keys(tracks).forEach(k => { if (k !== id) stop(k); });
+    const a = tracks[id];
+    a.play().catch(e => {
+      document.getElementById('st-' + id).textContent = 'Ошибка: ' + e.message;
+    });
+    document.getElementById('st-' + id).textContent = '▶ играет';
+    document.getElementById('st-' + id).className = 'status playing';
+    document.querySelector('#t-' + id + ' .btn-play').classList.add('active');
+  }
+
+  function stop(id) {
+    const a = tracks[id];
+    a.pause();
+    a.currentTime = 0;
+    document.getElementById('st-' + id).textContent = 'остановлено';
+    document.getElementById('st-' + id).className = 'status';
+    document.querySelector('#t-' + id + ' .btn-play').classList.remove('active');
+  }
+
+  function setVol(id, val) {
+    tracks[id].volume = val / 100;
+  }
+</script>
+
+</body>
+</html>

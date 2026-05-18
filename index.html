@@ -6,8 +6,6 @@
 <title>Ore Rush — Match-3 Excavation</title>
 <link rel="preload" as="audio" href="audio/menubgm.ogg" type="audio/ogg">
 <link rel="preload" as="audio" href="audio/levelbgm.ogg" type="audio/ogg">
-<link rel="preload" as="audio" href="audio/menu.mp3">
-<link rel="preload" as="audio" href="audio/bgm.mp3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -2092,13 +2090,12 @@ function getBgmAC(){
   return _bgmAC;
 }
 // ── BGM-плеер (factory): OGG первым, MP3 как запасной ────────────
-function _makeBgm(oggSrc, mp3Src) {
+function _makeBgm(oggSrc) {
   const _el = document.createElement('audio');
   _el.loop = true;
   _el.preload = 'auto';
   _el.volume = 0.8;
   if (oggSrc) { const s = document.createElement('source'); s.src = oggSrc; s.type = 'audio/ogg'; _el.appendChild(s); }
-  if (mp3Src) { const s = document.createElement('source'); s.src = mp3Src; s.type = 'audio/mpeg'; _el.appendChild(s); }
   return {
     start() {
       _el.volume = (state && state.musicVol != null) ? state.musicVol / 100 : 0.8;
@@ -2116,10 +2113,10 @@ function _makeBgm(oggSrc, mp3Src) {
 }
 
 // ── Музыка для меню ───────────────────────────────────────────────
-const MENU_BGM = _makeBgm('audio/menubgm.ogg', 'audio/menu.mp3');
+const MENU_BGM = _makeBgm('audio/menubgm.ogg');
 
 // ── Музыка для уровней ────────────────────────────────────────────
-const BGM = _makeBgm('audio/levelbgm.ogg', 'audio/bgm.mp3');
+const BGM = _makeBgm('audio/levelbgm.ogg');
 
 // ── 3-слойная адаптивная музыка + тональные переходы ──────────────
 // stub: MIDI-layered adaptive BGM disabled (was producing oscillator-based cascade music)
