@@ -4971,14 +4971,15 @@ function drawBoard() {
     // Внутренний блик (верхняя полоска)
     ctx.fillStyle='rgba(255,255,255,0.08)';
     roundRect(ctx,bx+2,by+2,cs-4,Math.round(cs*0.28),8); ctx.fill();
-    // Ковёр — кешированный спрайт
+    // Ковёр
     if (state.carpetGrid?.[r]?.[c]) {
-      ctx.drawImage(_getCarpetSprite(), bx, by, cs, cs);
+      ctx.drawImage(BLOCK_SPRITES[11] || _getCarpetSprite(), bx, by, cs, cs);
     }
-    // Желе — кешированный спрайт
+    // Желе
     const jelly=state.jellyGrid[r]?.[c]||0;
     if (jelly>0) {
-      ctx.drawImage(_getJellySprite(jelly), bx, by, cs, cs);
+      const _jImg = jelly===1 ? BLOCK_SPRITES[9] : BLOCK_SPRITES[10];
+      ctx.drawImage(_jImg || _getJellySprite(jelly), bx, by, cs, cs);
     }
   }
 
@@ -4989,8 +4990,8 @@ function drawBoard() {
     if (cell) drawCellGem(r,c,cell);
   }
 
-  // 4. Лёд поверх фишек — кешированный спрайт
-  const _iceS = _getIceSprite();
+  // 4. Лёд поверх фишек
+  const _iceS = BLOCK_SPRITES[23] || _getIceSprite();
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
     if (!state.iceGrid[r]?.[c]) continue;
     ctx.drawImage(_iceS, boardOffX+c*cs, boardOffY+r*cs, cs, cs);
@@ -5162,6 +5163,10 @@ function drawCellGem(r,c,cell) {
   if (sc!==1) { ctx.translate(cx,cy); ctx.scale(sc,sc); ctx.translate(-cx,-cy); }
 
   if (cell.ingredient) {
+    if (BLOCK_SPRITES[5]) {
+      ctx.drawImage(BLOCK_SPRITES[5], x+2, y+2, cs-4, cs-4);
+      ctx.restore(); return;
+    }
     // Ведро с камнями (flat canvas)
     const topW=cs*0.70, botW=cs*0.50;
     const topX=cx-topW/2, botX=cx-botW/2;
@@ -5208,6 +5213,10 @@ function drawCellGem(r,c,cell) {
     ctx.strokeStyle='rgba(255,185,10,0.9)'; ctx.lineWidth=2.5;
     roundRect(ctx,x+2,y+2,cs-4,cs-4,10); ctx.stroke();
   } else if (cell.chocolate) {
+    if (BLOCK_SPRITES[0]) {
+      ctx.drawImage(BLOCK_SPRITES[0], x+2, y+2, cs-4, cs-4);
+      ctx.restore(); return;
+    }
     // ЛАВА — расширяющаяся расплавленная порода
     const _lt = Date.now()/1000;
     ctx.fillStyle='#100400'; roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
@@ -5241,6 +5250,10 @@ function drawCellGem(r,c,cell) {
     ctx.strokeStyle='rgba(210,55,0,0.78)'; ctx.lineWidth=2;
     roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.stroke();
   } else if (cell.mystery) {
+    if (BLOCK_SPRITES[7]) {
+      ctx.drawImage(BLOCK_SPRITES[7], x+2, y+2, cs-4, cs-4);
+      ctx.restore(); return;
+    }
     // Мистический контейнер — тёмно-фиолетовый с блеском и ❓
     ctx.fillStyle='#2e1065'; roundRect(ctx,x+2,y+2,cs-4,cs-4,10); ctx.fill();
     const mystGrd=ctx.createRadialGradient(cx-cs*.2,cy-cs*.22,2,cx,cy,cs*.52);
@@ -5252,14 +5265,24 @@ function drawCellGem(r,c,cell) {
     ctx.font=`${cs*.48}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('❓',cx,cy);
   } else if (cell.bottle) {
-    // Колба: рисуем гем-цвет фишки, поверх — иконка колбы
+    // Колба: рисуем гем-цвет фишки, поверх — спрайт или эмодзи колбы
     const _bGem = GEMS[cell.type];
     if (_bGem) drawShape(ctx, _bGem.shape, cx, cy, cs / 2 - pad + 2, _bGem.color, SPECIAL.NONE);
-    ctx.globalAlpha = 0.82;
-    ctx.font = `${cs * 0.42}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('🍶', cx, cy);
-    ctx.globalAlpha = 1;
+    if (BLOCK_SPRITES[8]) {
+      ctx.globalAlpha = 0.88;
+      ctx.drawImage(BLOCK_SPRITES[8], x, y, cs, cs);
+      ctx.globalAlpha = cell.anim?.alpha??1;
+    } else {
+      ctx.globalAlpha = 0.82;
+      ctx.font = `${cs * 0.42}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🍶', cx, cy);
+      ctx.globalAlpha = 1;
+    }
   } else if (cell.stone) {
+    if (BLOCK_SPRITES[1]) {
+      ctx.drawImage(BLOCK_SPRITES[1], x+2, y+2, cs-4, cs-4);
+      ctx.restore(); return;
+    }
     // КАМЕННАЯ ГЛЫБА — тёмный камень с выпуклостями
     ctx.save();
     roundRect(ctx,x+pad,y+pad,cs-pad*2,cs-pad*2,10); ctx.clip();
@@ -5292,13 +5315,14 @@ function drawCellGem(r,c,cell) {
     if (!gem && cell.special!==SPECIAL.RAINBOW && cell.special!==SPECIAL.COLORING) { ctx.restore(); return; }
 
     // ─── ТЕКСТУР-ПАК ──────────────────────────────────────────────────
+    let _drawnByTP=false, _indicatorStillNeeded=false;
     { const _spc=cell.special, _ct=cell.type; let _tpImg=null;
       if (!_spc||_spc===SPECIAL.NONE)      _tpImg=TEXTURE_PACK.sprites.gem[_ct];
       else if (_spc===SPECIAL.STRIPE_H)    _tpImg=TEXTURE_PACK.sprites.stripe_h[_ct];
       else if (_spc===SPECIAL.STRIPE_V)    _tpImg=TEXTURE_PACK.sprites.stripe_v[_ct];
-      else if (_spc===SPECIAL.BOMB)        _tpImg=TEXTURE_PACK.sprites.bomb[_ct];
-      else if (_spc===SPECIAL.ROCKET)      _tpImg=TEXTURE_PACK.sprites.rocket[_ct];
-      else if (_spc===SPECIAL.COLORING)    _tpImg=TEXTURE_PACK.sprites.coloring[_ct];
+      else if (_spc===SPECIAL.BOMB)        { _tpImg=TEXTURE_PACK.sprites.bomb[_ct]; if(!(_tpImg instanceof HTMLImageElement)){_tpImg=TEXTURE_PACK.sprites.gem[_ct];_indicatorStillNeeded=true;} }
+      else if (_spc===SPECIAL.ROCKET)      { _tpImg=TEXTURE_PACK.sprites.rocket[_ct]; if(!(_tpImg instanceof HTMLImageElement)){_tpImg=TEXTURE_PACK.sprites.gem[_ct];_indicatorStillNeeded=true;} }
+      else if (_spc===SPECIAL.COLORING)    { _tpImg=TEXTURE_PACK.sprites.coloring[_ct]; if(!(_tpImg instanceof HTMLImageElement)){_tpImg=TEXTURE_PACK.sprites.gem[_ct];_indicatorStillNeeded=true;} }
       else if (_spc===SPECIAL.RAINBOW)     _tpImg=TEXTURE_PACK.sprites.rainbow;
       else if (_spc===SPECIAL.MEGA)        _tpImg=TEXTURE_PACK.sprites.mega;
       if (_tpImg instanceof HTMLImageElement) {
@@ -5306,12 +5330,12 @@ function drawCellGem(r,c,cell) {
         const sc=Math.min(sz/iw, sz/ih);
         const dw=iw*sc, dh=ih*sc;
         ctx.drawImage(_tpImg, x+2+(sz-dw)/2, y+2+(sz-dh)/2, dw, dh);
-        ctx.restore(); return;
+        _drawnByTP=true;
       }
     }
 
     // ─── RAINBOW → ГЕОСКАНЕР — радарный экран ────────────────────────
-    if (cell.special===SPECIAL.RAINBOW) {
+    if (!_drawnByTP && cell.special===SPECIAL.RAINBOW) {
       const r2 = cs/2-pad+2;
       const t = Date.now()/600;
       // Тёмный экран радара
@@ -5376,7 +5400,7 @@ function drawCellGem(r,c,cell) {
     }
 
     // ─── COLORING без цвета — радужные сектора (перекрашивает) ────────────
-    if (cell.special===SPECIAL.COLORING && !gem) {
+    if (!_drawnByTP && cell.special===SPECIAL.COLORING && !gem) {
       const r2=cs/2-pad+2;
       const rcolors = ['#ff3d6e','#ff8a3a','#ffcb3a','#34d96f','#3aa8ff','#b96bff'];
       // Тёмный диск
@@ -5412,11 +5436,11 @@ function drawCellGem(r,c,cell) {
 
     // ─── ОБЫЧНЫЕ + спец-фишки на базе геометрии ───────────────
     // Сначала рисуем саму фишку
-    drawShape(ctx, gem.shape, getSkinColor(cell.type), x+pad, y+pad, cs-pad*2, cell.type);
+    if (!_drawnByTP) drawShape(ctx, gem.shape, getSkinColor(cell.type), x+pad, y+pad, cs-pad*2, cell.type);
 
     // Поверх рисуем индикатор спец-типа — векторный, без emoji
     const spc = cell.special;
-    if (spc !== SPECIAL.NONE && spc !== SPECIAL.COLORING) {
+    if ((spc !== SPECIAL.NONE && spc !== SPECIAL.COLORING) && (!_drawnByTP || _indicatorStillNeeded)) {
       const t = Date.now()/700;
       const pulse = 0.7 + 0.30 * Math.sin(t + cell.type);
       ctx.save();
@@ -5634,7 +5658,7 @@ function drawCellGem(r,c,cell) {
     }
 
     // COLORING с цветом — цветная бочка OIL в углу (перекраска)
-    if (cell.special===SPECIAL.COLORING && gem) {
+    if (cell.special===SPECIAL.COLORING && gem && (!_drawnByTP || _indicatorStillNeeded)) {
       const gc = getSkinColor(cell.type);
       const bx2 = x + cs*0.74, by2 = y + cs*0.74;
       const bW = cs*0.24, bH = cs*0.28;
@@ -5667,114 +5691,116 @@ function drawCellGem(r,c,cell) {
   }
   // КОРЕНЬ ДЕРЕВА — тёмно-коричневое переплетение корней
   if (cell.marmalade) {
-    ctx.save();
-    // Коричневый оверлей
-    ctx.fillStyle='rgba(60,28,8,0.42)';
-    roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
-    // Корневые линии поверх гема
-    ctx.strokeStyle='rgba(100,55,15,0.82)'; ctx.lineWidth=Math.max(2,cs*0.050); ctx.lineCap='round';
-    ctx.beginPath();
-    ctx.moveTo(x+cs*0.10,y+cs*0.50); ctx.bezierCurveTo(x+cs*0.28,y+cs*0.28,x+cs*0.55,y+cs*0.48,x+cs*0.90,y+cs*0.38); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x+cs*0.20,y+cs*0.80); ctx.bezierCurveTo(x+cs*0.42,y+cs*0.60,x+cs*0.62,y+cs*0.72,x+cs*0.88,y+cs*0.62); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x+cs*0.50,y+cs*0.10); ctx.bezierCurveTo(x+cs*0.38,y+cs*0.35,x+cs*0.58,y+cs*0.55,x+cs*0.48,y+cs*0.88); ctx.stroke();
-    // Светлый контур ветки
-    ctx.strokeStyle='rgba(160,100,40,0.40)'; ctx.lineWidth=Math.max(1,cs*0.020);
-    ctx.beginPath();
-    ctx.moveTo(x+cs*0.10,y+cs*0.50); ctx.bezierCurveTo(x+cs*0.28,y+cs*0.26,x+cs*0.55,y+cs*0.46,x+cs*0.90,y+cs*0.36); ctx.stroke();
-    // Рамка
-    ctx.strokeStyle='rgba(80,40,10,0.75)'; ctx.lineWidth=2.5;
-    roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.stroke();
-    ctx.restore();
+    if (BLOCK_SPRITES[14]) {
+      ctx.drawImage(BLOCK_SPRITES[14], x, y, cs, cs);
+    } else {
+      ctx.save();
+      ctx.fillStyle='rgba(60,28,8,0.42)';
+      roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
+      ctx.strokeStyle='rgba(100,55,15,0.82)'; ctx.lineWidth=Math.max(2,cs*0.050); ctx.lineCap='round';
+      ctx.beginPath();
+      ctx.moveTo(x+cs*0.10,y+cs*0.50); ctx.bezierCurveTo(x+cs*0.28,y+cs*0.28,x+cs*0.55,y+cs*0.48,x+cs*0.90,y+cs*0.38); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x+cs*0.20,y+cs*0.80); ctx.bezierCurveTo(x+cs*0.42,y+cs*0.60,x+cs*0.62,y+cs*0.72,x+cs*0.88,y+cs*0.62); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x+cs*0.50,y+cs*0.10); ctx.bezierCurveTo(x+cs*0.38,y+cs*0.35,x+cs*0.58,y+cs*0.55,x+cs*0.48,y+cs*0.88); ctx.stroke();
+      ctx.strokeStyle='rgba(160,100,40,0.40)'; ctx.lineWidth=Math.max(1,cs*0.020);
+      ctx.beginPath();
+      ctx.moveTo(x+cs*0.10,y+cs*0.50); ctx.bezierCurveTo(x+cs*0.28,y+cs*0.26,x+cs*0.55,y+cs*0.46,x+cs*0.90,y+cs*0.36); ctx.stroke();
+      ctx.strokeStyle='rgba(80,40,10,0.75)'; ctx.lineWidth=2.5;
+      roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.stroke();
+      ctx.restore();
+    }
   }
   // ЖЕЛЕЗНАЯ СКОБА — стальные зажимы поверх гема
   if (cell.locked) {
-    // Тёмно-стальной оверлей
-    ctx.fillStyle='rgba(20,20,28,0.38)';
-    roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
-    // Три горизонтальные металлические полосы-скобы
-    const barH=Math.max(3,cs*0.072), barGap=cs*0.20;
-    const barsY=[cy-barGap, cy, cy+barGap];
-    barsY.forEach(by2=>{
-      // Тень скобы
-      ctx.fillStyle='rgba(0,0,0,0.45)';
-      roundRect(ctx,x+cs*0.10+1,by2-barH/2+1,cs*0.80,barH,barH/2); ctx.fill();
-      // Металлическая полоса
-      const mg=ctx.createLinearGradient(0,by2-barH/2,0,by2+barH/2);
-      mg.addColorStop(0,'#a0a8b0'); mg.addColorStop(0.4,'#d8dce0'); mg.addColorStop(1,'#606870');
-      ctx.fillStyle=mg;
-      roundRect(ctx,x+cs*0.10,by2-barH/2,cs*0.80,barH,barH/2); ctx.fill();
-      // Заклёпки по краям
-      [[x+cs*0.16,by2],[x+cs*0.84,by2]].forEach(([rx2,ry2])=>{
-        ctx.fillStyle='#d0d4d8';
-        ctx.beginPath(); ctx.arc(rx2,ry2,Math.max(2,cs*0.046),0,Math.PI*2); ctx.fill();
-        ctx.strokeStyle='rgba(40,48,56,0.6)'; ctx.lineWidth=1;
-        ctx.beginPath(); ctx.arc(rx2,ry2,Math.max(2,cs*0.046),0,Math.PI*2); ctx.stroke();
+    if (BLOCK_SPRITES[13]) {
+      ctx.drawImage(BLOCK_SPRITES[13], x, y, cs, cs);
+    } else {
+      ctx.fillStyle='rgba(20,20,28,0.38)';
+      roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
+      const barH=Math.max(3,cs*0.072), barGap=cs*0.20;
+      const barsY=[cy-barGap, cy, cy+barGap];
+      barsY.forEach(by2=>{
+        ctx.fillStyle='rgba(0,0,0,0.45)';
+        roundRect(ctx,x+cs*0.10+1,by2-barH/2+1,cs*0.80,barH,barH/2); ctx.fill();
+        const mg=ctx.createLinearGradient(0,by2-barH/2,0,by2+barH/2);
+        mg.addColorStop(0,'#a0a8b0'); mg.addColorStop(0.4,'#d8dce0'); mg.addColorStop(1,'#606870');
+        ctx.fillStyle=mg;
+        roundRect(ctx,x+cs*0.10,by2-barH/2,cs*0.80,barH,barH/2); ctx.fill();
+        [[x+cs*0.16,by2],[x+cs*0.84,by2]].forEach(([rx2,ry2])=>{
+          ctx.fillStyle='#d0d4d8';
+          ctx.beginPath(); ctx.arc(rx2,ry2,Math.max(2,cs*0.046),0,Math.PI*2); ctx.fill();
+          ctx.strokeStyle='rgba(40,48,56,0.6)'; ctx.lineWidth=1;
+          ctx.beginPath(); ctx.arc(rx2,ry2,Math.max(2,cs*0.046),0,Math.PI*2); ctx.stroke();
+        });
       });
-    });
-    // Замок-шестерня в центре
-    ctx.fillStyle='rgba(200,210,220,0.88)';
-    ctx.font=`${cs*.26}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('⚙',cx,cy+1);
+      ctx.fillStyle='rgba(200,210,220,0.88)';
+      ctx.font=`${cs*.26}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('⚙',cx,cy+1);
+    }
   }
   // МИНЕРАЛЬНЫЕ ПРОЖИЛКИ — концентрические каменные обручи
   if (cell.licorice > 0) {
     const n = cell.licorice;
-    // Тёмный каменный оверлей
-    ctx.fillStyle=`rgba(38,28,16,${0.22+n*0.07})`;
-    roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
-    for (let i=0;i<n;i++) {
-      const shrink=2+i*3.2;
-      const lw=Math.max(2,cs*0.045);
-      // Каждый слой — немного разный тон (тёмный камень)
-      const br=42+i*8, bg2=32+i*6;
-      ctx.strokeStyle=`rgba(${br},${bg2},16,${0.88-i*0.08})`;
-      ctx.lineWidth=lw; ctx.lineCap='round';
-      ctx.beginPath();
-      ctx.ellipse(cx,cy,cs/2-shrink-lw,cs/2-shrink-lw*0.62,0,0,Math.PI*2);
-      ctx.stroke();
-      // Светлая прожилка по верху (минеральный блик)
-      ctx.strokeStyle=`rgba(140,110,60,${0.28-i*0.04})`;
-      ctx.lineWidth=Math.max(1,lw*0.35);
-      ctx.beginPath();
-      ctx.ellipse(cx,cy,cs/2-shrink-lw,cs/2-shrink-lw*0.62,0,Math.PI*1.1,Math.PI*1.9);
-      ctx.stroke();
+    // licorice x1→sprite 17, x2→18, x3→19
+    const _licS = BLOCK_SPRITES[16 + Math.min(n, 3)];
+    if (_licS) {
+      ctx.drawImage(_licS, x, y, cs, cs);
+    } else {
+      ctx.fillStyle=`rgba(38,28,16,${0.22+n*0.07})`;
+      roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
+      for (let i=0;i<n;i++) {
+        const shrink=2+i*3.2;
+        const lw=Math.max(2,cs*0.045);
+        const br=42+i*8, bg2=32+i*6;
+        ctx.strokeStyle=`rgba(${br},${bg2},16,${0.88-i*0.08})`;
+        ctx.lineWidth=lw; ctx.lineCap='round';
+        ctx.beginPath();
+        ctx.ellipse(cx,cy,cs/2-shrink-lw,cs/2-shrink-lw*0.62,0,0,Math.PI*2);
+        ctx.stroke();
+        ctx.strokeStyle=`rgba(140,110,60,${0.28-i*0.04})`;
+        ctx.lineWidth=Math.max(1,lw*0.35);
+        ctx.beginPath();
+        ctx.ellipse(cx,cy,cs/2-shrink-lw,cs/2-shrink-lw*0.62,0,Math.PI*1.1,Math.PI*1.9);
+        ctx.stroke();
+      }
+      ctx.font=`bold ${cs*.18}px Arial`; ctx.textAlign='left'; ctx.textBaseline='top';
+      ctx.fillStyle='rgba(180,145,70,0.88)'; ctx.fillText(`×${n}`,x+4,y+3);
     }
-    // Значок слоёв (верхний левый)
-    ctx.font=`bold ${cs*.18}px Arial`; ctx.textAlign='left'; ctx.textBaseline='top';
-    ctx.fillStyle='rgba(180,145,70,0.88)'; ctx.fillText(`×${n}`,x+4,y+3);
   }
   // ЯНТАРЬ/СМОЛА — N слоёв вязкой смолы поверх гема
   if (cell.honey > 0) {
     const n = cell.honey;
-    const t2 = Date.now() / 1400;
-    // Янтарный оверлей
-    ctx.fillStyle=`rgba(180,90,10,${0.28+n*0.10})`;
-    roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
-    // Радиальный янтарный градиент
-    const hGrd=ctx.createRadialGradient(cx-cs*0.18,cy-cs*0.22,cs*0.05,cx,cy,cs*0.52);
-    hGrd.addColorStop(0,`rgba(255,190,60,${0.38+n*0.05})`);
-    hGrd.addColorStop(0.55,`rgba(200,120,20,${0.22+n*0.04})`);
-    hGrd.addColorStop(1,'rgba(80,30,0,0)');
-    ctx.fillStyle=hGrd; roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
-    // Капли смолы — снизу
-    ctx.fillStyle=`rgba(200,110,15,0.80)`;
-    for(let i=0;i<3;i++){
-      const ddx=x+cs*0.22+i*cs*0.26+Math.sin(t2*0.6+i)*cs*0.03;
-      const ddy=y+cs*0.68+Math.sin(t2*0.4+i)*cs*0.05;
-      ctx.beginPath(); ctx.ellipse(ddx,ddy,cs*0.055,cs*0.095+Math.sin(t2+i)*cs*0.015,0,0,Math.PI*2); ctx.fill();
+    // В режиме bears — показываем медведя в янтаре (sprite 25), иначе honey x1=21, x2=22, x3=20
+    const _isBears = getLevel(state.currentLevel)?.type === 'bears';
+    const _hIdx = _isBears ? 25 : (n === 1 ? 21 : n === 2 ? 22 : 20);
+    const _hSprite = BLOCK_SPRITES[_hIdx];
+    if (_hSprite) {
+      ctx.drawImage(_hSprite, x, y, cs, cs);
+    } else {
+      const t2 = Date.now() / 1400;
+      ctx.fillStyle=`rgba(180,90,10,${0.28+n*0.10})`;
+      roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
+      const hGrd=ctx.createRadialGradient(cx-cs*0.18,cy-cs*0.22,cs*0.05,cx,cy,cs*0.52);
+      hGrd.addColorStop(0,`rgba(255,190,60,${0.38+n*0.05})`);
+      hGrd.addColorStop(0.55,`rgba(200,120,20,${0.22+n*0.04})`);
+      hGrd.addColorStop(1,'rgba(80,30,0,0)');
+      ctx.fillStyle=hGrd; roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
+      ctx.fillStyle=`rgba(200,110,15,0.80)`;
+      for(let i=0;i<3;i++){
+        const ddx=x+cs*0.22+i*cs*0.26+Math.sin(t2*0.6+i)*cs*0.03;
+        const ddy=y+cs*0.68+Math.sin(t2*0.4+i)*cs*0.05;
+        ctx.beginPath(); ctx.ellipse(ddx,ddy,cs*0.055,cs*0.095+Math.sin(t2+i)*cs*0.015,0,0,Math.PI*2); ctx.fill();
+      }
+      ctx.strokeStyle=`rgba(240,160,40,0.28)`; ctx.lineWidth=Math.max(0.8,cs*0.018); ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(x+cs*0.30,y+cs*0.28); ctx.lineTo(x+cs*0.52,y+cs*0.55); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x+cs*0.60,y+cs*0.32); ctx.lineTo(x+cs*0.75,y+cs*0.60); ctx.stroke();
+      ctx.strokeStyle=`rgba(160,80,8,0.72)`; ctx.lineWidth=2;
+      roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.stroke();
+      ctx.font=`bold ${cs*.20}px Arial`; ctx.textAlign='left'; ctx.textBaseline='top';
+      ctx.fillStyle='rgba(255,200,80,0.90)'; ctx.fillText(`x${n}`,x+3,y+3);
     }
-    // Прожилки в янтаре
-    ctx.strokeStyle=`rgba(240,160,40,0.28)`; ctx.lineWidth=Math.max(0.8,cs*0.018); ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(x+cs*0.30,y+cs*0.28); ctx.lineTo(x+cs*0.52,y+cs*0.55); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(x+cs*0.60,y+cs*0.32); ctx.lineTo(x+cs*0.75,y+cs*0.60); ctx.stroke();
-    // Граница
-    ctx.strokeStyle=`rgba(160,80,8,0.72)`; ctx.lineWidth=2;
-    roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.stroke();
-    // Счётчик слоёв
-    ctx.font=`bold ${cs*.20}px Arial`; ctx.textAlign='left'; ctx.textBaseline='top';
-    ctx.fillStyle='rgba(255,200,80,0.90)'; ctx.fillText(`x${n}`,x+3,y+3);
   }
   ctx.restore();
 }
@@ -6111,6 +6137,15 @@ const TEXTURE_PACK = {
     mega:     null,
   }
 };
+
+// Спрайты блокеров: sprites/0-26.png
+// 0=chocolate, 1=stone, 2-3=stone alt, 4=carpet_pebble, 5=ingredient, 6=ingredient_alt
+// 7=mystery, 8=bottle, 9=jelly_x1, 10=jelly_x2, 11=carpet, 12=stone_brick
+// 13=locked, 14=marmalade_x1, 15=marmalade_x2, 16=marmalade_x3
+// 17=licorice_x1, 18=licorice_x2, 19=licorice_x3
+// 20=honey_x3, 21=honey_x1, 22=honey_x2
+// 23=ice, 24=portal, 25=bear_honey, 26=bear
+const BLOCK_SPRITES = new Array(27).fill(null);
 // Новые спрайты 0-42: 7 цветов на категорию (0=красный..6=фиолетовый или наоборот)
 // gem 0=gold 1=cyan 2=green 3=red 4=purple 5=orange
 // FWD-категории (красный=+0, фиолетовый=+6): камни (0-6), TNT (14-20), stripe_h (28-34)
@@ -6129,10 +6164,18 @@ async function loadTexturePack() {
   }
   jobs.push(_loadTPImg('sprites/squares/42.png').then(img=>{ if(img) TEXTURE_PACK.sprites.rainbow=img; }));
   await Promise.all(jobs);
+  // Блокеры: sprites/0-26.png
+  const bJobs = [];
+  for (let _bi = 0; _bi <= 26; _bi++) {
+    const _idx = _bi;
+    bJobs.push(_loadTPImg(`sprites/${_idx}.png`).then(img => { if (img) BLOCK_SPRITES[_idx] = img; }));
+  }
+  await Promise.all(bJobs);
   invalidateGemCache();
   const n = TEXTURE_PACK.sprites.gem.filter(Boolean).length+(TEXTURE_PACK.sprites.rainbow?1:0);
-  console.log('[TP] Загружено:', n, 'спрайтов');
-  if (n>0 && typeof showToast==='function') showToast('Текстур-пак: '+n+' спрайтов');
+  const nb = BLOCK_SPRITES.filter(Boolean).length;
+  console.log('[TP] Загружено:', n, 'гем-спрайтов,', nb, 'блокер-спрайтов');
+  if ((n+nb)>0 && typeof showToast==='function') showToast('Текстур-пак: '+n+' гемов, '+nb+' блокеров');
 }
 
 
@@ -7354,23 +7397,23 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     if (_matchEpoch !== _myEpoch) return;
     spawnExplosionSparks(r1,c1,24,'#ff8800');
   } else if (sp1===SPECIAL.BOMB&&sp2===SPECIAL.BOMB) {
-    // Bomb+Bomb: 5×5 twice (early return — manages own blast sequence)
-    const wr=r1, wc=c1;
-    const blast5x5=async()=>{
-      const bCells=[];
-      for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++){const nr=wr+dr,nc=wc+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)bCells.push({r:nr,c:nc});}
-      bCells.forEach(({r,c})=>{const cl=state.board[r]?.[c];if(cl&&!cl.stone)spawnParticles(r,c,getSkinColor(cl.type),6);});
-      spawnExplosionSparks(wr,wc,16,'#ec4899');
-      await animateDestroyWave(bCells,wr,wc);
-      let pts=0;
-      for(const{r,c}of bCells){const cl=state.board[r]?.[c];if(!cl)continue;if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]=0;state.iceBroken++;updateQuestProgress('ice',1);}if(cl.ingredient){}else if(cl.mystery){}else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(r,c,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(r,c);}else if(cl.chocolate){destroyChocolate(r,c);breakAdjacentChocolate(r,c);}else if(cl.marmalade){cl.marmalade=false;}else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}else if(cl.honey>0){cl.honey=0;freeBear(r,c);}else{state.board[r][c]=null;pts+=50;breakAdjacentChocolate(r,c);}if(!cl.ingredient&&!cl.mystery){clearJellyAt(r,c);clearCarpetAt(r,c,false);}if(cl.type>=0&&!cl.ingredient&&!cl.mystery)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;}
-      if(pts>0){state.score+=pts;spawnFloatingScore(wr,wc,pts,'#ec4899');updateGoalProgress();}
-    };
-    await animateBombBlast(wr,wc); spawnScreenShake(14); await blast5x5();
+    // Super Bomb: same two-phase mechanics as regular BOMB but 5×5 radius
+    const superBombCell={type:Math.max(0,_t1>=0?_t1:(_t2>=0?_t2:0)),special:SPECIAL.BOMB,anim:{}};
+    state.board[r1][c1]=superBombCell;  // restore for gravity tracking
+    await _bombPhase1_5x5(r1,c1);
     if (_matchEpoch !== _myEpoch) return;
     applyGravity(); fillFromTop(); await animateDrop();
     if (_matchEpoch !== _myEpoch) return;
-    await animateBombBlast(wr,wc); spawnScreenShake(14); await blast5x5();
+    let _br=r1,_bc=c1;
+    {let _found=false;for(let rr=0;rr<ROWS&&!_found;rr++)for(let cc=0;cc<COLS&&!_found;cc++){if(state.board[rr]?.[cc]===superBombCell){_br=rr;_bc=cc;_found=true;}}}
+    if (state._inBonusExplosion) {
+      spawnParticles(_br,_bc,'#cccccc',2); await new Promise(res=>setTimeout(res,_d(50)));
+    } else {
+      for(let i=0;i<3;i++){spawnParticles(_br,_bc,'#cccccc',2);await new Promise(res=>setTimeout(res,_d(150)));if(_matchEpoch!==_myEpoch)return;}
+    }
+    if (_matchEpoch !== _myEpoch) return;
+    if (state.board[_br]?.[_bc]===superBombCell) state.board[_br][_bc]=null;
+    await _bombBlast5x5(_br,_bc);
     return;
   } else if ((sp1===SPECIAL.BOMB&&(sp2===SPECIAL.STRIPE_H||sp2===SPECIAL.STRIPE_V))||
              ((sp1===SPECIAL.STRIPE_H||sp1===SPECIAL.STRIPE_V)&&sp2===SPECIAL.BOMB)) {
@@ -8001,6 +8044,67 @@ async function _bombBlast3x3(cr, cc) {
   for(const{r,c,special:sp,type:tp}of chains)await triggerSpecial(r,c,sp,tp);
 }
 
+async function _bombPhase1_5x5(r, c) {
+  const _myEpoch = _matchEpoch;
+  const _td1=[];
+  for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++){
+    if(dr===0&&dc===0)continue;
+    const nr=r+dr,nc=c+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)_td1.push([nr,nc]);
+  }
+  const _cells1=_td1.map(([nr,nc])=>({r:nr,c:nc}));
+  _cells1.forEach(({r:rr,c:cc})=>{const cl=state.board[rr]?.[cc];if(cl&&!cl.stone){const g=GEMS[cl.type];if(g)spawnParticles(rr,cc,getSkinColor(cl.type),8);}});
+  spawnExplosionSparks(r,c,20,'#ec4899');spawnBombBeams(r,c,2,'rgba(236,72,153,0.9)');
+  await animateMegaBlast(r,c);spawnScreenShake(14);
+  await animateDestroyWave(_cells1,r,c);
+  const _ch1=[];let _pts1=0;
+  for(const[nr,nc]of _td1){
+    const cl=state.board[nr]?.[nc];if(!cl)continue;
+    if(state.iceGrid[nr]?.[nc]){state.iceGrid[nr][nc]=0;state.iceBroken++;updateQuestProgress('ice',1);}
+    if(cl.ingredient){}
+    else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(nr,nc,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(nr,nc);}
+    else if(cl.chocolate){destroyChocolate(nr,nc);breakAdjacentChocolate(nr,nc);}
+    else if(cl.marmalade){cl.marmalade=false;}
+    else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(nr,nc,'#a78bfa',4);}
+    else if(cl.licorice>0){cl.licorice=0;spawnParticles(nr,nc,'#b45309',6);}
+    else if(cl.honey>0){cl.honey=0;freeBear(nr,nc);}
+    else if(cl.mystery){}
+    else{if(cl.special!==SPECIAL.NONE)_ch1.push({r:nr,c:nc,special:cl.special,type:cl.type});state.board[nr][nc]=null;_pts1+=50;breakAdjacentChocolate(nr,nc);}
+    if(!cl.ingredient){clearJellyAt(nr,nc);clearCarpetAt(nr,nc,false);}
+    if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
+  }
+  if(_pts1>0){state.score+=_pts1;spawnFloatingScore(r,c,_pts1,'#ec4899');updateGoalProgress();}
+  for(const{r:cr,c:cc,special:sp,type:tp}of _ch1){if(_matchEpoch!==_myEpoch)return;await triggerSpecial(cr,cc,sp,tp);}
+}
+
+async function _bombBlast5x5(cr, cc) {
+  const td=[];
+  for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++){const nr=cr+dr,nc=cc+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)td.push([nr,nc]);}
+  const cells=td.map(([r,c])=>({r,c}));
+  cells.forEach(({r,c})=>{const cl=state.board[r]?.[c];if(cl&&!cl.stone){const g=GEMS[cl.type];if(g)spawnParticles(r,c,getSkinColor(cl.type),8);}});
+  spawnExplosionSparks(cr,cc,20,'#ec4899');
+  spawnBombBeams(cr,cc,2,'rgba(236,72,153,0.9)');
+  await animateMegaBlast(cr,cc); spawnScreenShake(14);
+  await animateDestroyWave(cells,cr,cc);
+  const chains=[];let pts=0;
+  for(const[r,c]of td){
+    const cl=state.board[r]?.[c];if(!cl)continue;
+    if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]=0;state.iceBroken++;updateQuestProgress('ice',1);}
+    if(cl.ingredient){}
+    else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(r,c,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(r,c);}
+    else if(cl.chocolate){destroyChocolate(r,c);breakAdjacentChocolate(r,c);}
+    else if(cl.marmalade){cl.marmalade=false;}
+    else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}
+    else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}
+    else if(cl.honey>0){cl.honey=0;freeBear(r,c);}
+    else if(cl.mystery){}
+    else{if(cl.special!==SPECIAL.NONE)chains.push({r,c,special:cl.special,type:cl.type});state.board[r][c]=null;pts+=50;breakAdjacentChocolate(r,c);}
+    if(!cl.ingredient){clearJellyAt(r,c);clearCarpetAt(r,c,false);}
+    if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
+  }
+  if(pts>0){state.score+=pts;spawnFloatingScore(cr,cc,pts,'#ec4899');updateGoalProgress();}
+  for(const{r,c,special:sp,type:tp}of chains)await triggerSpecial(r,c,sp,tp);
+}
+
 async function triggerSpecial(r,c,special,partnerType=-1) {
   const _myEpoch = _matchEpoch; // захватываем эпоху для прерывания при смене уровня
   updateQuestProgress('specials', 1);
@@ -8119,7 +8223,6 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
       await animateRocketBlast(target.r,target.c,_rCol);
       if (_matchEpoch !== _myEpoch) return;
       await explodeCell(target.r,target.c);
-      applyGravity(); fillFromTop(); await animateDrop();
     }
     return;
   }
@@ -12221,7 +12324,7 @@ function initDevPanel() {
       <div style="margin-top:6px;margin-bottom:3px;font-size:10px;color:#64748b;">🖼️ Текстур-пак:</div>
       <div style="display:flex;gap:3px;margin-bottom:4px;">
         <button onclick="loadTexturePack()" style="${devBtnStyle('#1e3a5f')};flex:1;">↺ Перезагрузить</button>
-        <button onclick="Object.keys(TEXTURE_PACK.sprites).forEach(k=>{ const v=TEXTURE_PACK.sprites[k]; if(Array.isArray(v))v.fill(null); else TEXTURE_PACK.sprites[k]=null; }); invalidateGemCache(); showToast('Сброшено')" style="${devBtnStyle('#7f1d1d')};padding:3px 6px;">✖ Сброс</button>
+        <button onclick="Object.keys(TEXTURE_PACK.sprites).forEach(k=>{ const v=TEXTURE_PACK.sprites[k]; if(Array.isArray(v))v.fill(null); else TEXTURE_PACK.sprites[k]=null; }); BLOCK_SPRITES.fill(null); invalidateGemCache(); showToast('Сброшено')" style="${devBtnStyle('#7f1d1d')};padding:3px 6px;">✖ Сброс</button>
       </div>
     </div>
   `;
