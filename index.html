@@ -6160,7 +6160,12 @@ async function loadTexturePack() {
   const jobs = [];
   for (let gi=0; gi<6; gi++) {
     const fwd=_TP_FWD[gi], rev=_TP_REV[gi], g=gi;
-    jobs.push(_loadTPImg(`sprites/squares/${fwd}.png`).then(img=>{        if(img) TEXTURE_PACK.sprites.gem[g]=img;      }));
+    jobs.push(_loadTPImg(`sprites/squares/${fwd}.png`).then(img=>{       if(img) TEXTURE_PACK.sprites.gem[g]=img;       }));
+    jobs.push(_loadTPImg(`sprites/squares/${7+rev}.png`).then(img=>{    if(img) TEXTURE_PACK.sprites.coloring[g]=img;  }));
+    jobs.push(_loadTPImg(`sprites/squares/${14+fwd}.png`).then(img=>{   if(img) TEXTURE_PACK.sprites.bomb[g]=img;      }));
+    jobs.push(_loadTPImg(`sprites/squares/${21+rev}.png`).then(img=>{   if(img) TEXTURE_PACK.sprites.rocket[g]=img;    }));
+    jobs.push(_loadTPImg(`sprites/squares/${28+fwd}.png`).then(img=>{   if(img) TEXTURE_PACK.sprites.stripe_h[g]=img;  }));
+    jobs.push(_loadTPImg(`sprites/squares/${35+rev}.png`).then(img=>{   if(img) TEXTURE_PACK.sprites.stripe_v[g]=img;  }));
   }
   jobs.push(_loadTPImg('sprites/squares/42.png').then(img=>{ if(img) TEXTURE_PACK.sprites.rainbow=img; }));
   await Promise.all(jobs);
@@ -6172,7 +6177,10 @@ async function loadTexturePack() {
   }
   await Promise.all(bJobs);
   invalidateGemCache();
-  const n = TEXTURE_PACK.sprites.gem.filter(Boolean).length+(TEXTURE_PACK.sprites.rainbow?1:0);
+  const _tps=TEXTURE_PACK.sprites;
+  const n = _tps.gem.filter(Boolean).length+_tps.bomb.filter(Boolean).length+_tps.rocket.filter(Boolean).length
+           +_tps.stripe_h.filter(Boolean).length+_tps.stripe_v.filter(Boolean).length
+           +_tps.coloring.filter(Boolean).length+(_tps.rainbow?1:0);
   const nb = BLOCK_SPRITES.filter(Boolean).length;
   console.log('[TP] Загружено:', n, 'гем-спрайтов,', nb, 'блокер-спрайтов');
   if ((n+nb)>0 && typeof showToast==='function') showToast('Текстур-пак: '+n+' гемов, '+nb+' блокеров');
@@ -8012,10 +8020,18 @@ async function _bombPhase1(r, c) {
     if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
   }
   if(_pts1>0){state.score+=_pts1;spawnFloatingScore(r,c,_pts1,'#ec4899');updateGoalProgress();}
-  for(const{r:cr,c:cc,special:sp,type:tp}of _ch1){if(_matchEpoch!==_myEpoch)return;await triggerSpecial(cr,cc,sp,tp);}
+  if(_ch1.length){
+    if(_matchEpoch!==_myEpoch)return;
+    const _ch1B=_ch1.filter(s=>s.special===SPECIAL.BOMB);
+    const _ch1O=_ch1.filter(s=>s.special!==SPECIAL.BOMB);
+    if(_ch1B.length) await Promise.all(_ch1B.map(({r:cr,c:cc})=>_bombBlast3x3(cr,cc)));
+    if(_matchEpoch!==_myEpoch)return;
+    for(const{r:cr,c:cc,special:sp,type:tp}of _ch1O){if(_matchEpoch!==_myEpoch)return;await triggerSpecial(cr,cc,sp,tp);}
+  }
 }
 
 async function _bombBlast3x3(cr, cc) {
+  const _myEpoch = _matchEpoch;
   const td=[];
   for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){const nr=cr+dr,nc=cc+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS)td.push([nr,nc]);}
   const cells=td.map(([r,c])=>({r,c}));
@@ -8041,7 +8057,14 @@ async function _bombBlast3x3(cr, cc) {
     if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
   }
   if(pts>0){state.score+=pts;spawnFloatingScore(cr,cc,pts,'#ec4899');updateGoalProgress();}
-  for(const{r,c,special:sp,type:tp}of chains)await triggerSpecial(r,c,sp,tp);
+  if(!chains.length) return;
+  if(_matchEpoch!==_myEpoch) return;
+  // Чейн-бомбы взрываются сразу параллельно (ячейка уже обнулена — двухфазовый путь не нужен)
+  const _chainBombs=chains.filter(s=>s.special===SPECIAL.BOMB);
+  const _chainOther=chains.filter(s=>s.special!==SPECIAL.BOMB);
+  if(_chainBombs.length) await Promise.all(_chainBombs.map(({r,c})=>_bombBlast3x3(r,c)));
+  if(_matchEpoch!==_myEpoch) return;
+  for(const{r,c,special:sp,type:tp}of _chainOther){if(_matchEpoch!==_myEpoch)return;await triggerSpecial(r,c,sp,tp);}
 }
 
 async function _bombPhase1_5x5(r, c) {
@@ -8073,7 +8096,14 @@ async function _bombPhase1_5x5(r, c) {
     if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
   }
   if(_pts1>0){state.score+=_pts1;spawnFloatingScore(r,c,_pts1,'#ec4899');updateGoalProgress();}
-  for(const{r:cr,c:cc,special:sp,type:tp}of _ch1){if(_matchEpoch!==_myEpoch)return;await triggerSpecial(cr,cc,sp,tp);}
+  if(_ch1.length){
+    if(_matchEpoch!==_myEpoch)return;
+    const _ch1B=_ch1.filter(s=>s.special===SPECIAL.BOMB);
+    const _ch1O=_ch1.filter(s=>s.special!==SPECIAL.BOMB);
+    if(_ch1B.length) await Promise.all(_ch1B.map(({r:cr,c:cc})=>_bombBlast3x3(cr,cc)));
+    if(_matchEpoch!==_myEpoch)return;
+    for(const{r:cr,c:cc,special:sp,type:tp}of _ch1O){if(_matchEpoch!==_myEpoch)return;await triggerSpecial(cr,cc,sp,tp);}
+  }
 }
 
 async function _bombBlast5x5(cr, cc) {
@@ -8102,7 +8132,11 @@ async function _bombBlast5x5(cr, cc) {
     if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
   }
   if(pts>0){state.score+=pts;spawnFloatingScore(cr,cc,pts,'#ec4899');updateGoalProgress();}
-  for(const{r,c,special:sp,type:tp}of chains)await triggerSpecial(r,c,sp,tp);
+  if(!chains.length) return;
+  const _cb5=chains.filter(s=>s.special===SPECIAL.BOMB);
+  const _co5=chains.filter(s=>s.special!==SPECIAL.BOMB);
+  if(_cb5.length) await Promise.all(_cb5.map(({r,c})=>_bombBlast3x3(r,c)));
+  for(const{r,c,special:sp,type:tp}of _co5)await triggerSpecial(r,c,sp,tp);
 }
 
 async function triggerSpecial(r,c,special,partnerType=-1) {
@@ -8296,7 +8330,14 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
     updateGoalProgress();
   }
   // Тригерим спешлы, попавшие в зону взрыва
-  for (const {r,c,special,type} of chainSpecials) {
+  // Чейн-бомбы взрываются сразу (ячейка уже null — двухфазовый путь не нужен)
+  if(!chainSpecials.length) return;
+  if (_matchEpoch !== _myEpoch) return;
+  const _csBombs=chainSpecials.filter(s=>s.special===SPECIAL.BOMB);
+  const _csOther=chainSpecials.filter(s=>s.special!==SPECIAL.BOMB);
+  if(_csBombs.length) await Promise.all(_csBombs.map(({r,c})=>_bombBlast3x3(r,c)));
+  if (_matchEpoch !== _myEpoch) return;
+  for (const {r,c,special,type} of _csOther) {
     if (_matchEpoch !== _myEpoch) return;
     await triggerSpecial(r,c,special,type);
   }
