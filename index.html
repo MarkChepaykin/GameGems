@@ -1058,7 +1058,7 @@ canvas { display: block; touch-action: none; }
 /* Pre-game responsive */
 #screen-pregame, #screen-menu, #screen-levels, #screen-episode, #screen-quests,
 #screen-achievements, #screen-shop, #screen-settings,
-#screen-season, #screen-tournament, #screen-island { padding-bottom: 60px; }
+#screen-season, #screen-tournament { padding-bottom: 60px; }
 
 /* Win glow canvas sits on top of the dark overlay */
 #win-glow-canvas { z-index: 0; mix-blend-mode: screen; }
@@ -1168,84 +1168,6 @@ canvas { display: block; touch-action: none; }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ── Остров  ── */
-#screen-island { justify-content: flex-start; }
-.island-wrap { width: 100%; max-width: 440px; padding: 12px 16px 32px; box-sizing: border-box; }
-.island-progress-bar-bg {
-  height: 10px; border-radius: 999px;
-  background: rgba(255,255,255,.18);
-  margin: 6px 0 14px;
-  overflow: hidden;
-}
-.island-progress-bar-fill {
-  height: 100%; border-radius: 999px;
-  background: linear-gradient(90deg, #4be0a3, #ffd75a);
-  transition: width .4s ease;
-}
-.island-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-}
-.island-tile {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 4px;
-  padding: 10px 4px 8px;
-  border-radius: 16px;
-  border: 2px solid rgba(255,180,220,.35);
-  background: rgba(255,255,255,.10);
-  cursor: pointer;
-  font-size: 13px; font-weight: 700; color: #fff;
-  transition: transform .15s, box-shadow .15s, opacity .2s;
-  min-height: 80px;
-  position: relative;
-}
-.island-tile .tile-emoji { font-size: 30px; line-height: 1; }
-.island-tile .tile-cost  { font-size: 11px; font-weight: 800; color: #ffd75a; }
-.island-tile.unlocked {
-  border-color: #4be0a3;
-  background: rgba(75,224,163,.18);
-  box-shadow: 0 0 12px rgba(75,224,163,.35);
-}
-.island-tile.unlocked .tile-cost { color: #4be0a3; }
-.island-tile.affordable {
-  border-color: #ffd75a;
-  background: rgba(255,215,90,.16);
-  box-shadow: 0 0 12px rgba(255,215,90,.4);
-  animation: islandPulse 2s ease-in-out infinite;
-}
-.island-tile.locked-tile {
-  opacity: .45;
-  cursor: not-allowed;
-}
-@keyframes islandPulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(255,215,90,.3); }
-  50%       { box-shadow: 0 0 18px rgba(255,215,90,.7); }
-}
-.island-tile:not(.locked-tile):hover { transform: scale(1.06); }
-.island-stars-hdr {
-  font-size: 13px; font-weight: 800; color: #ffd75a;
-  text-align: right; padding: 2px 0 6px;
-}
-.island-progress-label {
-  font-size: 12px; color: rgba(255,255,255,.7); margin-bottom: 2px;
-}
-/* Island mini-bar on level map */
-.island-mini-bar-wrap {
-  display: flex; align-items: center; gap: 6px;
-  padding: 5px 16px 2px;
-  font-size: 11px; font-weight: 700; color: rgba(255,255,255,.75);
-  max-width: 380px; width: 100%; box-sizing: border-box;
-}
-.island-mini-bar-bg {
-  flex: 1; height: 6px; border-radius: 999px;
-  background: rgba(255,255,255,.2); overflow: hidden;
-}
-.island-mini-bar-fill {
-  height: 100%; border-radius: 999px;
-  background: linear-gradient(90deg, #4be0a3, #ffd75a);
-  transition: width .4s;
-}
 </style>
 </head>
 <body>
@@ -1325,7 +1247,6 @@ canvas { display: block; touch-action: none; }
       </button>
     </div>
     <button class="btn btn-gold" onclick="showScreen('shop')" data-i18n="shop_btn">🛒 Магазин</button>
-    <button class="btn btn-green" onclick="showScreen('island')">🏝️ Остров</button>
     <div class="menu-btns-2col">
       <button class="btn btn-blue" style="position:relative;overflow:visible;" onclick="showScreen('quests')">
         📋 Задания
@@ -1369,23 +1290,6 @@ canvas { display: block; touch-action: none; }
   </div>
 </div>
 
-<!-- ══ ОСТРОВ  ══ -->
-<div id="screen-island" class="screen hidden" style="justify-content:flex-start;">
-  <div class="top-bar">
-    <button class="btn btn-gray btn-sm" onclick="showScreen('menu')" style="margin:0;padding:5px 12px;font-size:13px;">← Назад</button>
-    <div style="font-size:17px;font-weight:900;color:#fff;flex:1;text-align:center;text-shadow:0 2px 0 #804800,0 0 8px rgba(200,160,40,.4);">🏝️ МОЙ ОСТРОВ</div>
-    <div class="cur-pill" style="cursor:default;">⭐ <span id="island-stars-hdr">0</span></div>
-  </div>
-  <div class="island-wrap">
-    <div class="island-progress-label">
-      <span id="island-unlocked-count">0</span> / <span id="island-total-count">16</span> разблокировано
-    </div>
-    <div class="island-progress-bar-bg">
-      <div class="island-progress-bar-fill" id="island-progress-fill" style="width:0%"></div>
-    </div>
-    <div id="island-grid" class="island-grid"></div>
-  </div>
-</div>
 
 <!-- ══ УРОВНИ / СЛОИ ЗЕМЛИ ══ -->
 <div id="screen-levels" class="screen hidden" style="justify-content:flex-start;">
@@ -1395,14 +1299,7 @@ canvas { display: block; touch-action: none; }
     <div class="cur-pill">🪙 <span id="lvl-coins">0</span></div>
     <div class="cur-pill">❤️ <span id="lvl-lives">5</span></div>
   </div>
-  <!-- Глубина бурения -->
-  <div class="island-mini-bar-wrap">
-    <span id="lvl-depth-icon">⛏️</span>
-    <div class="island-mini-bar-bg">
-      <div class="island-mini-bar-fill" id="lvl-island-bar" style="width:0%"></div>
-    </div>
-    <span id="lvl-island-pct">0 км</span>
-  </div>
+
   <div class="episode-map" id="episode-map" style="margin-top:4px;"></div>
 </div>
 
@@ -3005,9 +2902,6 @@ const state = {
   activeSkin: 'classic',
   unlockedSkins: ['classic','candy','animals','fruits','fire','ice_pal','space'],  // все бесплатные скины открыты сразу
 
-  // Острова — набор купленных тайлов {[tileId]: true}
-  islandTiles: {},
-
   // Sidekick (компаньон-помощник)
   sidekick: { id: null, charge: 0, maxCharge: 20 },
 
@@ -3071,7 +2965,7 @@ function buildSaveObj() {
     activeSkin:       state.activeSkin,
     unlockedSkins:    state.unlockedSkins,
     recentResults:    state.recentResults,
-    islandTiles:      state.islandTiles,
+
     sidekickId:       state.sidekick.id,
     chestStreak:      state.chestStreak,
     lastChestDate:    state.lastChestDate,
@@ -3089,7 +2983,7 @@ const SAVE_FIELDS = ['coins','crystals','lives','livesTimestamp','lives24hUntil'
   'levelAttempts','firstAttemptWins','tutorialDone','tutorialSeen','specialOfferShown','lastPlayedAt','totalSpecials',
   'totalIceBroken','totalStonesBroken',
   'activeSkin','unlockedSkins','trophies','totalWins','shopOfferExpiry','recentResults',
-  'islandTiles','sidekickId',
+  'sidekickId',
   'chestStreak','lastChestDate'];
 
 function applySaveObj(s) {
@@ -3440,7 +3334,7 @@ function applyLang() {
 // ══════════════════════════════════════════
 //  ЭКРАНЫ
 // ══════════════════════════════════════════
-const ALL_SCREENS = ['loading','menu','quests','achievements','island','levels','episode','pregame','game','win','lose','shop','settings','season','tournament'];
+const ALL_SCREENS = ['loading','menu','quests','achievements','levels','episode','pregame','game','win','lose','shop','settings','season','tournament'];
 
 const _SCREEN_ANIM = {
   menu:    'screen-slide-down',
@@ -3456,7 +3350,7 @@ const _SCREEN_ANIM = {
   quests:  'screen-slide-left',
   achievements: 'screen-slide-left',
   tournament:   'screen-slide-left',
-  island:       'screen-slide-left',
+
 };
 
 function showScreen(name) {
@@ -3495,7 +3389,7 @@ function showScreen(name) {
   }
   if (name !== 'game') { clearTimeout(_hintTimer); _hintTimer=null; }
   if (name === 'menu')       { refreshMenu();       if (!state.noAds) SDK.showBanner(); }
-  if (name === 'island')       renderIslandScreen();
+
   if (name === 'quests')       renderQuestsFull();
   if (name === 'achievements') renderAchievements();
   if (name === 'levels')     refreshLevelsCurrency();
@@ -3512,103 +3406,6 @@ function getTotalStars() {
   return Object.values(state.levelStars).reduce((s, v) => s + (v || 0), 0);
 }
 
-// ══════════════════════════════════════════
-//  ОСТРОВА (мета-прогрессия)
-// ══════════════════════════════════════════
-const ISLAND_TILES = [
-  { id: 'tree',       emoji: '🌳',  cost: 1  },
-  { id: 'house',      emoji: '🏠',  cost: 2  },
-  { id: 'fountain',   emoji: '⛲',  cost: 4  },
-  { id: 'castle',     emoji: '🏰',  cost: 6  },
-  { id: 'hibiscus',   emoji: '🌺',  cost: 1  },
-  { id: 'cottage',    emoji: '🏡',  cost: 3  },
-  { id: 'tower',      emoji: '🗼',  cost: 5  },
-  { id: 'wave',       emoji: '🌊',  cost: 2  },
-  { id: 'tent',       emoji: '⛺',  cost: 1  },
-  { id: 'circus',     emoji: '🎪',  cost: 3  },
-  { id: 'fortress',   emoji: '🏯',  cost: 8  },
-  { id: 'bridge',     emoji: '🌉',  cost: 6  },
-  { id: 'carousel',   emoji: '🎠',  cost: 4  },
-  { id: 'stadium',    emoji: '🏟️', cost: 10 },
-  { id: 'volcano',    emoji: '🌋',  cost: 12 },
-  { id: 'statue',     emoji: '🗽',  cost: 15 },
-];
-
-function renderIslandScreen() {
-  if (!state.islandTiles) state.islandTiles = {};
-  const stars = getTotalStars();
-  const unlockedCount = Object.keys(state.islandTiles).length;
-  const totalCount = ISLAND_TILES.length;
-  const pct = totalCount > 0 ? Math.round(unlockedCount / totalCount * 100) : 0;
-
-  // Шапка — звёзды
-  const hdrEl = document.getElementById('island-stars-hdr');
-  if (hdrEl) hdrEl.textContent = stars;
-
-  // Прогресс-бар
-  const fillEl = document.getElementById('island-progress-fill');
-  if (fillEl) fillEl.style.width = pct + '%';
-  const ucEl = document.getElementById('island-unlocked-count');
-  if (ucEl) ucEl.textContent = unlockedCount;
-  const tcEl = document.getElementById('island-total-count');
-  if (tcEl) tcEl.textContent = totalCount;
-
-  // Сетка тайлов
-  const grid = document.getElementById('island-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-
-  ISLAND_TILES.forEach(tile => {
-    const owned = !!state.islandTiles[tile.id];
-    const canAfford = !owned && stars >= tile.cost;
-
-    const btn = document.createElement('button');
-    btn.className = 'island-tile' +
-      (owned ? ' unlocked' : canAfford ? ' affordable' : ' locked-tile');
-    btn.disabled = !owned && !canAfford;
-
-    let costHtml;
-    if (owned) {
-      costHtml = '<span class="tile-cost">✅ Есть</span>';
-    } else {
-      costHtml = `<span class="tile-cost">${tile.cost}⭐</span>`;
-    }
-    btn.innerHTML = `<span class="tile-emoji">${tile.emoji}</span>${costHtml}`;
-
-    if (!owned && canAfford) {
-      btn.onclick = () => buyIslandTile(tile.id);
-    }
-    grid.appendChild(btn);
-  });
-}
-
-function buyIslandTile(tileId) {
-  if (!state.islandTiles) state.islandTiles = {};
-  if (state.islandTiles[tileId]) return; // уже куплен
-  const tile = ISLAND_TILES.find(t => t.id === tileId);
-  if (!tile) return;
-  const stars = getTotalStars();
-  if (stars < tile.cost) { showToast('Не хватает ⭐ звёзд!'); return; }
-
-  // Вычитаем звёзды из levelStars (начиная с уровней с наименьшим количеством)
-  let remaining = tile.cost;
-  // Сортируем уровни по количеству звёзд (меньше сначала) чтобы вычитать равномерно
-  const lvlEntries = Object.entries(state.levelStars)
-    .filter(([,v]) => v > 0)
-    .sort(([,a],[,b]) => a - b);
-  for (const [lvl, val] of lvlEntries) {
-    if (remaining <= 0) break;
-    const take = Math.min(val, remaining);
-    state.levelStars[lvl] -= take;
-    if (state.levelStars[lvl] <= 0) delete state.levelStars[lvl];
-    remaining -= take;
-  }
-
-  state.islandTiles[tileId] = true;
-  saveGame();
-  showToast(`${tile.emoji} Разблокировано!`);
-  renderIslandScreen();
-}
 
 function refreshMenu() {
   document.getElementById('m-coins').textContent    = state.coins;
@@ -3654,16 +3451,7 @@ function refreshLevelsCurrency() {
   const ll = document.getElementById('lvl-lives');  if (ll) ll.textContent = livesDisplay();
   const ec = document.getElementById('ep-coins');   if (ec) ec.textContent = state.coins;
   const el = document.getElementById('ep-lives');   if (el) el.textContent = livesDisplay();
-  // Earth depth mini-bar
-  if (typeof _getDepthInfo !== 'undefined') {
-    const di = _getDepthInfo();
-    const barEl  = document.getElementById('lvl-island-bar');
-    const pctEl  = document.getElementById('lvl-island-pct');
-    const iconEl = document.getElementById('lvl-depth-icon');
-    if (barEl)  barEl.style.width = di.pct + '%';
-    if (pctEl)  pctEl.textContent = di.label;
-    if (iconEl) iconEl.textContent = di.icon;
-  }
+
 }
 
 // Timed Shop Offers
@@ -10144,37 +9932,60 @@ async function bonusMovesExplosion() {
   state.busy = true;
   state._inBonusExplosion = true;
   const specials=[SPECIAL.STRIPE_H,SPECIAL.STRIPE_V,SPECIAL.BOMB];
-  while (state.moves > 0) {
-    if (_matchEpoch !== _myEpoch) break; // уровень сменился — прерываем
-    const free=[];
-    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
-      if (state.holes.has(`${r},${c}`)) continue;
-      const cl=state.board[r]?.[c];
-      if (cl&&!cl.stone&&!cl.chocolate&&cl.type>=0&&cl.special===SPECIAL.NONE) free.push([r,c]);
-    }
-    if (!free.length) break;
-    const [br,bc]=free[Math.floor(Math.random()*free.length)];
+
+  // Собираем все свободные клетки
+  const free=[];
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+    if (state.holes.has(`${r},${c}`)) continue;
+    const cl=state.board[r]?.[c];
+    if (cl&&!cl.stone&&!cl.chocolate&&cl.type>=0&&cl.special===SPECIAL.NONE) free.push([r,c]);
+  }
+  if (!free.length) {
+    state._inBonusExplosion=false;
+    state.comboCount=0; state.matchSoundLvl=0; state.matchSequenceStep=0;
+    return;
+  }
+
+  // Перемешиваем и берём min(moves, free.length) клеток
+  for (let i=free.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [free[i],free[j]]=[free[j],free[i]]; }
+  const n=Math.min(state.moves, free.length);
+  const chosen=free.slice(0,n);
+
+  // Размещаем ВСЕ бонусы сразу на экране
+  const placements=[];
+  for (const [br,bc] of chosen) {
+    const cl=state.board[br]?.[bc]; if (!cl) continue;
     const sp=specials[Math.floor(Math.random()*specials.length)];
-    state.board[br][bc].special=sp;
-    state.moves--;
-    state.comboCount++;
-    drawBoard(); updateHUD();
-    await new Promise(r=>setTimeout(r,60)); // brief pause so player sees the placed special
+    cl.special=sp;
+    placements.push({r:br,c:bc,sp});
+  }
+  state.moves=0;
+  state.comboCount++;
+  drawBoard(); updateHUD();
+
+  // Пауза — игрок видит все бонусы на экране одновременно
+  await new Promise(r=>setTimeout(r,500));
+  if (_matchEpoch !== _myEpoch) { state._inBonusExplosion=false; return; }
+
+  // Взрываем по одному
+  for (const {r:br,c:bc,sp} of placements) {
     if (_matchEpoch !== _myEpoch) break;
+    const cl=state.board[br]?.[bc];
+    if (!cl||cl.special!==sp) continue; // уже уничтожен предыдущим взрывом
     await triggerSpecial(br,bc,sp);
     if (_matchEpoch !== _myEpoch) break;
     if (state.board[br]?.[bc]) state.board[br][bc]=null;
-    applyGravity(); fillFromTop(); await animateDrop(); // gems settle visually before next
+    applyGravity(); fillFromTop(); await animateDrop();
     if (_matchEpoch !== _myEpoch) break;
-    const cascadeMatches = findMatches();
-    if (cascadeMatches.size > 0) await processMatches();
+    const cascadeMatches=findMatches();
+    if (cascadeMatches.size>0) await processMatches();
     if (_matchEpoch !== _myEpoch) break;
     updateHUD(); updateGoalProgress();
   }
-  state._inBonusExplosion = false;
+
+  state._inBonusExplosion=false;
   state.comboCount=0; state.matchSoundLvl=0; state.matchSequenceStep=0;
 }
-
 function showWin() {
   state.recentResults = [...(state.recentResults||[]), 'win'].slice(-5);
   state.movesAtWin = state.moves;
