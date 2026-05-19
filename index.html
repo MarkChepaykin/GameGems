@@ -82,6 +82,9 @@ html, body {
 #game-bg.blurred {
   filter: blur(14px);
 }
+#game-bg.game-dim {
+  filter: blur(8px) brightness(0.45);
+}
 canvas { display: block; touch-action: none; }
 /* Rainbow Round canvas animation */
 @keyframes rainbowHue { 0%{filter:hue-rotate(0deg) saturate(1.4)} 100%{filter:hue-rotate(360deg) saturate(1.4)} }
@@ -3283,7 +3286,9 @@ function showScreen(name) {
     }
   });
   state.screen = name;
-  document.getElementById('game-bg').classList.toggle('blurred', name === 'menu');
+  const _gbEl2 = document.getElementById('game-bg');
+  _gbEl2.classList.toggle('blurred',   name === 'menu');
+  _gbEl2.classList.toggle('game-dim',  ['game','pregame','win','lose'].includes(name));
   if (name === 'game') {
     // Переходим в игру: fade MENU_BGM → start BGM
     if (MENU_BGM.isPlaying()) { MENU_BGM.stop(); }
@@ -7817,7 +7822,7 @@ function animateRainbowBurst(targetType, srcR, srcC) {
       ctx.globalAlpha=Math.max(0,(1-scanPhase*0.55)*0.95);
       ctx.strokeStyle='#00ff88'; ctx.lineWidth=2.8;
       ctx.shadowColor='#00ff88'; ctx.shadowBlur=cellSize*0.38;
-      ctx.beginPath(); ctx.arc(srcX,srcY,scanRadius,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(srcX,srcY,Math.max(0,scanRadius),0,Math.PI*2); ctx.stroke();
       ctx.shadowBlur=0;
       // Lock-on targets as scan ring reaches them
       targets.forEach(target=>{
