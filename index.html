@@ -7191,7 +7191,8 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
       for(let rr=0;rr<ROWS;rr++) for(let cc=0;cc<COLS;cc++){
         const cl=state.board[rr]?.[cc];
         if(cl&&cl.type===coloringType&&!cl.stone&&!cl.chocolate&&!cl.ingredient&&cl.special===SPECIAL.NONE){
-          cl.special=partnerSp; targets.push([rr,cc,partnerSp]);
+          const _csp=(partnerSp===SPECIAL.STRIPE_H||partnerSp===SPECIAL.STRIPE_V)?(Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V):partnerSp;
+          cl.special=_csp; targets.push([rr,cc,_csp]);
         }
       }
       drawBoard(); await new Promise(res=>setTimeout(res,_d(200)));
@@ -7288,7 +7289,7 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
       const targets=[];
       for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
         const cl=state.board[r]?.[c];
-        if(cl&&cl.type===tt&&!cl.stone&&!cl.chocolate&&!cl.ingredient){cl.special=otherSp;targets.push([r,c,otherSp]);}
+        if(cl&&cl.type===tt&&!cl.stone&&!cl.chocolate&&!cl.ingredient){const _rsp=(otherSp===SPECIAL.STRIPE_H||otherSp===SPECIAL.STRIPE_V)?(Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V):otherSp;cl.special=_rsp;targets.push([r,c,_rsp]);}
       }
       drawBoard(); await new Promise(res=>setTimeout(res,_d(200)));
       if (_matchEpoch !== _myEpoch) return;
@@ -7420,7 +7421,7 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     await animateDestroyWave(sCells,tgt.r,tgt.c);
     if (_matchEpoch !== _myEpoch) return;
     let sPts=0;
-    for(const{r,c}of sCells){const cl=state.board[r]?.[c];if(!cl)continue;if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]=0;state.iceBroken++;updateQuestProgress('ice',1);}if(cl.ingredient){}else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(r,c,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(r,c);}else if(cl.chocolate){destroyChocolate(r,c);breakAdjacentChocolate(r,c);}else if(cl.marmalade){cl.marmalade=false;}else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}else if(cl.honey>0){cl.honey=0;freeBear(r,c);}else if(cl.mystery){}else{state.board[r][c]=null;sPts+=30;breakAdjacentChocolate(r,c);}if(!cl.ingredient){clearJellyAt(r,c);clearCarpetAt(r,c,false);}if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;}
+    for(const{r,c}of sCells){const cl=state.board[r]?.[c];if(!cl)continue;if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]=0;state.iceBroken++;updateQuestProgress('ice',1);}if(cl.ingredient){}else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(r,c,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(r,c);}else if(cl.chocolate){destroyChocolate(r,c);breakAdjacentChocolate(r,c);}else if(cl.marmalade){cl.marmalade=false;}else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}else if(cl.honey>0){cl.honey=0;_releaseBear(r,c);}else if(cl.mystery){}else{state.board[r][c]=null;sPts+=30;breakAdjacentChocolate(r,c);}if(!cl.ingredient){clearJellyAt(r,c);clearCarpetAt(r,c,false);}if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;}
     if(sPts>0){state.score+=sPts;spawnFloatingScore(tgt.r,tgt.c,sPts,'#60a5fa');updateGoalProgress();}
     applyGravity();fillFromTop();await animateDrop();
     return;
@@ -7440,7 +7441,7 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
     await animateDestroyWave(wCells,tgt.r,tgt.c);
     if (_matchEpoch !== _myEpoch) return;
     let wPts=0;
-    for(const{r,c}of wCells){const cl=state.board[r]?.[c];if(!cl)continue;if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]=0;state.iceBroken++;updateQuestProgress('ice',1);}if(cl.ingredient){}else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(r,c,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(r,c);}else if(cl.chocolate){destroyChocolate(r,c);breakAdjacentChocolate(r,c);}else if(cl.marmalade){cl.marmalade=false;}else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}else if(cl.honey>0){cl.honey=0;freeBear(r,c);}else if(cl.mystery){}else{state.board[r][c]=null;wPts+=50;breakAdjacentChocolate(r,c);}if(!cl.ingredient){clearJellyAt(r,c);clearCarpetAt(r,c,false);}if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;}
+    for(const{r,c}of wCells){const cl=state.board[r]?.[c];if(!cl)continue;if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]=0;state.iceBroken++;updateQuestProgress('ice',1);}if(cl.ingredient){}else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(r,c,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(r,c);}else if(cl.chocolate){destroyChocolate(r,c);breakAdjacentChocolate(r,c);}else if(cl.marmalade){cl.marmalade=false;}else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}else if(cl.honey>0){cl.honey=0;_releaseBear(r,c);}else if(cl.mystery){}else{state.board[r][c]=null;wPts+=50;breakAdjacentChocolate(r,c);}if(!cl.ingredient){clearJellyAt(r,c);clearCarpetAt(r,c,false);}if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;}
     if(wPts>0){state.score+=wPts;spawnFloatingScore(tgt.r,tgt.c,wPts,'#7c3aed');updateGoalProgress();}
     applyGravity();fillFromTop();await animateDrop();
     return;
@@ -7875,7 +7876,7 @@ async function _bombPhase1(r, c) {
     else if(cl.marmalade){cl.marmalade=false;}
     else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(nr,nc,'#a78bfa',4);}
     else if(cl.licorice>0){cl.licorice=0;spawnParticles(nr,nc,'#b45309',6);}
-    else if(cl.honey>0){cl.honey=0;freeBear(nr,nc);}
+    else if(cl.honey>0){cl.honey=0;_releaseBear(nr,nc);}
     else if(cl.mystery){}
     else if(cl.ingredient){}
     else{if(cl.special!==SPECIAL.NONE)_ch1.push({r:nr,c:nc,special:cl.special,type:cl.type});state.board[nr][nc]=null;_pts1+=30;breakAdjacentChocolate(nr,nc);}
@@ -7913,7 +7914,7 @@ async function _bombBlast3x3(cr, cc) {
     else if(cl.marmalade){cl.marmalade=false;}
     else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}
     else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}
-    else if(cl.honey>0){cl.honey=0;freeBear(r,c);}
+    else if(cl.honey>0){cl.honey=0;_releaseBear(r,c);}
     else if(cl.mystery){}
     else{if(cl.special!==SPECIAL.NONE)chains.push({r,c,special:cl.special,type:cl.type});state.board[r][c]=null;pts+=30;breakAdjacentChocolate(r,c);}
     if(!cl.ingredient){clearJellyAt(r,c);clearCarpetAt(r,c,false);}
@@ -7952,7 +7953,7 @@ async function _bombPhase1_5x5(r, c) {
     else if(cl.marmalade){cl.marmalade=false;}
     else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(nr,nc,'#a78bfa',4);}
     else if(cl.licorice>0){cl.licorice=0;spawnParticles(nr,nc,'#b45309',6);}
-    else if(cl.honey>0){cl.honey=0;freeBear(nr,nc);}
+    else if(cl.honey>0){cl.honey=0;_releaseBear(nr,nc);}
     else if(cl.mystery){}
     else{if(cl.special!==SPECIAL.NONE)_ch1.push({r:nr,c:nc,special:cl.special,type:cl.type});state.board[nr][nc]=null;_pts1+=50;breakAdjacentChocolate(nr,nc);}
     if(!cl.ingredient){clearJellyAt(nr,nc);clearCarpetAt(nr,nc,false);}
@@ -7988,7 +7989,7 @@ async function _bombBlast5x5(cr, cc) {
     else if(cl.marmalade){cl.marmalade=false;}
     else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}
     else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}
-    else if(cl.honey>0){cl.honey=0;freeBear(r,c);}
+    else if(cl.honey>0){cl.honey=0;_releaseBear(r,c);}
     else if(cl.mystery){}
     else{if(cl.special!==SPECIAL.NONE)chains.push({r,c,special:cl.special,type:cl.type});state.board[r][c]=null;pts+=50;breakAdjacentChocolate(r,c);}
     if(!cl.ingredient){clearJellyAt(r,c);clearCarpetAt(r,c,false);}
@@ -8168,7 +8169,7 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
     else if (cl.marmalade) { cl.marmalade=false; }
     else if (cl.locked) { cl.locked=false; cl.anim={}; spawnParticles(rr,cc,'#a78bfa',4); }
     else if (cl.licorice > 0) { cl.licorice=0; spawnParticles(rr,cc,'#b45309',6); }
-    else if (cl.honey > 0) { cl.honey=0; freeBear(rr,cc); }
+    else if (cl.honey > 0) { cl.honey=0; _releaseBear(rr,cc); }
     else if (cl.mystery) { /* mystery иммунен к прямым взрывам */ }
     else {
       if (cl.special!==SPECIAL.NONE) chainSpecials.push({r:rr,c:cc,special:cl.special,type:cl.type});
