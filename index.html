@@ -6141,9 +6141,9 @@ async function loadTexturePack() {
   }
   jobs.push(_loadTPImg(P+'coloring.png').then(img=>{ if(img) TEXTURE_PACK.sprites.rainbow=img; }));
   await Promise.all(jobs);
-  // Блокеры: sprites/pack/
-  const bJobs = _TP_BLOCKS.map((name, idx) =>
-    _loadTPImg(P+name+'.png').then(img => { if(img) BLOCK_SPRITES[idx]=img; })
+  // Блокеры: sprites/0-26.png (числовые файлы по индексу)
+  const bJobs = BLOCK_SPRITES.map((_, idx) =>
+    _loadTPImg('sprites/'+idx+'.png').then(img => { if(img) BLOCK_SPRITES[idx]=img; })
   );
   await Promise.all(bJobs);
   invalidateGemCache();
@@ -9605,9 +9605,11 @@ async function applyHammerBooster(r, c) {
     state.busy = false; updateHUD(); showToast('Ингредиент нельзя разрушить!'); return;
   } else if (cell.special !== SPECIAL.NONE) {
     // Hammer on bonus gem — trigger its special effect
+    const _hsp = cell.special, _htp = cell.type;
     spawnParticles(r, c, '#f59e0b', 10);
+    if (_hsp !== SPECIAL.BOMB) state.board[r][c] = null; // null before trigger (bomb stays for 2-phase fall)
     updateHUD();
-    await triggerSpecial(r, c, cell.special);
+    await triggerSpecial(r, c, _hsp, _htp);
     applyGravity(); await animateDrop(); fillFromTop(); await animateDrop();
     await processMatches();
     return;
@@ -10011,6 +10013,7 @@ async function bonusMovesExplosion() {
   }
 
   state._inBonusExplosion=false;
+  state.busy=false; // ensure busy is cleared even if processMatches exited early (e.g. _cascadeWon inside explosion)
   state.comboCount=0; state.matchSoundLvl=0; state.matchSequenceStep=0;
 }
 function showWin() {
@@ -10019,7 +10022,14 @@ function showWin() {
   if (state.moves === 0) showExclamation('closecall'); // победа на последнем ходу
   if (state.moves > 0) {
     const _winEpoch = _matchEpoch;
-    bonusMovesExplosion().then(()=>{ if (_matchEpoch === _winEpoch) _doShowWin(); });
+    let _winBusyTries = 0;
+    const _startBonus = () => {
+      if (_matchEpoch !== _winEpoch) return; // level changed
+      if (state.busy && _winBusyTries++ < 30) { setTimeout(_startBonus, 100); return; }
+      if (state.busy) state.busy = false; // failsafe after 3s
+      bonusMovesExplosion().then(()=>{ if (_matchEpoch === _winEpoch) _doShowWin(); });
+    };
+    _startBonus();
     return;
   }
   _doShowWin();
@@ -11526,10 +11536,11 @@ let _animOverlayId = 0;
 function gameLoop(now) {
   if (state.screen==='game') {
     drawBoard();
-    if (_animOverlays.size > 0) {
-      _animOverlays.forEach(fn => fn(now));
-    }
     updateParticles();
+  }
+  // Run overlay callbacks even off-screen so pending promises can detect screen change and resolve
+  if (_animOverlays.size > 0) {
+    _animOverlays.forEach(fn => fn(now));
   }
   requestAnimationFrame(gameLoop);
 }
