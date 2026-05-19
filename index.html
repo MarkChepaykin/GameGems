@@ -6881,6 +6881,7 @@ async function processMatches(hintR, hintC) {
     setTimeout(showLose, 400);
     return;
   }
+  console.log('[DBG] processMatches normal exit → busy=false');
   state.busy=false;
   _updateUndoBtn();
   resetHintTimer();
@@ -7474,7 +7475,7 @@ function animateRocketBlast(r,c,gemColor) {
         const grd=ctx.createRadialGradient(bx,by,0,bx,by,cellSize*1.6);
         grd.addColorStop(0,'#ffffff');
         grd.addColorStop(0.20,'rgba(255,255,220,0.95)');
-        grd.addColorStop(0.55,gemColor.replace(/,[\d.]+\)$/,',0.70)').replace(/^#/,(m)=>'rgba(')+'88' || gemColor);
+        grd.addColorStop(0.55, gemColor.startsWith('#') ? gemColor+'b2' : gemColor.replace(/,[\d.]+\)$/,',0.70)'));
         grd.addColorStop(1,'rgba(0,0,0,0)');
         ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(bx,by,cellSize*1.6,0,Math.PI*2); ctx.fill();
       }
@@ -8061,13 +8062,17 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
   if (special===SPECIAL.ROCKET) {
     const _rCol = getSkinColor(partnerType) || '#ff4040';
     const target=findRocketTarget();
+    console.log('[DBG] ROCKET fire r='+r+' c='+c+' target='+JSON.stringify(target)+' color='+_rCol);
     if (target) {
       await animateRocketFlight(r,c,target.r,target.c,_rCol);
+      console.log('[DBG] ROCKET flight done, epoch match='+ (_matchEpoch===_myEpoch));
       if (_matchEpoch !== _myEpoch) return;
       spawnExplosionSparks(target.r,target.c,18,_rCol);
       await animateRocketBlast(target.r,target.c,_rCol);
+      console.log('[DBG] ROCKET blast done');
       if (_matchEpoch !== _myEpoch) return;
       await explodeCell(target.r,target.c);
+      console.log('[DBG] ROCKET explodeCell done');
     }
     return;
   }
@@ -9102,14 +9107,17 @@ function onPD(e) {
 async function activateSpecialByTap(r, c) {
   const gem=state.board[r]?.[c];
   if (!gem||gem.special===SPECIAL.NONE||state.busy) return;
+  console.log('[DBG] activateSpecialByTap START r='+r+' c='+c+' special='+gem.special);
   state.busy=true;
   spendMove();
   const sp=gem.special, tp=gem.type;
   if (sp !== SPECIAL.BOMB) state.board[r][c]=null;
   spawnParticles(r,c,getSkinColor(tp>=0?tp:0),12);
   await triggerSpecial(r,c,sp,tp);
+  console.log('[DBG] activateSpecialByTap after triggerSpecial busy='+state.busy);
   applyGravity(); fillFromTop(); await animateDrop();
   await processMatches();
+  console.log('[DBG] activateSpecialByTap END busy='+state.busy);
 }
 function onPM(e) {
   if (!dragStartCell||state.busy) return;
@@ -9955,7 +9963,8 @@ function spawnScreenShake(amplitude=10) {
 //  ПОБЕДА / ПОРАЖЕНИЕ
 // ══════════════════════════════════════════
 async function bonusMovesExplosion() {
-  if (!state.moves || state.moves <= 0) return;
+  console.log('[DBG] bonusMovesExplosion START moves='+state.moves);
+  if (!state.moves || state.moves <= 0) { console.log('[DBG] bonusMovesExplosion SKIP (no moves)'); return; }
   const _myEpoch = _matchEpoch;
   state.busy = true;
   state._inBonusExplosion = true;
@@ -10013,6 +10022,7 @@ async function bonusMovesExplosion() {
 
   state._inBonusExplosion=false;
   state.busy=false; // ensure busy is cleared even if processMatches exited early (e.g. _cascadeWon inside explosion)
+  console.log('[DBG] bonusMovesExplosion END busy='+state.busy);
   state.comboCount=0; state.matchSoundLvl=0; state.matchSequenceStep=0;
 }
 function showWin() {
@@ -11533,13 +11543,20 @@ function step4TickLoop() {
 const _animOverlays = new Map();
 let _animOverlayId = 0;
 function gameLoop(now) {
-  if (state.screen==='game') {
-    drawBoard();
-    updateParticles();
-  }
-  // Run overlay callbacks even off-screen so pending promises can detect screen change and resolve
-  if (_animOverlays.size > 0) {
-    _animOverlays.forEach(fn => fn(now));
+  try {
+    if (state.screen==='game') {
+      drawBoard();
+      updateParticles();
+    }
+    // Run overlay callbacks even off-screen so pending promises can detect screen change and resolve
+    if (_animOverlays.size > 0) {
+      for (const [id, fn] of [..._animOverlays]) {
+        try { fn(now); }
+        catch(e) { console.error('[DBG] overlay error id=' + id + ':', e); _animOverlays.delete(id); }
+      }
+    }
+  } catch(e) {
+    console.error('[DBG] gameLoop error:', e);
   }
   requestAnimationFrame(gameLoop);
 }
