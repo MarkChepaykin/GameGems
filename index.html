@@ -3304,7 +3304,11 @@ function showScreen(name) {
     if (state.musicOn) MENU_BGM.start(); // start() — no-op if already playing
   }
   if (name !== 'game') { clearTimeout(_hintTimer); _hintTimer=null; }
-  if (name === 'menu')       { refreshMenu();       if (!state.noAds) SDK.showBanner(); }
+  if (name === 'menu') {
+    const _gbEl = document.getElementById('game-bg');
+    if (_gbEl) _gbEl.style.backgroundImage = "url('sprites/bg/main.png')";
+    refreshMenu(); if (!state.noAds) SDK.showBanner();
+  }
 
   if (name === 'quests')       renderQuestsFull();
   if (name === 'achievements') renderAchievements();
@@ -4177,6 +4181,7 @@ function showLayer(i) {
   _currentLayerIdx = i;
   const layer = EARTH_LAYERS[i];
   const { lvl1, lvlN } = getLayerRange(i);
+  _setChapterBg(i);
 
   showScreen('episode');
   const titleEl = document.getElementById('ep-title');
@@ -10750,6 +10755,7 @@ function startLevel() {
 }
 
 function playLevel(n, fresh) {
+  _setChapterBg(_getLayerIdxForLevel(n));
   if (COLS !== 8 || ROWS !== 10) { COLS = 8; ROWS = 10; }
   state._testLevel = false;
   const lvl=getLevel(n);
