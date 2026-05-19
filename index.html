@@ -82,9 +82,6 @@ html, body {
 #game-bg.blurred {
   filter: blur(14px);
 }
-#game-bg.game-dim {
-  filter: blur(8px) brightness(0.45);
-}
 canvas { display: block; touch-action: none; }
 /* Rainbow Round canvas animation */
 @keyframes rainbowHue { 0%{filter:hue-rotate(0deg) saturate(1.4)} 100%{filter:hue-rotate(360deg) saturate(1.4)} }
@@ -326,12 +323,12 @@ canvas { display: block; touch-action: none; }
 #hud {
   position: absolute; top: 0; left: 0; right: 0; z-index: 10;
   display: flex; flex-direction: column; gap: 0;
-  background: rgba(14,9,3,.88);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1.5px solid rgba(200,160,80,.40);
+  background: linear-gradient(180deg, rgba(0,0,0,.52) 0%, rgba(0,0,0,.08) 100%);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom: 1px solid rgba(255,255,255,.10);
   border-radius: 0 0 18px 18px;
-  box-shadow: 0 4px 20px rgba(10,5,0,.65);
+  box-shadow: 0 4px 18px rgba(0,0,0,.30);
   color: #fff;
   pointer-events: none;
 }
@@ -390,11 +387,11 @@ canvas { display: block; touch-action: none; }
   position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
   display: flex; align-items: center; justify-content: space-around;
   padding: 6px 8px max(8px, env(safe-area-inset-bottom));
-  background: rgba(14,9,3,.88);
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  border-top: 1.5px solid rgba(200,160,80,.40);
+  background: linear-gradient(0deg, rgba(255,255,255,.06) 0%, rgba(0,0,0,.08) 100%);
+  backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border-top: 1px solid rgba(255,255,255,.10);
   border-radius: 18px 18px 0 0;
-  box-shadow: 0 -4px 20px rgba(10,5,0,.65);
+  box-shadow: 0 -4px 18px rgba(0,0,0,.30);
   pointer-events: none;
 }
 #ingame-booster-bar .hud-bst-btn {
@@ -3287,8 +3284,7 @@ function showScreen(name) {
   });
   state.screen = name;
   const _gbEl2 = document.getElementById('game-bg');
-  _gbEl2.classList.toggle('blurred',   name === 'menu');
-  _gbEl2.classList.toggle('game-dim',  ['game','pregame','win','lose'].includes(name));
+  _gbEl2.classList.toggle('blurred', name === 'menu');
   if (name === 'game') {
     // Переходим в игру: fade MENU_BGM → start BGM
     if (MENU_BGM.isPlaying()) { MENU_BGM.stop(); }
