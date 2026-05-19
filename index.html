@@ -72,7 +72,10 @@ html, body {
 #game-bg {
   position: fixed; inset: -6%;
   z-index: 0;
-  background: url('sprites/bg/main.png') center/cover no-repeat;
+  background-image: url('sprites/bg/main.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   transition: filter 0.45s ease;
   will-change: filter;
 }
@@ -4017,46 +4020,46 @@ let _levelsMode       = 'layers'; // 'layers' | 'episodes'
 const TOTAL_LEVELS = 20110;
 
 const EARTH_LAYERS = [
-  {name:'Поверхность',          emoji:'🌿', bg:'#1e4d1a,#0d2509',  depth:'0 м'},
-  {name:'Дёрн',                 emoji:'🌱', bg:'#2a3a14,#121808',  depth:'5 м'},
-  {name:'Гумус',                emoji:'🪱', bg:'#3a2410,#1a0e06',  depth:'15 м'},
-  {name:'Глина',                emoji:'🏺', bg:'#6a3820,#381008',  depth:'30 м'},
-  {name:'Песчаник',             emoji:'🧱', bg:'#705228,#3a2410',  depth:'60 м'},
-  {name:'Вечная мерзлота',      emoji:'❄️', bg:'#2a4060,#121828',  depth:'100 м'},
-  {name:'Водоносный пласт',     emoji:'💧', bg:'#183070,#080e40',  depth:'200 м'},
-  {name:'Известняк',            emoji:'🪨', bg:'#706050,#382e20',  depth:'400 м'},
-  {name:'Угольный пласт',       emoji:'⛏️', bg:'#282030,#101018',  depth:'800 м'},
-  {name:'Медные руды',          emoji:'🟤', bg:'#6a3010,#301408',  depth:'1.2 км'},
-  {name:'Железные жилы',        emoji:'🔩', bg:'#4a3828,#201814',  depth:'2 км'},
-  {name:'Серебряный пласт',     emoji:'🥈', bg:'#505870,#202838',  depth:'3 км'},
-  {name:'Мраморные гроты',      emoji:'🏛️', bg:'#6a6050,#302818',  depth:'5 км'},
-  {name:'Светящийся лес',       emoji:'🍄', bg:'#1a5020,#081e0a',  depth:'7 км'},
-  {name:'Морские пещеры',       emoji:'🌊', bg:'#0a2878,#040e3c',  depth:'10 км'},
-  {name:'Изумрудные жилы',      emoji:'💚', bg:'#145028,#06200e',  depth:'13 км'},
-  {name:'Кристальные гроты',    emoji:'🔮', bg:'#2a1868,#100630',  depth:'17 км'},
-  {name:'Золотые жилы',         emoji:'🥇', bg:'#684808,#302004',  depth:'21 км'},
-  {name:'Алмазный пласт',       emoji:'💎', bg:'#102070,#060838',  depth:'26 км'},
-  {name:'Тёмные пещеры',        emoji:'🌑', bg:'#0e0e14,#06060c',  depth:'32 км'},
-  {name:'Ледяные катакомбы',    emoji:'🧊', bg:'#182840,#081018',  depth:'40 км'},
-  {name:'Костяной ярус',        emoji:'🦴', bg:'#504038,#201810',  depth:'50 км'},
-  {name:'Забытые шахты',        emoji:'🏚️', bg:'#3a2c1c,#181008',  depth:'60 км'},
-  {name:'Светокамень',          emoji:'⚗️', bg:'#2a5020,#102008',  depth:'75 км'},
-  {name:'Метеоритный слой',     emoji:'☄️', bg:'#303040,#141418',  depth:'90 км'},
-  {name:'Вулканические трубки', emoji:'🌋', bg:'#701800,#300800',  depth:'120 км'},
-  {name:'Тепловые жилы',        emoji:'🔥', bg:'#7a2000,#380800',  depth:'160 км'},
-  {name:'Подземный океан',      emoji:'🫧', bg:'#082080,#040840',  depth:'220 км'},
-  {name:'Адский камень',        emoji:'🔴', bg:'#780800,#380400',  depth:'300 км'},
-  {name:'Преддверие ада',       emoji:'💀', bg:'#580010,#280008',  depth:'400 км'},
-  {name:'Верхняя мантия',       emoji:'🟠', bg:'#683000,#301000',  depth:'600 км'},
-  {name:'Расплавленная порода', emoji:'💫', bg:'#883800,#401400',  depth:'900 км'},
-  {name:'Нижняя мантия',        emoji:'🌀', bg:'#540e0e,#240606',  depth:'1500 км'},
-  {name:'Зона Д″',              emoji:'🔴', bg:'#700808,#300404',  depth:'2500 км'},
-  {name:'Внешнее ядро',         emoji:'🌊', bg:'#0a1468,#040830',  depth:'3000 км'},
-  {name:'Железный вихрь',       emoji:'⚡', bg:'#081a78,#040838',  depth:'3500 км'},
-  {name:'Граница ядра',         emoji:'💠', bg:'#060890,#020444',  depth:'4500 км'},
-  {name:'Внутреннее ядро',      emoji:'✨', bg:'#44445c,#1c1c2a',  depth:'5100 км'},
-  {name:'Сердце Земли',         emoji:'❤️', bg:'#680606,#280202',  depth:'6000 км'},
-  {name:'Нулевая точка',        emoji:'🌍', bg:'#0c0c0c,#040404',  depth:'Центр'},
+  {name:'Поверхность',         emoji:'🌿', bg:'#1e4d1a,#0d2509',  depth:'0 м',      img:'Поверхность.png'},
+  {name:'Корни мира',          emoji:'🌱', bg:'#2a3a14,#121808',  depth:'5 м',      img:'Корни мира.png'},
+  {name:'Червоточины',         emoji:'🪱', bg:'#3a2410,#1a0e06',  depth:'15 м',     img:'Червоточины.png'},
+  {name:'Красное ложе',        emoji:'🏺', bg:'#6a3820,#381008',  depth:'30 м',     img:'Красное ложе.png'},
+  {name:'Песчаные своды',      emoji:'🧱', bg:'#705228,#3a2410',  depth:'60 м',     img:null},
+  {name:'Морозные трещины',    emoji:'❄️', bg:'#2a4060,#121828',  depth:'100 м',    img:'Морозные трещины.png'},
+  {name:'Подземные реки',      emoji:'💧', bg:'#183070,#080e40',  depth:'200 м',    img:'Подземные реки.png'},
+  {name:'Каменные палаты',     emoji:'🪨', bg:'#706050,#382e20',  depth:'400 м',    img:'Каменные палаты.png'},
+  {name:'Сажа глубин',         emoji:'⛏️', bg:'#282030,#101018',  depth:'800 м',    img:'Сажа глубин.png'},
+  {name:'Медные карманы',      emoji:'🟤', bg:'#6a3010,#301408',  depth:'1.2 км',   img:'Медные карманы.png'},
+  {name:'Железные жилы',       emoji:'🔩', bg:'#4a3828,#201814',  depth:'2 км',     img:'Железные жилы.png'},
+  {name:'Лунные жилы',         emoji:'🥈', bg:'#505870,#202838',  depth:'3 км',     img:'Лунные жилы.png'},
+  {name:'Мраморные гроты',     emoji:'🏛️', bg:'#6a6050,#302818',  depth:'5 км',     img:'Мраморные гроты.png'},
+  {name:'Светящийся лес',      emoji:'🍄', bg:'#1a5020,#081e0a',  depth:'7 км',     img:'Светящийся лес.png'},
+  {name:'Морские пещеры',      emoji:'🌊', bg:'#0a2878,#040e3c',  depth:'10 км',    img:'Морские пещеры.png'},
+  {name:'Зелёное сияние',      emoji:'💚', bg:'#145028,#06200e',  depth:'13 км',    img:'Зелёное сияние.png'},
+  {name:'Кристальные гроты',   emoji:'🔮', bg:'#2a1868,#100630',  depth:'17 км',    img:'Кристальные гроты.png'},
+  {name:'Золотые жилы',        emoji:'🥇', bg:'#684808,#302004',  depth:'21 км',    img:'Золотые жилы.png'},
+  {name:'Алмазные недра',      emoji:'💎', bg:'#102070,#060838',  depth:'26 км',    img:'Алмазные недра.png'},
+  {name:'Беззвёздная тьма',    emoji:'🌑', bg:'#0e0e14,#06060c',  depth:'32 км',    img:'Беззвёздная тьма.png'},
+  {name:'Ледяные катакомбы',   emoji:'🧊', bg:'#182840,#081018',  depth:'40 км',    img:'Ледяные катакомбы.png'},
+  {name:'Кладбище титанов',    emoji:'🦴', bg:'#504038,#201810',  depth:'50 км',    img:'Кладбище титанов.png'},
+  {name:'Забытые шахты',       emoji:'🏚️', bg:'#3a2c1c,#181008',  depth:'60 км',    img:'Забытые шахты.png'},
+  {name:'Живой люмит',         emoji:'⚗️', bg:'#2a5020,#102008',  depth:'75 км',    img:'Живой люмит.png'},
+  {name:'Метеоритный слой',    emoji:'☄️', bg:'#303040,#141418',  depth:'90 км',    img:'Метеоритный слой.png'},
+  {name:'Вулканические трубы', emoji:'🌋', bg:'#701800,#300800',  depth:'120 км',   img:'Вулканические трубы.png'},
+  {name:'Пульс магмы',         emoji:'🔥', bg:'#7a2000,#380800',  depth:'160 км',   img:'Пульс магмы.png'},
+  {name:'Подземный океан',     emoji:'🫧', bg:'#082080,#040840',  depth:'220 км',   img:'Подземный океан.png'},
+  {name:'Кровавый базальт',    emoji:'🔴', bg:'#780800,#380400',  depth:'300 км',   img:'Кровавый базальт.png'},
+  {name:'Багровый предел',     emoji:'💀', bg:'#580010,#280008',  depth:'400 км',   img:'Багровый предел.png'},
+  {name:'Верхняя мантия',      emoji:'🟠', bg:'#683000,#301000',  depth:'600 км',   img:'Верхняя мантия.png'},
+  {name:'Море магмы',          emoji:'💫', bg:'#883800,#401400',  depth:'900 км',   img:'Море магмы.png'},
+  {name:'Нижняя мантия',       emoji:'🌀', bg:'#540e0e,#240606',  depth:'1500 км',  img:'Нижняя мантия.png'},
+  {name:'Огненный разлом',     emoji:'🔴', bg:'#700808,#300404',  depth:'2500 км',  img:'Огненный разлом.png'},
+  {name:'Внешнее ядро',        emoji:'🌊', bg:'#0a1468,#040830',  depth:'3000 км',  img:'Внешнее ядро.png'},
+  {name:'Ферровихрь',          emoji:'⚡', bg:'#081a78,#040838',  depth:'3500 км',  img:'Ферровихрь.png'},
+  {name:'Рубеж ядра',          emoji:'💠', bg:'#060890,#020444',  depth:'4500 км',  img:'Рубеж ядра.png'},
+  {name:'Внутреннее ядро',     emoji:'✨', bg:'#44445c,#1c1c2a',  depth:'5100 км',  img:'Внутреннее ядро.png'},
+  {name:'Сердце Земли',        emoji:'❤️', bg:'#680606,#280202',  depth:'6000 км',  img:'Сердце Земли.png'},
+  {name:'Нулевая точка',       emoji:'🌍', bg:'#0c0c0c,#040404',  depth:'Центр',    img:'Нулевая точка.png'},
 ];
 
 function getLayerRange(i) {
@@ -4079,6 +4082,25 @@ function _getDepthInfo() {
     label: EARTH_LAYERS[idx].depth,
     pct:   Math.round(idx / (EARTH_LAYERS.length - 1) * 100),
   };
+}
+
+function _getLayerIdxForLevel(n) {
+  for (let i = EARTH_LAYERS.length - 1; i >= 0; i--) {
+    if (getLayerRange(i).lvl1 <= n) return i;
+  }
+  return 0;
+}
+
+function _setChapterBg(layerIdx) {
+  const layer = EARTH_LAYERS[Math.max(0, Math.min(layerIdx, EARTH_LAYERS.length - 1))];
+  const el = document.getElementById('game-bg');
+  if (!el) return;
+  if (layer.img) {
+    el.style.backgroundImage = `url('sprites/bg/${encodeURI(layer.img)}')`;
+  } else {
+    const [bg1, bg2] = layer.bg.split(',');
+    el.style.backgroundImage = `linear-gradient(135deg,${bg1} 0%,${bg2} 100%)`;
+  }
 }
 
 const TYPE_ICON = {
@@ -4123,7 +4145,11 @@ function showLevels() {
     const [bg1, bg2] = layer.bg.split(',');
     const card = document.createElement('button');
     card.className = 'layer-card';
-    card.style.background = `linear-gradient(135deg,${bg1} 0%,${bg2} 100%)`;
+    if (layer.img) {
+      card.style.background = `linear-gradient(135deg,rgba(0,0,0,.44) 0%,rgba(0,0,0,.62) 100%),url('sprites/bg/${encodeURI(layer.img)}') center/cover no-repeat`;
+    } else {
+      card.style.background = `linear-gradient(135deg,${bg1} 0%,${bg2} 100%)`;
+    }
     card.disabled = locked;
     card.innerHTML =
       `<div class="lc-icon">${locked ? '🔒' : layer.emoji}</div>` +
@@ -5267,7 +5293,7 @@ function drawCellGem(r,c,cell) {
   } else if (cell.bottle) {
     // Колба: рисуем гем-цвет фишки, поверх — спрайт или эмодзи колбы
     const _bGem = GEMS[cell.type];
-    if (_bGem) drawShape(ctx, _bGem.shape, cx, cy, cs / 2 - pad + 2, _bGem.color, SPECIAL.NONE);
+    if (_bGem) drawShape(ctx, _bGem.shape, _bGem.color, cx, cy, cs / 2 - pad + 2, cell.type);
     if (BLOCK_SPRITES[8]) {
       ctx.globalAlpha = 0.88;
       ctx.drawImage(BLOCK_SPRITES[8], x, y, cs, cs);
@@ -5732,37 +5758,43 @@ function drawCellGem(r,c,cell) {
       ctx.fillStyle='rgba(180,145,70,0.88)'; ctx.fillText(`×${n}`,x+4,y+3);
     }
   }
-  // ЯНТАРЬ/СМОЛА — N слоёв вязкой смолы поверх гема
-  if (cell.honey > 0) {
-    const n = cell.honey;
-    // В режиме bears — показываем медведя в янтаре (sprite 25), иначе honey x1=21, x2=22, x3=20
+  // МЕДВЕДИ — закрытый медведь в янтаре поверх гема; открытый при освобождении
+  if (cell.honey > 0 || cell._bearOpened) {
     const _isBears = getLevel(state.currentLevel)?.type === 'bears';
-    const _hIdx = _isBears ? 25 : (n === 1 ? 21 : n === 2 ? 22 : 20);
-    const _hSprite = BLOCK_SPRITES[_hIdx];
-    if (_hSprite) {
-      ctx.drawImage(_hSprite, x, y, cs, cs);
-    } else {
-      const t2 = Date.now() / 1400;
-      ctx.fillStyle=`rgba(180,90,10,${0.28+n*0.10})`;
-      roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
-      const hGrd=ctx.createRadialGradient(cx-cs*0.18,cy-cs*0.22,cs*0.05,cx,cy,cs*0.52);
-      hGrd.addColorStop(0,`rgba(255,190,60,${0.38+n*0.05})`);
-      hGrd.addColorStop(0.55,`rgba(200,120,20,${0.22+n*0.04})`);
-      hGrd.addColorStop(1,'rgba(80,30,0,0)');
-      ctx.fillStyle=hGrd; roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
-      ctx.fillStyle=`rgba(200,110,15,0.80)`;
-      for(let i=0;i<3;i++){
-        const ddx=x+cs*0.22+i*cs*0.26+Math.sin(t2*0.6+i)*cs*0.03;
-        const ddy=y+cs*0.68+Math.sin(t2*0.4+i)*cs*0.05;
-        ctx.beginPath(); ctx.ellipse(ddx,ddy,cs*0.055,cs*0.095+Math.sin(t2+i)*cs*0.015,0,0,Math.PI*2); ctx.fill();
+    if (_isBears) {
+      if (cell._bearOpened) {
+        _drawOpenBear(ctx, x, y, cs);
+      } else {
+        _drawBearInAmber(ctx, x, y, cs);
       }
-      ctx.strokeStyle=`rgba(240,160,40,0.28)`; ctx.lineWidth=Math.max(0.8,cs*0.018); ctx.lineCap='round';
-      ctx.beginPath(); ctx.moveTo(x+cs*0.30,y+cs*0.28); ctx.lineTo(x+cs*0.52,y+cs*0.55); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x+cs*0.60,y+cs*0.32); ctx.lineTo(x+cs*0.75,y+cs*0.60); ctx.stroke();
-      ctx.strokeStyle=`rgba(160,80,8,0.72)`; ctx.lineWidth=2;
-      roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.stroke();
-      ctx.font=`bold ${cs*.20}px Arial`; ctx.textAlign='left'; ctx.textBaseline='top';
-      ctx.fillStyle='rgba(255,200,80,0.90)'; ctx.fillText(`x${n}`,x+3,y+3);
+    } else {
+      const n = cell.honey;
+      const _hSprite = BLOCK_SPRITES[20];
+      if (_hSprite) {
+        ctx.drawImage(_hSprite, x, y, cs, cs);
+      } else {
+        const t2 = Date.now() / 1400;
+        ctx.fillStyle=`rgba(180,90,10,${0.28+n*0.10})`;
+        roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
+        const hGrd=ctx.createRadialGradient(cx-cs*0.18,cy-cs*0.22,cs*0.05,cx,cy,cs*0.52);
+        hGrd.addColorStop(0,`rgba(255,190,60,${0.38+n*0.05})`);
+        hGrd.addColorStop(0.55,`rgba(200,120,20,${0.22+n*0.04})`);
+        hGrd.addColorStop(1,'rgba(80,30,0,0)');
+        ctx.fillStyle=hGrd; roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
+        ctx.fillStyle=`rgba(200,110,15,0.80)`;
+        for(let i=0;i<3;i++){
+          const ddx=x+cs*0.22+i*cs*0.26+Math.sin(t2*0.6+i)*cs*0.03;
+          const ddy=y+cs*0.68+Math.sin(t2*0.4+i)*cs*0.05;
+          ctx.beginPath(); ctx.ellipse(ddx,ddy,cs*0.055,cs*0.095+Math.sin(t2+i)*cs*0.015,0,0,Math.PI*2); ctx.fill();
+        }
+        ctx.strokeStyle=`rgba(240,160,40,0.28)`; ctx.lineWidth=Math.max(0.8,cs*0.018); ctx.lineCap='round';
+        ctx.beginPath(); ctx.moveTo(x+cs*0.30,y+cs*0.28); ctx.lineTo(x+cs*0.52,y+cs*0.55); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+cs*0.60,y+cs*0.32); ctx.lineTo(x+cs*0.75,y+cs*0.60); ctx.stroke();
+        ctx.strokeStyle=`rgba(160,80,8,0.72)`; ctx.lineWidth=2;
+        roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.stroke();
+        ctx.font=`bold ${cs*.20}px Arial`; ctx.textAlign='left'; ctx.textBaseline='top';
+        ctx.fillStyle='rgba(255,200,80,0.90)'; ctx.fillText(`x${n}`,x+3,y+3);
+      }
     }
   }
   ctx.restore();
@@ -6157,6 +6189,7 @@ async function loadTexturePack() {
 
 
 function _renderGemSprite(shape, color, size, gemType) {
+  if (!isFinite(size) || size <= 0) { const _cv=document.createElement('canvas'); _cv.width=_cv.height=1; return {canvas:_cv,pad:0,size:1,w:1}; }
   const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
   const pad = Math.ceil(size * 0.28);  // увеличен padding для glow
   const w = Math.ceil(size + pad*2);
@@ -6709,7 +6742,7 @@ async function processMatches(hintR, hintC) {
         if (nb?.mystery) { popMystery(nr,nc); }
         if (nb?.bottle) { popBottle(nr,nc); }
         if (nb?.licorice > 0) { nb.licorice--; spawnParticles(nr,nc,'#b45309',nb.licorice===0?6:3); if(nb.licorice===0)rings.push({x:boardOffX+nc*cellSize+cellSize/2,y:boardOffY+nr*cellSize+cellSize/2,color:'rgba(180,83,9,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2}); }
-        if (nb?.honey > 0) { nb.honey--; spawnParticles(nr,nc,'#fde68a',3); if(nb.honey===0) freeBear(nr,nc); }
+        if (nb?.honey > 0) { nb.honey--; spawnParticles(nr,nc,'#fde68a',3); if(nb.honey===0) _releaseBear(nr,nc); }
       }
     }
 
@@ -7185,7 +7218,7 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
           if(cl.ingredient){}else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(rr,cc,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(rr,cc);}
           else if(cl.chocolate){destroyChocolate(rr,cc);breakAdjacentChocolate(rr,cc);}else if(cl.marmalade){cl.marmalade=false;}
           else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(rr,cc,'#a78bfa',4);}else if(cl.licorice>0){cl.licorice=0;spawnParticles(rr,cc,'#b45309',6);}
-          else if(cl.honey>0){cl.honey=0;freeBear(rr,cc);}else if(cl.mystery){}
+          else if(cl.honey>0){cl.honey=0;_releaseBear(rr,cc);}else if(cl.mystery){}
           else{if(cl.special!==SPECIAL.NONE)_ch.push({r:rr,c:cc,special:cl.special,type:cl.type});state.board[rr][cc]=null;breakAdjacentChocolate(rr,cc);}
           if(!cl.ingredient){clearJellyAt(rr,cc);clearCarpetAt(rr,cc,false);}
           if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
@@ -7281,7 +7314,7 @@ async function triggerCombinedSpecial(r1,c1,sp1,r2,c2,sp2) {
           if(cl.ingredient){}else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(rr,cc,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(rr,cc);}
           else if(cl.chocolate){destroyChocolate(rr,cc);breakAdjacentChocolate(rr,cc);}else if(cl.marmalade){cl.marmalade=false;}
           else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(rr,cc,'#a78bfa',4);}else if(cl.licorice>0){cl.licorice=0;spawnParticles(rr,cc,'#b45309',6);}
-          else if(cl.honey>0){cl.honey=0;freeBear(rr,cc);}else if(cl.mystery){}
+          else if(cl.honey>0){cl.honey=0;_releaseBear(rr,cc);}else if(cl.mystery){}
           else{if(cl.special!==SPECIAL.NONE)_ch.push({r:rr,c:cc,special:cl.special,type:cl.type});state.board[rr][cc]=null;breakAdjacentChocolate(rr,cc);}
           if(!cl.ingredient){clearJellyAt(rr,cc);clearCarpetAt(rr,cc,false);}
           if(cl.type>=0&&!cl.ingredient)state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
@@ -8866,6 +8899,67 @@ function freeBear(r, c) {
   showToast('🐻 Медведь освобождён!');
   updateQuestProgress('bears', 1);
   updateGoalProgress();
+}
+function _releaseBear(r, c) {
+  if (getLevel(state.currentLevel)?.type === 'bears') {
+    const cell = state.board[r]?.[c];
+    if (cell) cell._bearOpened = true;
+    spawnParticles(r, c, '#fde68a', 4);
+    setTimeout(() => {
+      if (state.board[r]?.[c]) delete state.board[r][c]._bearOpened;
+      freeBear(r, c);
+    }, 380);
+  } else {
+    freeBear(r, c);
+  }
+}
+function _drawBearInAmber(ctx, x, y, cs) {
+  const cx = x + cs/2, cy = y + cs/2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(160,75,5,0.40)';
+  roundRect(ctx, x+2, y+2, cs-4, cs-4, 10); ctx.fill();
+  const ag = ctx.createRadialGradient(cx-cs*0.14, cy-cs*0.20, cs*0.04, cx, cy, cs*0.50);
+  ag.addColorStop(0, 'rgba(255,185,40,0.52)');
+  ag.addColorStop(0.5, 'rgba(195,105,12,0.38)');
+  ag.addColorStop(1, 'rgba(90,35,0,0.15)');
+  ctx.fillStyle = ag; roundRect(ctx, x+2, y+2, cs-4, cs-4, 10); ctx.fill();
+  ctx.fillStyle = 'rgba(70,35,8,0.68)';
+  ctx.beginPath(); ctx.ellipse(cx, cy+cs*0.08, cs*0.25, cs*0.20, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy-cs*0.09, cs*0.175, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx-cs*0.12, cy-cs*0.24, cs*0.065, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+cs*0.12, cy-cs*0.24, cs*0.065, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,215,100,0.75)';
+  ctx.beginPath(); ctx.ellipse(cx-cs*0.065, cy-cs*0.095, cs*0.038, cs*0.012, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+cs*0.065, cy-cs*0.095, cs*0.038, cs*0.012, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,225,100,0.20)';
+  ctx.beginPath(); ctx.ellipse(cx-cs*0.10, cy-cs*0.20, cs*0.090, cs*0.050, -0.4, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = 'rgba(195,115,18,0.72)';
+  ctx.lineWidth = Math.max(1, cs*0.024);
+  roundRect(ctx, x+2, y+2, cs-4, cs-4, 10); ctx.stroke();
+  ctx.restore();
+}
+function _drawOpenBear(ctx, x, y, cs) {
+  const cx = x + cs/2, cy = y + cs/2;
+  ctx.save();
+  ctx.shadowColor = 'rgba(255,210,50,0.85)'; ctx.shadowBlur = cs*0.22;
+  ctx.fillStyle = '#8B5733';
+  ctx.beginPath(); ctx.ellipse(cx, cy+cs*0.08, cs*0.26, cs*0.21, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy-cs*0.09, cs*0.185, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx-cs*0.125, cy-cs*0.24, cs*0.072, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+cs*0.125, cy-cs*0.24, cs*0.072, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#C4845A';
+  ctx.beginPath(); ctx.arc(cx-cs*0.125, cy-cs*0.24, cs*0.038, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+cs*0.125, cy-cs*0.24, cs*0.038, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx, cy-cs*0.02, cs*0.072, cs*0.048, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#1a0e06'; ctx.lineWidth = Math.max(1, cs*0.024); ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(cx-cs*0.068, cy-cs*0.115, cs*0.028, Math.PI, 0); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx+cs*0.068, cy-cs*0.115, cs*0.028, Math.PI, 0); ctx.stroke();
+  ctx.fillStyle = '#2a110a';
+  ctx.beginPath(); ctx.ellipse(cx, cy-cs*0.055, cs*0.028, cs*0.018, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#2a110a'; ctx.lineWidth = Math.max(0.8, cs*0.018);
+  ctx.beginPath(); ctx.arc(cx, cy+cs*0.01, cs*0.044, 0.2, Math.PI-0.2); ctx.stroke();
+  ctx.restore();
 }
 
 // Rainbow Round — banner + HUD sync
