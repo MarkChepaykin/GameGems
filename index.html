@@ -3283,7 +3283,7 @@ function showScreen(name) {
     }
   });
   state.screen = name;
-  document.getElementById('game-bg').classList.toggle('blurred', name !== 'loading');
+  document.getElementById('game-bg').classList.toggle('blurred', name !== 'loading' && name !== 'levels' && name !== 'episode');
   if (name === 'game') {
     // Переходим в игру: fade MENU_BGM → start BGM
     if (MENU_BGM.isPlaying()) { MENU_BGM.stop(); }
@@ -4095,6 +4095,17 @@ function _getLayerIdxForLevel(n) {
   return 0;
 }
 
+let _bgPreloaded = false;
+function _preloadChapterBgs() {
+  if (_bgPreloaded) return;
+  _bgPreloaded = true;
+  EARTH_LAYERS.forEach(layer => {
+    if (!layer.img) return;
+    const _img = new Image();
+    _img.src = `sprites/bg/${encodeURI(layer.img)}`;
+  });
+}
+
 function _setChapterBg(layerIdx) {
   const layer = EARTH_LAYERS[Math.max(0, Math.min(layerIdx, EARTH_LAYERS.length - 1))];
   const el = document.getElementById('game-bg');
@@ -4124,6 +4135,7 @@ function showLevels() {
   if (typeof EPISODES === 'undefined') {
     showToast('⏳ Загружаем...'); return;
   }
+  _preloadChapterBgs();
   _levelsMode = 'layers';
   showScreen('levels');
   refreshLevelsCurrency();
@@ -10116,13 +10128,15 @@ async function bonusMovesExplosion() {
     await triggerSpecial(br,bc,sp);
     if (_matchEpoch !== _myEpoch) break;
     if (state.board[br]?.[bc]===cell) state.board[br][bc]=null;
-    applyGravity(); fillFromTop(); await animateDrop();
+    applyGravity(); fillFromTop(); // anim.oy сохраняется — анимация падения проиграет в начале следующей итерации
     if (_matchEpoch !== _myEpoch) break;
     const cascadeMatches=findMatches();
-    if (cascadeMatches.size>0) await processMatches();
+    if (cascadeMatches.size>0) { await animateDrop(); await processMatches(); } // сначала анимируем падение, потом каскад
     if (_matchEpoch !== _myEpoch) break;
     updateHUD(); updateGoalProgress();
   }
+  // Финальная анимация: anim.oy от последнего взрыва ещё не проигран
+  if (_matchEpoch === _myEpoch) { applyGravity(); fillFromTop(); await animateDrop(); }
 
   state._inBonusExplosion=false;
   state.busy=false; // ensure busy is cleared even if processMatches exited early (e.g. _cascadeWon inside explosion)
