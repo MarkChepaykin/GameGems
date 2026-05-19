@@ -5324,7 +5324,7 @@ function drawCellGem(r,c,cell) {
       else if (_spc===SPECIAL.ROCKET)      { _tpImg=TEXTURE_PACK.sprites.rocket[_ct]; if(!(_tpImg instanceof HTMLImageElement)){_tpImg=TEXTURE_PACK.sprites.gem[_ct];_indicatorStillNeeded=true;} }
       else if (_spc===SPECIAL.COLORING)    { _tpImg=TEXTURE_PACK.sprites.coloring[_ct]; if(!(_tpImg instanceof HTMLImageElement)){_tpImg=TEXTURE_PACK.sprites.gem[_ct];_indicatorStillNeeded=true;} }
       else if (_spc===SPECIAL.RAINBOW)     _tpImg=TEXTURE_PACK.sprites.rainbow;
-      else if (_spc===SPECIAL.MEGA)        _tpImg=TEXTURE_PACK.sprites.mega;
+      else if (_spc===SPECIAL.MEGA)        { _tpImg=TEXTURE_PACK.sprites.mega; if(!(_tpImg instanceof HTMLImageElement)){_tpImg=TEXTURE_PACK.sprites.gem[_ct];_indicatorStillNeeded=true;} }
       if (_tpImg instanceof HTMLImageElement) {
         const sz=cs-4, iw=_tpImg.naturalWidth||sz, ih=_tpImg.naturalHeight||sz;
         const sc=Math.min(sz/iw, sz/ih);
