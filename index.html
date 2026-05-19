@@ -4028,7 +4028,7 @@ const EARTH_LAYERS = [
   {name:'Корни мира',          emoji:'🌱', bg:'#2a3a14,#121808',  depth:'5 м',      img:'Корни мира.png'},
   {name:'Червоточины',         emoji:'🪱', bg:'#3a2410,#1a0e06',  depth:'15 м',     img:'Червоточины.png'},
   {name:'Красное ложе',        emoji:'🏺', bg:'#6a3820,#381008',  depth:'30 м',     img:'Красное ложе.png'},
-  {name:'Песчаные своды',      emoji:'🧱', bg:'#705228,#3a2410',  depth:'60 м',     img:null},
+  {name:'Песчаные своды',      emoji:'🧱', bg:'#705228,#3a2410',  depth:'60 м',     img:'Песчаные своды.png'},
   {name:'Морозные трещины',    emoji:'❄️', bg:'#2a4060,#121828',  depth:'100 м',    img:'Морозные трещины.png'},
   {name:'Подземные реки',      emoji:'💧', bg:'#183070,#080e40',  depth:'200 м',    img:'Подземные реки.png'},
   {name:'Каменные палаты',     emoji:'🪨', bg:'#706050,#382e20',  depth:'400 м',    img:'Каменные палаты.png'},
@@ -10093,7 +10093,7 @@ async function bonusMovesExplosion() {
     const cl=state.board[br]?.[bc]; if (!cl) continue;
     const sp=specials[Math.floor(Math.random()*specials.length)];
     cl.special=sp;
-    placements.push({r:br,c:bc,sp});
+    placements.push({sp, cell:cl});
   }
   state.moves=0;
   state.comboCount++;
@@ -10104,13 +10104,18 @@ async function bonusMovesExplosion() {
   if (_matchEpoch !== _myEpoch) { state._inBonusExplosion=false; return; }
 
   // Взрываем по одному
-  for (const {r:br,c:bc,sp} of placements) {
+  for (const {sp, cell} of placements) {
     if (_matchEpoch !== _myEpoch) break;
-    const cl=state.board[br]?.[bc];
-    if (!cl||cl.special!==sp) continue; // уже уничтожен предыдущим взрывом
+    applyGravity(); fillFromTop(); await animateDrop(); // подтягиваем фишки до взрыва
+    if (_matchEpoch !== _myEpoch) break;
+    let br=-1, bc=-1;
+    for (let rr=0; rr<ROWS && br<0; rr++) for (let cc=0; cc<COLS && br<0; cc++) {
+      if (state.board[rr]?.[cc] === cell) { br=rr; bc=cc; }
+    }
+    if (br<0 || cell.special!==sp) continue; // уже уничтожен предыдущим взрывом
     await triggerSpecial(br,bc,sp);
     if (_matchEpoch !== _myEpoch) break;
-    if (state.board[br]?.[bc]) state.board[br][bc]=null;
+    if (state.board[br]?.[bc]===cell) state.board[br][bc]=null;
     applyGravity(); fillFromTop(); await animateDrop();
     if (_matchEpoch !== _myEpoch) break;
     const cascadeMatches=findMatches();
