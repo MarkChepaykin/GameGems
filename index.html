@@ -323,12 +323,10 @@ canvas { display: block; touch-action: none; }
 #hud {
   position: absolute; top: 0; left: 0; right: 0; z-index: 10;
   display: flex; flex-direction: column; gap: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.14) 100%);
-  backdrop-filter: blur(24px) saturate(1.4);
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border-bottom: 1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.58) 100%);
+  border-bottom: 1px solid rgba(255,255,255,.10);
   border-radius: 0 0 18px 18px;
-  box-shadow: 0 4px 22px rgba(0,0,0,.40);
+  box-shadow: 0 4px 22px rgba(0,0,0,.50);
   color: #fff;
   pointer-events: none;
 }
@@ -387,11 +385,10 @@ canvas { display: block; touch-action: none; }
   position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
   display: flex; align-items: center; justify-content: space-around;
   padding: 6px 8px max(8px, env(safe-area-inset-bottom));
-  background: linear-gradient(0deg, rgba(255,255,255,.06) 0%, rgba(0,0,0,.14) 100%);
-  backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border-top: 1px solid rgba(255,255,255,.12);
+  background: linear-gradient(0deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.58) 100%);
+  border-top: 1px solid rgba(255,255,255,.10);
   border-radius: 18px 18px 0 0;
-  box-shadow: 0 -4px 22px rgba(0,0,0,.40);
+  box-shadow: 0 -4px 22px rgba(0,0,0,.50);
   pointer-events: none;
 }
 #ingame-booster-bar .hud-bst-btn {
