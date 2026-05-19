@@ -68,7 +68,7 @@ html, body {
   overflow: hidden;
 }
 /* Горизонт-полоска убрана — слив цветов плавный, без артефакта */
-#app { isolation: isolate; position: relative; z-index: 1; }
+#app { position: relative; z-index: 1; }
 #game-bg {
   position: fixed; inset: -6%;
   z-index: 0;
@@ -323,9 +323,9 @@ canvas { display: block; touch-action: none; }
 #hud {
   position: absolute; top: 0; left: 0; right: 0; z-index: 10;
   display: flex; flex-direction: column; gap: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,.68) 0%, rgba(0,0,0,.32) 100%);
-  backdrop-filter: blur(22px) saturate(1.3);
-  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  background: linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.14) 100%);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
   border-bottom: 1px solid rgba(255,255,255,.12);
   border-radius: 0 0 18px 18px;
   box-shadow: 0 4px 22px rgba(0,0,0,.40);
@@ -387,8 +387,8 @@ canvas { display: block; touch-action: none; }
   position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
   display: flex; align-items: center; justify-content: space-around;
   padding: 6px 8px max(8px, env(safe-area-inset-bottom));
-  background: linear-gradient(0deg, rgba(255,255,255,.08) 0%, rgba(0,0,0,.32) 100%);
-  backdrop-filter: blur(22px) saturate(1.3); -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  background: linear-gradient(0deg, rgba(255,255,255,.06) 0%, rgba(0,0,0,.14) 100%);
+  backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4);
   border-top: 1px solid rgba(255,255,255,.12);
   border-radius: 18px 18px 0 0;
   box-shadow: 0 -4px 22px rgba(0,0,0,.40);
@@ -5776,20 +5776,32 @@ function drawCellGem(r,c,cell) {
       ctx.fillStyle='rgba(180,145,70,0.88)'; ctx.fillText(`×${n}`,x+4,y+3);
     }
   }
-  // МЕДВЕДИ — закрытый медведь в янтаре поверх гема; открытый при освобождении
+  // МЕДВЕДИ — медведь под янтарём; открытый при освобождении
   if (cell.honey > 0 || cell._bearOpened) {
     const _isBears = getLevel(state.currentLevel)?.type === 'bears';
     if (_isBears) {
       if (cell._bearOpened) {
-        _drawOpenBear(ctx, x, y, cs);
+        // Открытый медведь: спрайт bear.png, fallback canvas
+        if (BLOCK_SPRITES[21]) {
+          ctx.drawImage(BLOCK_SPRITES[21], x, y, cs, cs);
+        } else {
+          _drawOpenBear(ctx, x, y, cs);
+        }
       } else {
-        _drawBearInAmber(ctx, x, y, cs);
+        // Закрытый медведь под янтарём: bear_sleeping + honey поверх
+        if (BLOCK_SPRITES[22]) {
+          ctx.drawImage(BLOCK_SPRITES[22], x, y, cs, cs);
+        } else {
+          _drawBearInAmber(ctx, x, y, cs);
+        }
+        if (BLOCK_SPRITES[20]) {
+          ctx.drawImage(BLOCK_SPRITES[20], x, y, cs, cs);
+        }
       }
     } else {
       const n = cell.honey;
-      const _hSprite = BLOCK_SPRITES[20];
-      if (_hSprite) {
-        ctx.drawImage(_hSprite, x, y, cs, cs);
+      if (BLOCK_SPRITES[20]) {
+        ctx.drawImage(BLOCK_SPRITES[20], x, y, cs, cs);
       } else {
         const t2 = Date.now() / 1400;
         ctx.fillStyle=`rgba(180,90,10,${0.28+n*0.10})`;
@@ -10082,6 +10094,10 @@ async function bonusMovesExplosion() {
   state.busy = true;
   state._inBonusExplosion = true;
   const specials=[SPECIAL.STRIPE_H,SPECIAL.STRIPE_V,SPECIAL.BOMB];
+
+  // Сначала подтягиваем фишки — поле должно быть заполнено до того, как игрок увидит бонусы
+  applyGravity(); fillFromTop(); await animateDrop();
+  if (_matchEpoch !== _myEpoch) { state._inBonusExplosion=false; return; }
 
   // Собираем все свободные клетки
   const free=[];
