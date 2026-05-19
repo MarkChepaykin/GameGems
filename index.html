@@ -6101,15 +6101,14 @@ const TEXTURE_PACK = {
   }
 };
 
-// Спрайты блокеров: sprites/0-26.png
-// 0=chocolate, 1=stone, 2-3=stone alt, 4=carpet_pebble, 5=ingredient, 6=ingredient_alt
-// 7=mystery, 8=bottle, 9=jelly_x1, 10=jelly_x2, 11=carpet, 12=stone_brick
-// 13=locked, 14=marmalade_x1, 15=marmalade_x2, 16=marmalade_x3
-// 17=licorice_x1, 18=licorice_x2, 19=licorice_x3
-// 20=honey_x3, 21=honey_x1, 22=honey_x2
-// 23=ice, 24=portal, 25=bear_honey, 26=bear
+// Спрайты блокеров: sprites/squares/<name>.png (индекс = позиция в _TP_BLOCKS)
+// 0=stone, 1=lava, 2=stone_cracked, 3=stone_broken, 4=gravel, 5=rubble, 6=gem_bucket
+// 7=cage_locked, 8=cobblestone, 9=dirt, 10=stone_2holes, 11=stone_1hole, 12=bottle
+// 13=mystery, 14=vine_branch, 15=vine_cross, 16=vine_cross2
+// 17=chain_1, 18=chain_2, 19=chain_3
+// 20=honey, 21=bear, 22=bear_sleeping, 23=ice, 24=portal, 25=jelly_red, 26=jelly_orange
 const BLOCK_SPRITES = new Array(27).fill(null);
-// sprites/pack/ — именованные файлы, тип гема 0-5 = yellow/cyan/green/red/purple/orange
+// sprites/squares/ — тип гема 0-5 = yellow/cyan/green/red/purple/orange
 const _TP_GEM      = ['gem_yellow',      'gem_cyan',      'gem_green',      'gem_red',      'gem_purple',      'gem_orange'];
 const _TP_COLORING = ['barrel_yellow',   'barrel_cyan',   'barrel_green',   'barrel_red',   'barrel_purple',   'barrel_orange'];
 const _TP_BOMB     = ['tnt_yellow',      'tnt_cyan',      'tnt_green',      'tnt_red',      'tnt_purple',      'tnt_orange'];
@@ -6117,11 +6116,11 @@ const _TP_ROCKET   = ['rocket_yellow',   'rocket_cyan',   'rocket_green',   'roc
 const _TP_STRIPE_H = ['stripe_h_yellow', 'stripe_h_cyan', 'stripe_h_green', 'stripe_h_red', 'stripe_h_purple', 'stripe_h_orange'];
 const _TP_STRIPE_V = ['stripe_v_yellow', 'stripe_v_cyan', 'stripe_v_green', 'stripe_v_red', 'stripe_v_purple', 'stripe_v_orange'];
 const _TP_BLOCKS   = [
-  'stone_block','lava_tile','stone_cracked','stone_broken','gravel_tile',
-  'rubble_heap','gem_bucket','cage_locked','cobblestone_tile','dirt_tile',
-  'stone_2holes','stone_1hole','bottle','mystery_box','vine_branch',
-  'vine_cross_2','vine_cross_3','chain_1','chain_2','chain_3',
-  'honey','bear','bear_sleeping','portal','ice_tile',
+  'stone','lava','stone_cracked','stone_broken','gravel',
+  'rubble','gem_bucket','cage_locked','cobblestone','dirt',
+  'stone_2holes','stone_1hole','bottle','mystery','vine_branch',
+  'vine_cross','vine_cross2','chain_1','chain_2','chain_3',
+  'honey','bear','bear_sleeping','ice','portal',
   'jelly_red','jelly_orange'
 ];
 
@@ -6129,7 +6128,7 @@ function _loadTPImg(src) {
   return new Promise(res => { const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(null); i.src=src; });
 }
 async function loadTexturePack() {
-  const P = 'sprites/pack/';
+  const P = 'sprites/squares/';
   const jobs = [];
   for (let g=0; g<6; g++) {
     jobs.push(_loadTPImg(P+_TP_GEM[g]+'.png').then(img=>{      if(img) TEXTURE_PACK.sprites.gem[g]=img;      }));
@@ -6139,11 +6138,11 @@ async function loadTexturePack() {
     jobs.push(_loadTPImg(P+_TP_STRIPE_H[g]+'.png').then(img=>{ if(img) TEXTURE_PACK.sprites.stripe_h[g]=img; }));
     jobs.push(_loadTPImg(P+_TP_STRIPE_V[g]+'.png').then(img=>{ if(img) TEXTURE_PACK.sprites.stripe_v[g]=img; }));
   }
-  jobs.push(_loadTPImg(P+'coloring.png').then(img=>{ if(img) TEXTURE_PACK.sprites.rainbow=img; }));
+  jobs.push(_loadTPImg(P+'rainbow.png').then(img=>{ if(img) TEXTURE_PACK.sprites.rainbow=img; }));
   await Promise.all(jobs);
-  // Блокеры: sprites/0-26.png (числовые файлы по индексу)
-  const bJobs = BLOCK_SPRITES.map((_, idx) =>
-    _loadTPImg('sprites/'+idx+'.png').then(img => { if(img) BLOCK_SPRITES[idx]=img; })
+  // Блокеры: sprites/squares/<name>.png
+  const bJobs = _TP_BLOCKS.map((name, idx) =>
+    _loadTPImg(P+name+'.png').then(img => { if(img) BLOCK_SPRITES[idx]=img; })
   );
   await Promise.all(bJobs);
   invalidateGemCache();
