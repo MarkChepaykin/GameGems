@@ -323,11 +323,21 @@ canvas { display: block; touch-action: none; }
 #hud {
   position: absolute; top: 0; left: 0; right: 0; z-index: 10;
   display: flex; flex-direction: column; gap: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.58) 100%);
+  background: linear-gradient(180deg, rgba(0,0,0,.60) 0%, rgba(0,0,0,.38) 100%);
   border-bottom: 1px solid rgba(255,255,255,.10);
   border-radius: 0 0 18px 18px;
   box-shadow: 0 4px 22px rgba(0,0,0,.50);
+  overflow: hidden;
   color: #fff;
+  pointer-events: none;
+}
+#hud::before {
+  content: '';
+  position: absolute; inset: -24px; z-index: -1;
+  background-image: var(--panel-bg-img, url('sprites/bg/main.png'));
+  background-size: cover; background-position: center;
+  background-attachment: fixed;
+  filter: blur(20px);
   pointer-events: none;
 }
 /* Строка 1 */
@@ -385,10 +395,20 @@ canvas { display: block; touch-action: none; }
   position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
   display: flex; align-items: center; justify-content: space-around;
   padding: 6px 8px max(8px, env(safe-area-inset-bottom));
-  background: linear-gradient(0deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.58) 100%);
+  background: linear-gradient(0deg, rgba(0,0,0,.60) 0%, rgba(0,0,0,.38) 100%);
   border-top: 1px solid rgba(255,255,255,.10);
   border-radius: 18px 18px 0 0;
   box-shadow: 0 -4px 22px rgba(0,0,0,.50);
+  overflow: hidden;
+  pointer-events: none;
+}
+#ingame-booster-bar::before {
+  content: '';
+  position: absolute; inset: -24px; z-index: -1;
+  background-image: var(--panel-bg-img, url('sprites/bg/main.png'));
+  background-size: cover; background-position: center;
+  background-attachment: fixed;
+  filter: blur(20px);
   pointer-events: none;
 }
 #ingame-booster-bar .hud-bst-btn {
@@ -3305,6 +3325,7 @@ function showScreen(name) {
   if (name === 'menu') {
     const _gbEl = document.getElementById('game-bg');
     if (_gbEl) _gbEl.style.backgroundImage = "url('sprites/bg/main.png')";
+    document.documentElement.style.setProperty('--panel-bg-img', "url('sprites/bg/main.png')");
     refreshMenu(); if (!state.noAds) SDK.showBanner();
   }
 
@@ -4108,12 +4129,15 @@ function _setChapterBg(layerIdx) {
   const layer = EARTH_LAYERS[Math.max(0, Math.min(layerIdx, EARTH_LAYERS.length - 1))];
   const el = document.getElementById('game-bg');
   if (!el) return;
+  let bgImg;
   if (layer.img) {
-    el.style.backgroundImage = `url('sprites/bg/${encodeURI(layer.img)}')`;
+    bgImg = `url('sprites/bg/${encodeURI(layer.img)}')`;
   } else {
     const [bg1, bg2] = layer.bg.split(',');
-    el.style.backgroundImage = `linear-gradient(135deg,${bg1} 0%,${bg2} 100%)`;
+    bgImg = `linear-gradient(135deg,${bg1} 0%,${bg2} 100%)`;
   }
+  el.style.backgroundImage = bgImg;
+  document.documentElement.style.setProperty('--panel-bg-img', bgImg);
 }
 
 const TYPE_ICON = {
