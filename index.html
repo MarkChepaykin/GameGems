@@ -1183,6 +1183,7 @@ canvas { display: block; touch-action: none; }
 }
 
 </style>
+  <script src="levels.js"></script>
 </head>
 <body>
 <div id="game-bg"></div>
@@ -2202,7 +2203,7 @@ const BGM_LAYERS = {
 //  КОНСТАНТЫ
 // ══════════════════════════════════════════
 let COLS = 8, ROWS = 10;
-const GEM_TYPES = 6;
+const GEM_TYPES = 7;
 const MAX_LIVES = 5;
 const LIFE_REGEN_MS = 30 * 60 * 1000; // 30 минут
 
@@ -2273,6 +2274,7 @@ const GEMS = [
   { id:3, color:'#ff4848', shape:'ore_round',  name:'Рубин'    },
   { id:4, color:'#c060ff', shape:'ore_tri',    name:'Аметист'  },
   { id:5, color:'#ff8840', shape:'ore_blob',   name:'Янтарь'   },
+  { id:6, color:'#1a6ce8', shape:'diamond',    name:'Лазурит'  },
 ];
 
 const SPECIAL = { NONE:0, STRIPE_H:1, STRIPE_V:2, RAINBOW:4, ROCKET:6, BOMB:7, COLORING:8 };
@@ -2520,7 +2522,7 @@ function generateLevel(levelNumber) {
   const difficulty = Math.min(100, Math.round(levelNumber * 0.8));
   const holesSet = generateArena(rng, difficulty);
   const holesArr = [...holesSet].map(k => k.split(',').map(Number));
-  const gemTypes = difficulty < 30 ? 4 : difficulty < 60 ? 5 : 6;
+  const gemTypes = difficulty < 30 ? 4 : difficulty < 60 ? 5 : difficulty < 80 ? 6 : 7;
 
   // Пул типов целей с порогами по сложности
   const typePool = ['score','score','score','score'];
@@ -4517,13 +4519,26 @@ function initBoard(lvl) {
       board[r][c] = createGem(type);
     }
   }
+  // Предзаданные цвета гемов из gemGrid (коды 1,3-7 в tileMap CCSS)
+  if (Array.isArray(lvl.gemGrid) && lvl.gemGrid.length > 0) {
+    for (const [gr, gc, colorIdx] of lvl.gemGrid) {
+      if (gr < ROWS && gc < COLS && board[gr][gc] && board[gr][gc].type >= 0 && !holeSet.has(`${gr},${gc}`)) {
+        board[gr][gc].type = colorIdx % _activeGemTypes;
+      }
+    }
+  }
   // Ингредиенты (спавнятся в верхних рядах)
   if ((lvl.ingredientCount || 0) > 0) {
     const topPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r]) => r < 2));
     topPool.slice(0, lvl.ingredientCount).forEach(([r,c]) => { board[r][c] = createIngredient(); });
   }
-  // Желе
-  if (lvl.jellyCount > 0) {
+  // Желе — используем точные позиции из jellyGrid (с числом слоёв), иначе рандом
+  if (Array.isArray(lvl.jellyGrid) && lvl.jellyGrid.length > 0) {
+    for (const pos of lvl.jellyGrid) {
+      const [jr, jc, layers] = [pos[0], pos[1], pos[2] || 2];
+      if (jr < ROWS && jc < COLS && !holeSet.has(`${jr},${jc}`)) state.jellyGrid[jr][jc] = layers;
+    }
+  } else if (lvl.jellyCount > 0) {
     shuffleArray(getAllNonHolePositions(holeSet)).slice(0, lvl.jellyCount).forEach(([r,c]) => {
       state.jellyGrid[r][c] = 2;
     });
@@ -4534,15 +4549,25 @@ function initBoard(lvl) {
     allCells.forEach(([r,c]) => { state.carpetGrid[r][c] = true; });
     state.carpetTotal = allCells.length;
   }
-  // Шоколад (края, тип=-1, блокер)
-  if ((lvl.chocolateCount || 0) > 0) {
+  // Шоколад — точные позиции из chocGrid, иначе края
+  if (Array.isArray(lvl.chocGrid) && lvl.chocGrid.length > 0) {
+    for (const [cr, cc] of lvl.chocGrid) {
+      if (cr < ROWS && cc < COLS && board[cr][cc] && !holeSet.has(`${cr},${cc}`)) {
+        board[cr][cc].chocolate = true; board[cr][cc].type = -1; board[cr][cc].special = SPECIAL.NONE;
+      }
+    }
+  } else if ((lvl.chocolateCount || 0) > 0) {
     const edgePool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => r===0||r===ROWS-1||c===0||c===COLS-1));
     edgePool.slice(0, lvl.chocolateCount).forEach(([r,c]) => {
       if (board[r][c]) { board[r][c].chocolate = true; board[r][c].type = -1; board[r][c].special = SPECIAL.NONE; }
     });
   }
-  // Мармелад (запирает существующий гем)
-  if ((lvl.marmaladeCount || 0) > 0) {
+  // Мармелад — точные позиции из marmaGrid, иначе рандом
+  if (Array.isArray(lvl.marmaGrid) && lvl.marmaGrid.length > 0) {
+    for (const [mr, mc] of lvl.marmaGrid) {
+      if (mr < ROWS && mc < COLS && board[mr][mc]?.type >= 0) board[mr][mc].marmalade = true;
+    }
+  } else if ((lvl.marmaladeCount || 0) > 0) {
     const freePool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => board[r][c]?.type >= 0));
     freePool.slice(0, lvl.marmaladeCount).forEach(([r,c]) => { board[r][c].marmalade = true; });
   }
@@ -4573,8 +4598,14 @@ function initBoard(lvl) {
   }
   state.licoriceSpawnRate = lvl.licoriceSpawnRate || 0;
   state.licoriceMax       = lvl.licoriceMax || 0;
-  // Мёд — покрывает клетки медовыми слоями, скрывает медведей
-  if ((lvl.honeyCount || 0) > 0) {
+  // Мёд — точные позиции из honeyGrid, иначе рандом
+  if (Array.isArray(lvl.honeyGrid) && lvl.honeyGrid.length > 0) {
+    for (const [hr, hc] of lvl.honeyGrid) {
+      if (hr < ROWS && hc < COLS && board[hr][hc] && !holeSet.has(`${hr},${hc}`)) {
+        board[hr][hc].honey = 2; board[hr][hc].special = SPECIAL.NONE;
+      }
+    }
+  } else if ((lvl.honeyCount || 0) > 0) {
     const hPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
       const cell = board[r][c];
       return cell?.type >= 0 && !cell.stone && !cell.chocolate && !cell.marmalade && !cell.locked && !cell.mystery && !cell.licorice;
@@ -4582,10 +4613,24 @@ function initBoard(lvl) {
     const honeyLayers = lvl.honeyCount <= 3 ? 2 : 3;
     hPool.slice(0, lvl.honeyCount).forEach(([r,c]) => { board[r][c].honey = honeyLayers; board[r][c].special = SPECIAL.NONE; });
   }
-  // Лёд — хранится в iceGrid (привязан к клетке, не к гему)
-  shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => board[r][c]?.type >= 0 && !board[r][c].marmalade)).slice(0, lvl.iceCount).forEach(([r,c]) => {
-    state.iceGrid[r][c] = 1;
-  });
+  // Цепи — точные позиции из chainGrid
+  if (Array.isArray(lvl.chainGrid) && lvl.chainGrid.length > 0) {
+    for (const [cr, cc, layers] of lvl.chainGrid) {
+      if (cr < ROWS && cc < COLS && board[cr][cc]?.type >= 0 && !holeSet.has(`${cr},${cc}`)) {
+        board[cr][cc].chain = layers || 1; board[cr][cc].special = SPECIAL.NONE;
+      }
+    }
+  }
+  // Лёд — точные позиции из iceGrid, иначе рандом
+  if (Array.isArray(lvl.iceGrid) && lvl.iceGrid.length > 0) {
+    for (const [ir, ic] of lvl.iceGrid) {
+      if (ir < ROWS && ic < COLS && !holeSet.has(`${ir},${ic}`)) state.iceGrid[ir][ic] = 1;
+    }
+  } else if ((lvl.iceCount || 0) > 0) {
+    shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => board[r][c]?.type >= 0 && !board[r][c].marmalade)).slice(0, lvl.iceCount).forEach(([r,c]) => {
+      state.iceGrid[r][c] = 1;
+    });
+  }
   // Камни — предпочитаем внутреннюю зону, но если там дыры — берём любые свободные клетки
   const innerPool = getAllNonHolePositions(holeSet).filter(([r,c]) => r>1&&r<ROWS-2&&c>1&&c<COLS-2 && !board[r][c]?.chocolate);
   const outerPool = getAllNonHolePositions(holeSet).filter(([r,c]) => !(r>1&&r<ROWS-2&&c>1&&c<COLS-2) && !board[r][c]?.chocolate);
@@ -5797,6 +5842,33 @@ function drawCellGem(r,c,cell) {
       ctx.fillStyle='rgba(180,145,70,0.88)'; ctx.fillText(`×${n}`,x+4,y+3);
     }
   }
+  // ЦЕПИ — металлические цепи поверх гема (chain blocker, снимается матчем рядом)
+  if (cell.chain > 0) {
+    const n = cell.chain;
+    const _chainS = BLOCK_SPRITES[16 + Math.min(n, 3)];
+    if (_chainS) {
+      ctx.drawImage(_chainS, x, y, cs, cs);
+    } else {
+      ctx.save();
+      ctx.fillStyle = `rgba(30,30,35,${0.30+n*0.08})`; roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.fill();
+      const lw = Math.max(2, cs*0.055);
+      const chainColor = `rgba(130,140,150,${0.85-n*0.06})`;
+      ctx.strokeStyle = chainColor; ctx.lineWidth = lw; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x+cs*0.10, cy); ctx.lineTo(x+cs*0.90, cy); ctx.stroke();
+      if (n >= 2) { ctx.beginPath(); ctx.moveTo(cx, y+cs*0.10); ctx.lineTo(cx, y+cs*0.90); ctx.stroke(); }
+      const linkR = Math.max(2, cs*0.09);
+      ctx.strokeStyle = `rgba(180,195,205,0.80)`; ctx.lineWidth = Math.max(1.5, cs*0.035);
+      for (let i = 0; i < Math.min(n+1, 3); i++) {
+        const lx = x + cs*(0.22 + i*0.28), ly = cy;
+        ctx.beginPath(); ctx.ellipse(lx, ly, linkR, linkR*0.55, 0, 0, Math.PI*2); ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(50,55,60,0.65)'; ctx.lineWidth = 2;
+      roundRect(ctx,x+2,y+2,cs-4,cs-4,8); ctx.stroke();
+      ctx.font = `bold ${cs*.18}px Arial`; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(180,195,205,0.88)'; ctx.fillText(`×${n}`, x+4, y+3);
+      ctx.restore();
+    }
+  }
   // МЕДВЕДИ — медведь под янтарём; открытый при освобождении
   if (cell.honey > 0 || cell._bearOpened) {
     const _isBears = getLevel(state.currentLevel)?.type === 'bears';
@@ -6161,7 +6233,7 @@ function _getCarpetSprite() {
 
 // PNG asset override — заполнить GEM_IMAGES[i] HTMLImageElement чтобы заменить canvas-рисовку
 // Пример: loadGemImage(0, 'assets/ore_gold.png')
-const GEM_IMAGES = new Array(6).fill(null);
+const GEM_IMAGES = new Array(7).fill(null);
 function loadGemImage(gemIndex, url) {
   const img = new Image();
   img.onload = () => { GEM_IMAGES[gemIndex] = img; invalidateGemCache(); };
@@ -6173,12 +6245,12 @@ function loadGemImage(gemIndex, url) {
 // ══════════════════════════════════════════
 const TEXTURE_PACK = {
   sprites: {
-    gem:      [null,null,null,null,null,null],
-    stripe_h: [null,null,null,null,null,null],
-    stripe_v: [null,null,null,null,null,null],
-    coloring: [null,null,null,null,null,null],
-    bomb:     [null,null,null,null,null,null],
-    rocket:   [null,null,null,null,null,null],
+    gem:      [null,null,null,null,null,null,null],
+    stripe_h: [null,null,null,null,null,null,null],
+    stripe_v: [null,null,null,null,null,null,null],
+    coloring: [null,null,null,null,null,null,null],
+    bomb:     [null,null,null,null,null,null,null],
+    rocket:   [null,null,null,null,null,null,null],
     rainbow:  null,
 
   }
@@ -6192,12 +6264,12 @@ const TEXTURE_PACK = {
 // 20=honey, 21=bear, 22=bear_sleeping, 23=ice, 24=portal, 25=jelly_red, 26=jelly_orange
 const BLOCK_SPRITES = new Array(27).fill(null);
 // sprites/squares/ — тип гема 0-5 = yellow/cyan/green/red/purple/orange
-const _TP_GEM      = ['gem_yellow',      'gem_cyan',      'gem_green',      'gem_red',      'gem_purple',      'gem_orange'];
-const _TP_COLORING = ['barrel_yellow',   'barrel_cyan',   'barrel_green',   'barrel_red',   'barrel_purple',   'barrel_orange'];
-const _TP_BOMB     = ['tnt_yellow',      'tnt_cyan',      'tnt_green',      'tnt_red',      'tnt_purple',      'tnt_orange'];
-const _TP_ROCKET   = ['rocket_yellow',   'rocket_cyan',   'rocket_green',   'rocket_red',   'rocket_purple',   'rocket_orange'];
-const _TP_STRIPE_H = ['stripe_h_yellow', 'stripe_h_cyan', 'stripe_h_green', 'stripe_h_red', 'stripe_h_purple', 'stripe_h_orange'];
-const _TP_STRIPE_V = ['stripe_v_yellow', 'stripe_v_cyan', 'stripe_v_green', 'stripe_v_red', 'stripe_v_purple', 'stripe_v_orange'];
+const _TP_GEM      = ['gem_yellow',      'gem_cyan',      'gem_green',      'gem_red',      'gem_purple',      'gem_orange',      'gem_blue'];
+const _TP_COLORING = ['barrel_yellow',   'barrel_cyan',   'barrel_green',   'barrel_red',   'barrel_purple',   'barrel_orange',   'barrel_blue'];
+const _TP_BOMB     = ['tnt_yellow',      'tnt_cyan',      'tnt_green',      'tnt_red',      'tnt_purple',      'tnt_orange',      'tnt_blue'];
+const _TP_ROCKET   = ['rocket_yellow',   'rocket_cyan',   'rocket_green',   'rocket_red',   'rocket_purple',   'rocket_orange',   'rocket_blue'];
+const _TP_STRIPE_H = ['stripe_h_yellow', 'stripe_h_cyan', 'stripe_h_green', 'stripe_h_red', 'stripe_h_purple', 'stripe_h_orange', 'stripe_h_blue'];
+const _TP_STRIPE_V = ['stripe_v_yellow', 'stripe_v_cyan', 'stripe_v_green', 'stripe_v_red', 'stripe_v_purple', 'stripe_v_orange', 'stripe_v_blue'];
 const _TP_BLOCKS   = [
   'stone','lava','stone_cracked','stone_broken','gravel',
   'rubble','gem_bucket','cage_locked','cobblestone','dirt',
@@ -6213,7 +6285,7 @@ function _loadTPImg(src) {
 async function loadTexturePack() {
   const P = 'sprites/squares/';
   const jobs = [];
-  for (let g=0; g<6; g++) {
+  for (let g=0; g<7; g++) {
     jobs.push(_loadTPImg(P+_TP_GEM[g]+'.png').then(img=>{      if(img) TEXTURE_PACK.sprites.gem[g]=img;      }));
     jobs.push(_loadTPImg(P+_TP_COLORING[g]+'.png').then(img=>{ if(img) TEXTURE_PACK.sprites.coloring[g]=img; }));
     jobs.push(_loadTPImg(P+_TP_BOMB[g]+'.png').then(img=>{     if(img) TEXTURE_PACK.sprites.bomb[g]=img;     }));
@@ -6652,8 +6724,8 @@ function analyzeMatch(cells) {
   if (rows>1&&cols>1&&n>=4) return { special:SPECIAL.BOMB };
   // 4 по прямой → STRIPE
   if (n===4) {
-    if (rows===1) return { special:SPECIAL.STRIPE_V };
-    if (cols===1) return { special:SPECIAL.STRIPE_H };
+    if (rows===1) return { special:SPECIAL.STRIPE_H };
+    if (cols===1) return { special:SPECIAL.STRIPE_V };
   }
   return null;
 }
@@ -6793,6 +6865,7 @@ async function processMatches(hintR, hintC) {
         if (nb?.mystery) { popMystery(nr,nc); }
         if (nb?.bottle) { popBottle(nr,nc); }
         if (nb?.licorice > 0) { nb.licorice--; spawnParticles(nr,nc,'#b45309',nb.licorice===0?6:3); if(nb.licorice===0)rings.push({x:boardOffX+nc*cellSize+cellSize/2,y:boardOffY+nr*cellSize+cellSize/2,color:'rgba(180,83,9,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2}); }
+        if (nb?.chain > 0) { nb.chain--; spawnParticles(nr,nc,'#8899aa',nb.chain===0?6:3); if(nb.chain===0)rings.push({x:boardOffX+nc*cellSize+cellSize/2,y:boardOffY+nr*cellSize+cellSize/2,color:'rgba(100,140,170,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2}); }
         if (nb?.honey > 0) { nb.honey--; spawnParticles(nr,nc,'#fde68a',3); if(nb.honey===0) _releaseBear(nr,nc); }
       }
     }
@@ -7021,11 +7094,81 @@ function breakAdjacentChocolate(r, c) {
   }
 }
 
+function _applyGravityAccel(holes, accelMap) {
+  const board = state.board;
+  function isVoid(r, c) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return true;
+    if (holes.has(`${r},${c}`)) return true;
+    const v = accelMap[r]?.[c];
+    return !v || (v[0] === 0 && v[1] === 0);
+  }
+  function isBlocker(cell) {
+    return cell.stone || cell.chocolate || cell.licorice > 0 || cell.honey > 0;
+  }
+
+  // Count dominant direction for iteration order
+  let downC = 0, leftC = 0, rightC = 0;
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    if (holes.has(`${r},${c}`)) continue;
+    const v = accelMap[r]?.[c]; if (!v) continue;
+    if (v[1] > 0) downC++; else if (v[0] < 0) leftC++; else if (v[0] > 0) rightC++;
+  }
+
+  const processCell = (r, c) => {
+    if (isVoid(r, c)) return false;
+    const cell = board[r][c];
+    if (!cell || isBlocker(cell)) return false;
+    const v = accelMap[r][c];
+    const dx = v[0] / 2, dy = v[1] / 2;
+    const tr = r + dy, tc = c + dx;
+    if (!isVoid(tr, tc) && board[tr][tc] === null) {
+      board[tr][tc] = cell; board[r][c] = null;
+      if (!board[tr][tc].anim) board[tr][tc].anim = {};
+      board[tr][tc].anim.oy = (board[tr][tc].anim.oy || 0) - dy * cellSize;
+      if (dx !== 0) board[tr][tc].anim.ox = (board[tr][tc].anim.ox || 0) - dx * cellSize;
+      return true;
+    }
+    // Diagonals: vertical gravity → try (r+dy, c±1); horizontal → try (r±1, c+dx)
+    const diags = dy !== 0
+      ? [[r + dy, c - 1], [r + dy, c + 1]]
+      : [[r - 1, c + dx], [r + 1, c + dx]];
+    for (const [dr, dc] of diags) {
+      if (!isVoid(dr, dc) && board[dr][dc] === null) {
+        board[dr][dc] = cell; board[r][c] = null;
+        if (!board[dr][dc].anim) board[dr][dc].anim = {};
+        board[dr][dc].anim.oy = (board[dr][dc].anim.oy || 0) - (dr - r) * cellSize;
+        board[dr][dc].anim.ox = (board[dr][dc].anim.ox || 0) - (dc - c) * cellSize;
+        board[dr][dc].anim._slide = true;
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const MAX_PASSES = ROWS + COLS;
+  for (let pass = 0; pass < MAX_PASSES; pass++) {
+    let moved = false;
+    if (downC >= leftC && downC >= rightC) {
+      for (let r = ROWS - 1; r >= 0; r--) for (let c = 0; c < COLS; c++) if (processCell(r, c)) moved = true;
+    } else if (leftC >= rightC) {
+      for (let c = 0; c < COLS; c++) for (let r = 0; r < ROWS; r++) if (processCell(r, c)) moved = true;
+    } else {
+      for (let c = COLS - 1; c >= 0; c--) for (let r = 0; r < ROWS; r++) if (processCell(r, c)) moved = true;
+    }
+    if (!moved) break;
+  }
+}
+
 function applyGravity() {
   const holes = state.holes;
+  const lvl = getLevel(state.currentLevel);
+  const accelMap = lvl?.accelMap;
   const sodaLevel = state.sodaLevel || 0;
   const sodaStart = ROWS - sodaLevel;
 
+  if (accelMap) {
+    _applyGravityAccel(holes, accelMap);
+  } else {
   for (let c=0;c<COLS;c++) {
     // ── Нормальная зона (строки 0..sodaStart-1): гемы падают вниз ──
     let wr=sodaStart-1;
@@ -7071,6 +7214,72 @@ function applyGravity() {
       for (let r=wr2;r<ROWS;r++) { if (!holes.has(`${r},${c}`)) state.board[r][c]=null; }
     }
   }
+  }
+
+  // Portal teleportation: gems resting on an entrance teleport to the exit
+  if (state.portalGrid) {
+    const _teleCols = new Set();
+    const _teleDests = new Set(); // prevent re-teleporting just-arrived gems
+    for (let r = ROWS-1; r >= 0; r--) {
+      for (let c = 0; c < COLS; c++) {
+        if (_teleDests.has(`${r},${c}`)) continue;
+        const _pg = state.portalGrid[r]?.[c];
+        if (!_pg) continue;
+        const _gc = state.board[r][c];
+        if (!_gc || _gc.stone || _gc.chocolate || (_gc.licorice > 0) || (_gc.honey > 0)) continue;
+        const {exitR, exitC} = _pg;
+        if (holes.has(`${exitR},${exitC}`)) continue;
+        if (state.board[exitR][exitC] !== null) continue;
+        state.board[exitR][exitC] = _gc;
+        state.board[r][c] = null;
+        if (!state.board[exitR][exitC].anim) state.board[exitR][exitC].anim = {};
+        _teleCols.add(exitC);
+        _teleDests.add(`${exitR},${exitC}`);
+        spawnParticles(r, c, _pg.color, 4);
+        spawnParticles(exitR, exitC, _pg.color, 4);
+      }
+    }
+    // Re-settle teleported gems in their destination columns
+    for (const _tc of _teleCols) {
+      let _wr = sodaStart - 1;
+      for (let _tr = sodaStart - 1; _tr >= 0; _tr--) {
+        if (holes.has(`${_tr},${_tc}`)) { _wr = _tr - 1; continue; }
+        const _cell = state.board[_tr][_tc];
+        if (_cell !== null) {
+          if (_cell.stone || _cell.chocolate || _cell.licorice > 0 || _cell.honey > 0) { _wr = _tr - 1; continue; }
+          const _fd = _wr - _tr;
+          state.board[_wr][_tc] = _cell;
+          if (_fd > 0) {
+            state.board[_tr][_tc] = null;
+            if (!state.board[_wr][_tc].anim) state.board[_wr][_tc].anim = {};
+            state.board[_wr][_tc].anim.oy = (state.board[_wr][_tc].anim.oy || 0) - _fd * cellSize;
+          }
+          _wr--;
+        }
+      }
+      for (let _tr = _wr; _tr >= 0; _tr--) { if (!holes.has(`${_tr},${_tc}`)) state.board[_tr][_tc] = null; }
+    }
+  }
+}
+
+function _spawnGem(r, c, honeyNeeded, enterOy, enterOx) {
+  let _ft = randGem();
+  for (let _fa=0; _fa<_activeGemTypes && wouldMatch(state.board,r,c,_ft); _fa++) _ft=(_ft+1)%_activeGemTypes;
+  const g = createGem(_ft);
+  g.anim = {oy: enterOy, alpha: 1, _new: 1};
+  if (enterOx) g.anim.ox = enterOx;
+  if (honeyNeeded > 0) { g.honey=2; g.special=SPECIAL.NONE; }
+  else if (state.rainbowRound?.active && Math.random()<0.30) { g.special=SPECIAL.RAINBOW; g.type=-1; }
+  else if (_currentDynDiff < 1.0 && Math.random() < 0.08) {
+    if (_currentSpecialWeights) {
+      const sw=_currentSpecialWeights, keys=['stripe','rainbow','rocket','bomb'];
+      const pick=keys[weightedRandom(keys.map(k=>sw[k]??0))];
+      g.special={stripe:Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V,rainbow:SPECIAL.RAINBOW,rocket:SPECIAL.ROCKET,bomb:SPECIAL.BOMB}[pick]??SPECIAL.STRIPE_H;
+    } else {
+      g.special = Math.random()<0.6 ? (Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V) : SPECIAL.BOMB;
+    }
+  }
+  return g;
 }
 
 function fillFromTop() {
@@ -7082,54 +7291,54 @@ function fillFromTop() {
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) { if (state.iceGrid[r][c]) iceOnBoard++; }
     iceNeeded=Math.max(0, lvl.target-state.iceBroken-iceOnBoard);
   }
-  // Bears: how many new honey cells need to spawn so the player can still win
   let honeyNeeded=0;
   if (lvl?.type==='bears') {
     const bt=lvl.bearsTarget||lvl.honeyCount||1;
-    const bearsStillNeeded=bt-(state.bearsFreed||0);
     let honeyOnBoard=0;
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) { if (state.board[r]?.[c]?.honey>0) honeyOnBoard++; }
-    honeyNeeded=Math.max(0, bearsStillNeeded-honeyOnBoard);
+    honeyNeeded=Math.max(0, bt-(state.bearsFreed||0)-honeyOnBoard);
   }
   const newGemPositions=[];
   const sodaLevel = state.sodaLevel || 0;
   const sodaStart = ROWS - sodaLevel;
 
+  // ── Cannon-based spawn (accelMap levels) ─────────────────────────────────────
+  if (lvl?.cannons?.length) {
+    const accelMap = lvl.accelMap;
+    for (const [cr, cc] of lvl.cannons) {
+      if (holes.has(`${cr},${cc}`)) continue;
+      if (cr >= sodaStart) continue;
+      if (state.board[cr][cc] !== null) continue;
+      // Entry offset: gem enters from opposite direction of gravity at cannon
+      const v = accelMap?.[cr]?.[cc] || [0, 2];
+      const enterOy = v[1] > 0 ? -cellSize : v[1] < 0 ? cellSize : 0;
+      const enterOx = v[0] > 0 ? -cellSize : v[0] < 0 ? cellSize : 0;
+      const g = _spawnGem(cr, cc, honeyNeeded, enterOy, enterOx);
+      if (honeyNeeded > 0 && g.honey) honeyNeeded--;
+      state.board[cr][cc] = g;
+      newGemPositions.push({r: cr, c: cc});
+    }
+    if (iceNeeded>0&&newGemPositions.length>0) {
+      shuffleArray([...newGemPositions]).slice(0,iceNeeded).forEach(({r,c})=>{ state.iceGrid[r][c]=1; });
+    }
+    return;
+  }
+
+  // ── Legacy: column-based spawn (no cannons / standard levels) ───────────────
   for (let c=0;c<COLS;c++) {
     let emptyCount=0;
-    // Нормальная зона: заполняем сверху (строки 0..sodaStart-1)
     for (let r=0;r<sodaStart;r++) {
       if (holes.has(`${r},${c}`)) { emptyCount=0; continue; }
       const existing=state.board[r][c];
       if (existing && (existing.stone || existing.chocolate)) { emptyCount=0; continue; }
       if (existing===null) {
         emptyCount++;
-        // Pick color that avoids creating an immediate 3-in-a-row
-        let _ft = randGem();
-        for (let _fa=0; _fa<_activeGemTypes && wouldMatch(state.board,r,c,_ft); _fa++) _ft=(_ft+1)%_activeGemTypes;
-        const g=createGem(_ft); g.anim={oy:-(r+1)*cellSize,alpha:1,_new:1};
-        // Bears: spawn honey cell if we still need more bears freed
-        if (honeyNeeded>0) { g.honey=2; g.special=SPECIAL.NONE; honeyNeeded--; }
-        // Rainbow Round — 30% chance to spawn RAINBOW gem
-        else if (state.rainbowRound?.active && Math.random()<0.30) { g.special=SPECIAL.RAINBOW; g.type=-1; }
-        // Dynamic difficulty — bonus specials when player is struggling
-        else if (_currentDynDiff < 1.0 && Math.random() < 0.08) {
-          if (_currentSpecialWeights) {
-            const sw = _currentSpecialWeights;
-            const keys = ['stripe','rainbow','rocket','bomb'];
-            const vals = keys.map(k => sw[k] ?? 0);
-            const pick = keys[weightedRandom(vals)];
-            const _sp={stripe:Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V,rainbow:SPECIAL.RAINBOW,rocket:SPECIAL.ROCKET,bomb:SPECIAL.BOMB}[pick];
-            g.special = _sp ?? (Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V);
-          } else {
-            g.special = Math.random()<0.6 ? (Math.random()<0.5?SPECIAL.STRIPE_H:SPECIAL.STRIPE_V) : SPECIAL.BOMB;
-          }
-        }
+        const g = _spawnGem(r, c, honeyNeeded, -(r+1)*cellSize, 0);
+        if (honeyNeeded > 0 && g.honey) honeyNeeded--;
         state.board[r][c]=g;
         newGemPositions.push({r,c});
       }
     }
-    // Сода-зона: заполняем снизу (строки ROWS-1..sodaStart)
     if (sodaLevel > 0) {
       let emptyCountS=0;
       for (let r=ROWS-1;r>=sodaStart;r--) {
@@ -7909,6 +8118,7 @@ async function _bombPhase1(r, c) {
     else if(cl.marmalade){cl.marmalade=false;}
     else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(nr,nc,'#a78bfa',4);}
     else if(cl.licorice>0){cl.licorice=0;spawnParticles(nr,nc,'#b45309',6);}
+    else if(cl.chain>0){cl.chain=0;spawnParticles(nr,nc,'#8899aa',6);}
     else if(cl.honey>0){cl.honey=0;_releaseBear(nr,nc);}
     else if(cl.mystery){}
     else if(cl.ingredient){}
@@ -7947,6 +8157,7 @@ async function _bombBlast3x3(cr, cc) {
     else if(cl.marmalade){cl.marmalade=false;}
     else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}
     else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}
+    else if(cl.chain>0){cl.chain=0;spawnParticles(r,c,'#8899aa',6);}
     else if(cl.honey>0){cl.honey=0;_releaseBear(r,c);}
     else if(cl.mystery){}
     else{if(cl.special!==SPECIAL.NONE)chains.push({r,c,special:cl.special,type:cl.type});state.board[r][c]=null;pts+=30;breakAdjacentChocolate(r,c);}
@@ -8448,6 +8659,7 @@ async function explodeCell(r,c) {
   else if (cl.stone) { cl.stone=false; cl.type=randGem(); state.stonesBroken++; spawnParticles(r,c,'#6b7280'); updateQuestProgress('stones',1); breakAdjacentChocolate(r,c); }
   else if (cl.chocolate) { destroyChocolate(r, c); breakAdjacentChocolate(r, c); }
   else if (cl.locked) { cl.locked=false; cl.anim={}; spawnParticles(r,c,'#a78bfa',4); }
+  else if (cl.chain > 0) { cl.chain=0; spawnParticles(r,c,'#8899aa',6); }
   else { const _sp=cl.special,_tp=cl.type; state.board[r][c]=null; state.score+=30; breakAdjacentChocolate(r,c); if(_sp!==SPECIAL.NONE){await triggerSpecial(r,c,_sp,_tp);} }
   clearJellyAt(r,c); clearCarpetAt(r,c,false);
   if(cl.type>=0&&!cl.ingredient) state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
@@ -8569,18 +8781,17 @@ function spawnExplosionSparks(r, c, count=18, color='#ff8800') {
 }
 
 function animateDrop() {
-  const STAGGER = 45; // ms between sequential new gems per column (deepest first)
+  const STAGGER = 45;
   const colData=[];
   for (let c=0;c<COLS;c++) {
     const drops=[];
     let maxAbs=0, newIdx=0;
-    // Bottom-to-top so deepest new gems get the smallest delay (enter first)
     for (let r=ROWS-1;r>=0;r--) {
       const cl=state.board[r]?.[c];
-      if (cl?.anim?.oy) {
+      if (cl?.anim && (cl.anim.oy || cl.anim.ox)) {
         const delay = cl.anim._new ? (newIdx++ * STAGGER) : 0;
-        drops.push({cl,startOy:cl.anim.oy,delay});
-        maxAbs=Math.max(maxAbs,Math.abs(cl.anim.oy));
+        drops.push({cl, startOy: cl.anim.oy||0, startOx: cl.anim.ox||0, slide: !!cl.anim._slide, delay});
+        maxAbs=Math.max(maxAbs, Math.abs(cl.anim.oy||0), Math.abs(cl.anim.ox||0));
       }
     }
     if (drops.length) {
@@ -8592,20 +8803,28 @@ function animateDrop() {
   const t0=performance.now(), _ep=_matchEpoch;
   return new Promise(res=>{
     function f(now){
-      if (_matchEpoch!==_ep) { colData.forEach(({drops})=>drops.forEach(({cl})=>{if(cl.anim)cl.anim.oy=0;})); res(); return; }
+      if (_matchEpoch!==_ep) {
+        colData.forEach(({drops})=>drops.forEach(({cl})=>{if(cl.anim){cl.anim.oy=0;cl.anim.ox=0;}}));
+        res(); return;
+      }
       let allDone=true;
       for (const {drops,dur} of colData){
-        drops.forEach(({cl,startOy,delay})=>{
+        drops.forEach(({cl,startOy,startOx,slide,delay})=>{
           const elapsed=now-t0-delay;
           if(elapsed<=0){allDone=false;return;}
           const t=Math.min(elapsed/dur,1);
           if(t<1) allDone=false;
-          const ease=EASE.outBounce(t);
-          if(cl.anim) cl.anim.oy=startOy*(1-ease);
+          const ease = slide ? EASE.outQuad(t) : EASE.outBounce(t);
+          if(cl.anim){ cl.anim.oy=startOy*(1-ease); cl.anim.ox=startOx*(1-ease); }
         });
       }
       if(!allDone) requestAnimationFrame(f);
-      else { colData.forEach(({drops})=>drops.forEach(({cl})=>{if(cl.anim){cl.anim.oy=0;delete cl.anim._new;}})); res(); }
+      else {
+        colData.forEach(({drops})=>drops.forEach(({cl})=>{
+          if(cl.anim){cl.anim.oy=0;cl.anim.ox=0;delete cl.anim._new;delete cl.anim._slide;}
+        }));
+        res();
+      }
     }
     requestAnimationFrame(f);
   });
@@ -11054,7 +11273,7 @@ function canSwap(r,c) {
   if ((state.iceGrid[r]?.[c]||0) > 0) return false;
   const cl=state.board[r]?.[c];
   if (!cl) return false;
-  if (cl.stone||cl.chocolate||cl.marmalade||cl.ingredient||cl.locked||cl.mystery||(cl.licorice>0)||(cl.honey>0)) return false;
+  if (cl.stone||cl.chocolate||cl.marmalade||cl.ingredient||cl.locked||cl.mystery||(cl.licorice>0)||(cl.chain>0)||(cl.honey>0)) return false;
   return true;
 }
 function findBestHint() {

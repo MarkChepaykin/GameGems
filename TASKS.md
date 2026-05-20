@@ -1,390 +1,260 @@
-﻿# GameGems — Dev Backlog
-
-> **Для разработчика (новый чат):** Прочитай этот файл. Используй карту секций
-> и функций из `CLAUDE.md` для точечного чтения `index.html`:
-> `Read index.html offset:LINE limit:150` — не читай файл целиком.
-> Бери первую незакрытую задачу с наивысшим приоритетом и выполняй её полностью.
-> После выполнения — отмечай `[x]` и пиши краткий итог рядом.
+# GameGems — Задачи по синхронизации механик CCSS
+_Составлено на основе анализа CCSS JSON + board_elements XML + index.html_
 
 ---
 
-## Контекст проекта
+## ПРОГРЕСС
 
-**GameGems (Gem Blast)** — мобильная match-3 игра. Весь код в одном файле:
-`C:\Users\user\Projects\GameGems\index.html` (~10 000+ строк, Canvas 2D + Web Audio API).
-
-**Роли:**
-- Пользователь = визионер, PM, тестировщик. Говорит ЧТО нужно.
-- Ассистент = senior-разработчик. Принимает технические решения и реализует.
-
-**Ключевые константы:**
-```
-COLS=8, ROWS=10
-SPECIAL={NONE:0,STRIPE_H:1,STRIPE_V:2,RAINBOW:4,MEGA:5,ROCKET:6,BOMB:7,COLORING:8}
-PHYSICS={SWAP_MS:75,DROP_MS:320,DESTROY_MS:200,COLORBOMB_MS:500,BASE_SCORE:20}
-EASE={linear,outQuad,outCubic,outQuart,inOutCubic,outBack,inBack,outElastic,outBounce}
-LEVELS[] — хардкод 112 уровней; getLevel(n) → n≤112:LEVELS[], n>112:generateLevel(n)
-state — глобальный объект (localStorage); SKINS, SKIN_EMOJI, EPISODE_LABELS={1,17,31,51,71,86,101}
-```
-
-**Ключевые функции:**
-```
-processMatches()          — главный цикл матчей (async)
-triggerSpecial()          — активация спецфишки
-triggerCombinedSpecial()  — комбо спецфишек
-applyGravity/fillFromTop/animateDrop — физика поля
-trySwap/canSwap/findBestHint — логика ходов
-checkWin/calcStars/patchLevelBalance — победа и баланс
-showScreen/saveGame/loadGame/showToast — UI и persist
-generateLevel/generateArena/seededRandom — процедурные уровни 113+
-simulateLevel/runBalanceReport/autoBalanceLevels — симулятор баланса
-getDifficultyTier(lvl) → 0-3 — нормал/хард/супер/ультра
-BGM_LAYERS.onMovesChange() — адаптивная музыка
-showUnlockScreen/showGestureHint/showExclamation — UI-хелперы
-```
-
-**Dev-панель:** FAB-кнопка 🛠️ всегда видима. +ходы, победа, спавн спешлов, телепорт.
+| # | Задача | Статус |
+|---|--------|--------|
+| 0 | Полный перекодировщик (make_levels.py) | ✅ ГОТОВО |
+| 1 | gemGrid предзаданные цвета | ✅ ГОТОВО |
+| 2 | Позиции блокеров grid вместо count | ✅ ГОТОВО |
+| 3 | colorWeights в initBoard | ✅ ГОТОВО |
+| 4 | Chain blocker (660-672) — логика | ✅ ГОТОВО |
+| 5 | Frosting Ice (550-555) — спрайт + логика | 🔴 Нет спрайта, нет логики |
+| 6 | White Chocolate fountain (602-606) — спрайт + логика | 🔴 Нет спрайта, нет логики |
+| 7 | Порталы — логика телепортации | 🟡 Данные есть, логика нет |
+| 8 | Цветные пушки (103-106) — спрайт + логика | 🔴 Нет спрайта, нет логики |
+| 9 | Лакрица (340) — спрайт + логика | 🔴 Нет спрайта |
+| 10 | accelerationMap — направленная гравитация | 🔴 Поле игнорируется |
+| 11 | Бонусные взрывы: одновременно vs по одному | 🟡 Ждём решения |
+| 12 | SFX: звуки разрушения блокеров | 🔴 Нет |
 
 ---
 
-## Музыка
+## РАСШИФРОВКА ТАЙЛ-КОДОВ CCSS
 
-**Файлы треков:** `C:\Users\user\Downloads\`
-- `Sugar Plum Quest (1).mp3` → **меню** (MENU_BGM заменить на этот файл)
-- `Sugar Plum Quest.mp3` → **игровой уровень** (BGM заменить на этот файл)
+_Источники: board_elements XML, анализ co-occurrence, сканирование 20 000 уровней_
 
-**Задача по интеграции треков:**
-Заменить процедурно-генерируемые MENU_BGM и BGM на воспроизведение mp3-файлов через HTML5 Audio API.
-При этом сохранить логику BGM_LAYERS (HighIntensity + EGP слои) поверх основного трека.
+### Подтверждённые коды
+
+| Код(ы) | Элемент | Механика | Статус в GG |
+|--------|---------|----------|-------------|
+| 0 (единственный) | Дыра | Пустая клетка | ✅ |
+| 1 | Гем цвета 0 (красный) | Цвет гема | ✅ |
+| 2 | Гем (случайный/generic) | Обычная ячейка | ✅ |
+| 3 | Гем цвета 1 (оранжевый) | Цвет гема | ✅ |
+| 4 | Гем цвета 2 (жёлтый) | Цвет гема | ✅ |
+| 5 | Гем цвета 3 (зелёный) | Цвет гема | ✅ |
+| 6 | Гем цвета 4 (синий) | Цвет гема | ✅ |
+| 7 | Гем цвета 5 (голубой) | Цвет гема | ✅ |
+| 52–55 | Лёд слои 1–4 | ice blocker | ✅ |
+| 164–165, 56 | Лёд слои 5–6 | ice blocker (доп. слои) | ✅ |
+| 101 | Spawner / generator cell | Ячейка-источник гемов | 🔴 Нет логики |
+| 103 | Пушка вниз | candyCannon, стреляет вниз | 🔴 Нет спрайта/логики |
+| 104 | Пушка вправо | candyCannon, стреляет вправо | 🔴 |
+| 105 | Пушка влево | candyCannon, стреляет влево | 🔴 |
+| 106 | Пушка вверх | candyCannon, стреляет вверх | 🔴 |
+| 200 | Желе 1 слой | jelly single | ✅ |
+| 201 | Желе 2 слоя | jelly double | ✅ |
+| 211 | Мармелад слой 1 | marmalade | ✅ |
+| 212 | Мармелад слой 2 | marmalade | ✅ |
+| 213 | Мармелад слой 3 | marmalade | ✅ |
+| 214–216 | Мармелад слои 4–6 | marmalade (доп.) | 🟡 Считаем как 3 |
+| 270 | Желе 1 слой (BubbleGum вариант) | jelly single | ✅ |
+| 271 | Желе 2 слоя (BubbleGum вариант) | jelly double | ✅ |
+| 300 | Carpet / ковёр | PaintBattle покраска | 🟡 Базовая логика есть |
+| 320 | Шоколад | chocolate blocker | ✅ |
+| 340 | **Licorice Swirl** | Блокер на ячейке, мешает матчу | 🔴 Нет спрайта |
+| 360 | Licorice вариант (только FloatingNuts) | Предположительно swirl-lock | 🔴 Нет данных |
+| 361 | Licorice Spawner | Генерирует лакрицу | 🟡 Частично |
+| 411–415 | Honey container (GiantBears) | Медовый контейнер с медведем | ✅ honeyGrid |
+| 416–417 | Honey container (GiantBears, доп.) | Медовый контейнер | ✅ |
+| 420 | **Hidden bear marker** | Скрытый медведь под слоем honey | 🔴 Нет логики |
+| 500–502 | Honey container (Honey mode) | Медовый контейнер | ✅ honeyGrid |
+| 503–505 | Honey container слои 3–5 | Многослойный мёд | 🟡 Считаем как honeyGrid |
+| 550 | **Frosting Ice слой 1** | Сахарная глазурь, покрывает ячейку | 🔴 Нет спрайта/логики |
+| 551 | Frosting Ice слой 2 | Глазурь 2 слоя | 🔴 |
+| 552 | Frosting Ice слой 3 | Глазурь 3 слоя | 🔴 |
+| 553 | Frosting Ice слой 4 | | 🔴 |
+| 554 | Frosting Ice слой 5 | | 🔴 |
+| 555 | Frosting Ice слой 6 | Глазурь 6 слоёв (макс) | 🔴 |
+| 570 | Exit zone (FloatingNuts) | Зона выхода для ингредиентов | 🟡 Частично |
+| 580–589 | Spawner типы? | Предположительно разные типы генераторов | 🔴 Нет данных |
+| 602 | **White Chocolate слой 1** | Белый шоколад / chocolate fountain | 🔴 Нет спрайта/логики |
+| 603–606 | White Chocolate слои 2–5 | Многослойный белый шоколад | 🔴 |
+| 650 | Honey container (Honey mode) | | ✅ |
+| 660 | **Chain blocker слой 1** | Цепь на ячейке, нужно разрушить | 🔴 Нет логики (спрайты есть: chain_1/2/3.png) |
+| 661–662 | Chain blocker слои 2–3 | Многослойная цепь | 🔴 |
+| 663–672 | Chain blocker доп. варианты | Предположительно те же цепи | 🔴 |
+| 850–853 | Path markers | Маркеры маршрута (Path mode) | 🟡 |
+
+### Коды с неизвестным значением (требуют уточнения)
+
+| Код(ы) | Частота | Режим | Текущая гипотеза |
+|--------|---------|-------|-----------------|
+| 101 | 1240 | все | spawner/generator target |
+| 360 | 432 | FloatingNuts | licorice вариант или lock |
+| 580–589 | ~3000 | все | spawner/mixer типы |
+| 663–672 | часть от 4257 | все | chain blocker варианты |
 
 ---
 
-## ✅ ВЫПОЛНЕННЫЕ ЗАДАЧИ (архив)
-
-### TASK-01 — Симулятор баланса
-`findAllMoves`, `simulateLevel`, `runBalanceReport`, `autoBalanceLevels`. Кнопки в dev-панели. `_sim*` функции на изолированном состоянии.
-
-### TASK-02 — Процедурный генератор уровней
-`seededRandom` (mulberry32), `generateArena`, `generateLevel(n)` (difficulty=min(100,n*0.8)), `generateCampaign`, `getLevel(n)`. Dev: «🏭 +500 уровней».
-
-### TASK-03 — Расширение арен
-ROWS 8→10. `migrateToRows10` IIFE масштабирует score ×1.25, расширяет holes. `r<ROWS-2` вместо `r<6`.
-
-### TASK-04 — Переработка порядка уровней
-IIFE `reorderLevels()`. `difficulty(lvl)` сводной балл. Тематические уровни на слотах L16/31/51/71/86.
-
-### Экран "+5 ходов" при поражении
-`state.extraMovesUsed`. Блок при прогрессе ≥60%. `buyMoreMoves()` -30💎+5 ходов. `watchAdMoves()` +5 ходов.
-
-### Gum Lock (замок на геме)
-`cell.locked=true`. `canSwap/_simCanSwap` блокируют. Матч рядом снимает замок. L47/50/56/59 с lockCount.
-
-### Coloring спецфишка
-`SPECIAL.COLORING=8`. Матч 6+ → COLORING. Перекрашивает все гемы своего цвета в targetColor. Coloring+Coloring меняет два цвета.
-
-### Тайминги win/lose анимаций
-3 `<span>` звезды, `starLand` CSS (100/700/1300ms). Кнопки заблокированы 3.5с. Lose: `heartBreak` 1.4с, кнопки 1.8с.
-
-### Три уровня звёзд
-`starlevel=[target, ×2.5, ×4.0]` в `patchLevelBalance`. `calcStars()` по starlevel. `#win-star-labels` числовые пороги.
-
-### Индикаторы сложности
-`getDifficultyTier(lvl)` → 0-3. Черепа 💀/💀💀/💀💀💀 на карте. Тир-метка в `selectLevel()`. Фон поля темнее на super/ultra.
-
-### Бонус за первую попытку
-`state.firstAttemptWins`, `_firstAttemptLevel`. Win с первой → +5💎 через 3.6с. 🏆 значок на кнопке.
-
-### Балансировка стиль авто-балансировщика
-`lvl.revision=0`. Ходы 20-35. `runBalanceReport` + колонка revision. `autoBalanceLevels` меняет target. Кнопка «Revision +1».
-
-### On Fire эффект
-`#on-fire-beam` с `onFirePulse`. `showCombo(n)` при n≥3 → beam 1.2s. `stopOnFire()` при сбросе comboCount.
-
-### Звёзды летят к HUD
-CSS `@keyframes starFlight` (translateY 80px, scale 2.4x, -180°→0°). `SFX.reward()` при приземлении. Задержка 550ms.
-
-### Маскот с эмоциями
-`#hud-mascot` 💎 с `mascotBob`. `_updateMascot()`: 😄/😬/😰/🤩. `mascotPop` при смене.
-
-### Полировка UI анимаций
-`@keyframes floatIdle` на бустерах (delay 0–1.6s). Shine `barShine` на `#star-bar`. `btnBounce`, `mascotBob`, `mascotPop`.
-
-### Тактильная обратная связь
-`HAPTIC={tap:[10],match:[20],special:[30,10,30],explode:[50,10,50,10,50],win,lose}`. `haptic(pattern)`. `state.vibroOn`.
-
-### Многоуровневые звуки комбо
-`state.matchSoundLvl` (0-7). `SFX.match(lvl)` 440→790 Hz. Уровень 8 — триумфальный аккорд.
-
-### Туториал с жестами
-`TUTORIAL_STEPS[]` с `handFrom/handTo`. 👆 на particle canvas. L1:[4,3]→[4,4], L2:[3,2]→[3,3], L4:[5,1]→[5,2].
-
-### Анимация часов
-`@keyframes clockShake/clockShakeStrong` (±3.4°/±5°). secs≤2 → strong + красный.
-
-### Библиотека easing
-`EASE` объект (8 функций: outBack, outElastic и др.). `animateDrop()` → `EASE.outBounce`. `animateBoardEntry()` → `EASE.outBack`.
-
-### Свечение спецфишек
-Idle glow с `globalCompositeOperation='lighter'`. Radial gradient пульсирует `sin(Date.now()/700)` alpha 0.15-0.25.
-
-### Переходы между экранами
-`_SCREEN_ANIM` маппинг. CSS `screenSlideUp/Down/Left` (60px→0, 0.32s). `screenPopIn` (overshoot 1.56).
-
-### Win-celebration glow + sparkle
-`startWinGlow()` на `#win-glow-canvas`. Жёлтый glow (280→80px, lighter). Sparkle каждые 140ms.
-
-### Score-pop частицы
-`spawnScorePop(r,c,gemColor)` — 4-5 частиц addBlend. Из `processMatches()`.
-
-### Множители очков
-`sizeMult` (5+→2.0, 4→1.5). `cascMult` 1+(comboCount-1)×0.3 (cap 3.0). `×1.5`/`×2.0` поп.
-
-### Отмена хода (Undo)
-`state.lastSwap` снапшот. Кнопка `#hud-undo-btn` ↩️. Первый undo бесплатный, следующие 10💎.
-
-### Размытый фон
-`.result-screen::before` backdrop-filter blur(6px). `#pause-overlay` blur(8px).
-
-### Score Pop упругая анимация
-Scale 0.2→1.224 `EASE.outElastic` (30%). Damped spring. Fade только t>0.8s.
-
-### Экран разблокировки
-`showUnlockScreen(title,icon,description)`. Каскад: иконка 150ms, заголовок 350ms, описание 550ms, кнопка 750ms.
-
-### Toast slide-from-top
-`showToast()` slide `top:-60px→20px` 0.3s. Очередь `_toastQueue`. `max(2000,msg.length×60)`.
-
-### Gesture hint оверлей
-`showGestureHint(fromR,fromC,toR,toC)`. 👆 на particle canvas. Движение 0.7s easeInOut.
-
-### Win-экран по сложности
-CSS `.win-tier-hard/super/ultra`. Баннер `#win-hard-cleared`. Через `getDifficultyTier()`.
-
-### Loss aversion quit dialog
-`confirmQuitLevel()` с backdrop-blur + rainbowStreak предупреждение. "Продолжить" визуально больше "Выйти".
-
-### Difficulty badges
-CSS `.tier-hard/superhard/ultrahard` box-shadow. Бейдж 🔥/💥/☠️ верхний левый угол кнопки.
-
-### Rainbow Streak
-`state.rainbowStreak` (0-4). `#pg-rainbow-streak` 5 иконок 🌈/⬜. При 5 → +colorbomb + тост.
-
-### 12-шаговая мелодия матчей
-`state.matchSequenceStep` (0-11). `freq=440×2^(step/12)`. При step=11: аккорд [440,554,659,880].
-
-### 3-слойная адаптивная музыка
-`BGM_LAYERS` с `hiGain/egpGain`. HighIntensity при moves<5. EGP при спешле (1.4s fade-in, hold 3s).
-
-### Стерео-пан матчей
-`StereoPannerNode`. `SFX.match(lvl)` пан нарастает с lvl. При lvl=7: три ноты [0,-0.4,0.4].
-
-### Восклицательные баннеры
-`EXCLAMATIONS` {combo5:'ОТЛИЧНО!', combo8:'НЕВЕРОЯТНО!', combo12:'ШИКАРНО!', rainbow:'РАДУГА!'}. Очередь max 1.
-
-### Difficulty announcement
-`_showDifficultyBanner(tier)` slide-up снизу. hard(оранж,660Hz), superhard(красн,784Hz), ultrahard(фиолет,440+880Hz).
-
-### Точная физика (PHYSICS объект)
-`PHYSICS={SWAP_MS:75,DROP_MS:320,DESTROY_MS:200,COLORBOMB_MS:500,BASE_SCORE:20}`.
-
-### Stars cap и счётчик
-`getTotalStars()`. `⭐ N` в `#m-total-stars`. `refreshMenu()` обновляет.
-
-### "ТАК БЛИЗКО!" на lose-экране
-`#lose-progress-bar-wrap`. Тег при nearMiss≥70%. Bar при ≥40%. Анимация `width 0→X%` 0.5s.
-
-### Retry Tips
-`RETRY_TIPS` (10 советов). `getNextTip()` без повторов. `#lose-retry-tip` со 2-й попытки.
-
-### Buff Buddies нюк
-`state.buffPieces/buffNukeReady`. `BUFF_PIECES_TARGET=10`. `addBuffPiece()` при матче 5+. `fireBuffNuke(r,c)` каскадный 3×3.
-
-### Rainbow Round
-`state.rainbowRound={active,movesLeft}`. Раз в 20 побед → 3 хода. `fillFromTop()` 30% шанс RAINBOW gem. `#game-canvas.rainbow-round` CSS `hue-rotate` анимация. `showRainbowRoundBanner()` поп-баннер + SFX. `updateRainbowRoundHUD()` синхронизирует класс. Сброс при retry.
-
-### Лакрица-слои (Licorice)
-`cell.licorice=N` (1-3). `canSwap()` блокирует. Матч рядом → `licorice--`. BOMB/STRIPE/MEGA → `licorice=0`. `applyGravity()` блокирует падение. `spawnLicorice()` автоспавн в `spendMove()` по `licoriceSpawnRate`. Рендер: N концентрических эллипсов + 🍬. L56/58/62 хардкод, generateLevel difficulty>50.
-
-### Порталы на поле
-`state.portalGrid[r][c]={id,exitR,exitC,color}`. `initBoard()` читает `lvl.portals[[r1,c1,r2,c2]]`. Матч у входа → exit-клетка добавляется в `cellsArr`. STRIPE_H/V продолжает всю exit-строку/колонку. BOMB/MEGA добавляют exit в множество. Визуал: пульсирующие кольца + дуга-безье + 🌀. L103/106/109/112 хардкод, generateLevel difficulty>70 детерминировано.
-
-### Экран пре-уровневых бустеров
-`screen-pregame` между levels и game. `PRE_BOOSTERS[]` (💎-бустеры). `BOOSTERS[]` (🪙-бустеры). `togglePreBooster/toggleBooster`. С L10+: кристалл-бустеры. `buildBoostersUI()`. Кнопка "▶ Начать!".
-
-### Ежедневный календарь наград
-7-дневный цикл `DAILY_REWARDS[]`. `state.loginStreak/lastLoginDate/streakRewardsClaimed`. Модал `claimDailyReward()`. Рамки по редкости. Стрик сбрасывается при пропуске.
-
-### Газировка (Soda Mechanic)
-`state.sodaLevel` (0..ROWS). `cell.bottle=true` — матч рядом → `popBottle()` → `sodaLevel++`. Синий оверлей + пузырьки в drawBoard. Обратная гравитация в soda-зоне (`fillFromTop` skip).
-
-### Система жизней
-`state.lives/livesTimestamp/lives24hUntil`. `MAX_LIVES=5`, рег. каждые 30 мин. `spendLife()`. Экран "Нет жизней". Таймер MM:SS. "Безлимит" за 50💎.
-
-### Мистический контейнер
-`cell.mystery=true`. `canSwap()` блокирует. BOMB/STRIPE/MEGA иммунен. Матч рядом → `popMystery()`: STRIPE_H(30%), STRIPE_V(30%), BOMB(25%), RAINBOW(10%), MEGA(5%). Рендер: ❓ фиолетовый. L60/70/80 хардкод, generateLevel difficulty>55.
-
-### TASK-MP3 — Интеграция MP3 треков
-`_makeMp3Bgm(src)` — HTML5 Audio wrapper. `MENU_BGM=_makeMp3Bgm('audio/menu.mp3')`, `BGM=_makeMp3Bgm('audio/bgm.mp3')`. `state.musicVol` (0-100) + слайдер в настройках. `state.musicOn` тоггл. `BGM_LAYERS` Web Audio поверх mp3. audio/menu.mp3 и audio/bgm.mp3 в репозитории.
-
-### Responsive layout
-`resizeCanvas()` portrait_narrow/portrait_square/landscape detection. `boardOffX/Y` как % viewport. HUD относительно board bounds. Landscape — board максимум высоты. `orientationchange` listener.
-
-### Bronze/Silver/Gold targets
-`starlevel=[t, ×2.5, ×4.0]` в `patchLevelBalance()`. `calcStars()` по starlevel. `win-star-labels` показывает пороги. Уже реализовано в базовом коде.
-
-### First Attempt бейдж
-`firstAttemptWins[n]` + `_firstAttemptLevel`. При победе с первой попытки: `#win-first-attempt` показывает "⚡ С первого раза! ⭐" (normal) или "HARD: С ПЕРВОГО РАЗА! 🏆" (hard+). +5💎 тост. Маркер 🏆 на кнопке уровня.
-
-### Login Calendar
-`dailyDayClaimed/dailyLastClaim/dailyLastClaimTs` в state. `shouldShowDailyReward()` — 20ч + calendar day check. 7-day grid в `popup-daily`: `past/claimed/today/rarity-*` классы. `claimDailyReward()` → coins/crystals/lives/booster + `_flyRewardAnim()`. День 7 = legendary reward. Цикл: `dailyDayClaimed%7+1`.
-
-### Stars fly-to-HUD
-`flyStarsToCounter(numStars)`: JS bezier quadratic path per star, fixed-position overlay ⭐ elements. Задержки 0/400/800ms. При прилёте: `counterEl` текст +1, `@keyframes winStarBounce` bounce-анимация, `SFX._tone` 440/523/659 Hz. `#win-total-stars` div показывается в win-экране.
-
-### Динамическая сложность
-`state.recentResults[]` последние 5. `getDynamicDifficulty()` → 0.75/1.0/1.15. 3+ потерь → 0.75: `_activeGemTypes-1` + 8% шанс STRIPE/BOMB в `fillFromTop()`. 3 победы подряд → 1.15 (норм). `_currentDynDiff` отображается в dev-панели. Результаты пишутся в `showWin/showLose`, сохраняются в `SAVE_FIELDS`.
-
-### Замки бустеров
-`BOOSTER_UNLOCK_LEVELS={hammer:5,striped:10,colorbomb:16}`. `updateHUD()` показывает 🔒/cnt, `disabled=true`, tooltip "Откроется на LN". `activateInGameBooster()` блокирует с тостом. `checkBoosterUnlocks(prevMax,newMax)` при победе: toast + +1 free если разблокировался.
-
-### Адаптивная музыка (тональность)
-`_musicState='calm'|'tense'|'critical'` внутри BGM_LAYERS. moves>10→calm, ≤10→tense (playbackRate→1.15 за 2s), ≤5→critical (+percGain kick/snare паттерн за 2s). `_smoothRate(target,ms)` через rAF. `getMusicState()` для dev-панели. `_makeMp3Bgm.getEl()` добавлен.
-
-### Мёд/Медведи (Honey Layers)
-`cell.honey=N` (1-3). `canSwap/_simCanSwap` блокируют. Матч рядом → `honey--`; при 0 → `freeBear(r,c)` → `bearsFreed++`. BOMB/STRIPE/MEGA → `honey=0`. `applyGravity()` фиксирует. Рендер: жёлтый градиент + капли + 🐻 + счётчик слоёв. `type:'bears'`, `level.bearsTarget`. `updateGoalProgress/calcStars/isCloseToWin` — bears case. `initBoard()` расставляет из `lvl.honeyCount`. `generateLevel()` difficulty>45. L65/L67 хардкод.
-
-### EOC gate
-`showLevels()` — после постройки сетки: если `maxUnlocked > LEVELS.length`, вставляет `.level-btn.eoc-gate` с 🔒 + "Скоро..." через `insertBefore(gate, grid.firstChild)`. Нажатие → `showToast('🔒 Больше уровней уже скоро!')`. CSS `@keyframes eocPulse` + gradient фон.
-
-### Lose-screen swipe-to-minimize
-`_setupLoseSwipe()` в `showLose()`. Handle bar (`#lose-drag-handle`) + drag вниз >30% → `.minimized` class (`translateY(calc(100%-60px))`). Snap-back при коротком свайпе. Tap на свёрнутый → разворачивает. Touch + Mouse events.
-
-### Вероятности гемов на уровень
-`weightedRandom(weights)` хелпер. `_currentColorWeights`/`_currentSpecialWeights` из `lvl.colorWeights`/`lvl.specialSpawnWeights`. `randGem()` использует colorWeights если есть. DD-бонус спешлов в `fillFromTop()` использует specialSpawnWeights. Dev-панель: `CW:[...]` и `SW:{...}`. Демо: L2 `colorWeights:[3,1,1]`, L5 `[1,3,1,1]`, L8 `[1,1,2,2]`.
-
-### Коллекция трофеев
-`TROPHIES[]` 6 штук (rookie/veteran/legend/streak/hard/ultra) + `checkTrophies()` при победе + раздел в `renderAchievements()`. `#m-last-trophy` на главном — последний полученный трофей. Клик → переход к достижениям.
-
-### HUD objective counter
-`level.objective={type,gem,count}` — опциональная вторичная цель. `#hud-obj-row` + `#hud-obj-text` в HUD. `updateGoalProgress()` рендерит `💎/⭐/🧊 X/Y ✅`. При выполнении: `@keyframes objPop` + SFX 880 Hz. `checkWin()` проверяет objective после основной цели. Демо: L22 `objective:{type:'score',count:8000}`.
-
-### Экран 0 жизней
-`#lose-lives-row` "❤️ Осталось: X/5" на lose-экране. `simulateAd(onComplete)` — 5s прогресс-бар → callback. `askFriendsForLife()` — 3 рандомных имени + "отправлено". `#no-lives-ad-bar`/`#no-lives-friends` в no-lives попапе. Таймер уже был.
-
-### Shop offer с таймером
-`SHOP_OFFERS[]` 3 предложения с `duration`. `state.shopOfferExpiry[id]`. `.timed-offer-card` золотой градиент + `barShine`. `.toc-badge` скидка. `.toc-timer.last-chance` (красный+пульс при <1ч). `_renderTimedOffers()` каждые 10с. `buyTimedOffer(id)` → удаляет expiry.
-
-### Activity Hub
-`screen-activity` с 2×N сеткой `.act-tile`. Плитки: Daily/Trophies/Shop/Achievements/Quests/Tournament. `.claim` = зелёный glow+пульс. Badge = нотификации. `renderActivityHub()` при открытии. `_activityBadgeCount()` для кнопки на главном. Кнопка "🎯 Активности" в меню с badge.
+## КРИТИЧЕСКИЕ — ломают уровни (ИСПРАВЛЕНО)
+
+### ✅ 1. Заранее заданные цвета гемов (gemGrid)
+Исправлено: make_levels.py извлекает gemGrid [[r,c,colorIdx]], initBoard применяет.
+**Результат:** 13 655 уровней с предзаданными цветами гемов.
+
+### ✅ 2. Позиции блокеров — координаты вместо счётчиков
+Исправлено: make_levels.py извлекает iceGrid, jellyGrid, chocGrid, honeyGrid, marmaGrid.
+initBoard расставляет блокеры по точным координатам, fallback на count-based.
+
+### ✅ 3. colorWeights не применялся при инициализации доски
+Исправлено: make_levels.py конвертирует `{red:1, blue:0,...}` → числовой массив [w0..w6].
+initBoard передаёт colorWeights в randGem() при начальном заполнении.
 
 ---
 
-## 🔵 ОЖИДАЮТ РЕАЛИЗАЦИИ
+## ВАЖНЫЕ — механики есть в CCSS, у нас нет
+
+### 4. Chain Blocker (коды 660–672)
+**Спрайты:** chain_1.png, chain_2.png, chain_3.png — **ЕСТЬ**
+**Механика:** Цепь поверх ячейки. Разрушается когда соседний гем матчится.
+До 3 слоёв (chain_1 → chain_2 → chain_3 → пусто). Гем под цепью двигается нормально.
+
+**Что делать:**
+- make_levels.py: уже извлекает в chocGrid (временно) — нужен отдельный chainGrid [[r,c,layers]]
+- initBoard: читать chainGrid, ставить cell.chain = N (1-3)
+- drawBoard: рисовать chain_N.png поверх гема
+- explodeCell/processMatches: при матче соседних уменьшать layers на 1
 
 ---
 
-### TASK-18 · Режим пути (Path Mode)
-**Приоритет: средний | ~5-6 часов**
+### 5. Frosting Ice (коды 550–555)
+**Спрайты:** НЕТ — нужно создать frosting_1.png … frosting_6.png (или один спрайт + число слоёв)
+**Механика:** Сахарная глазурь покрывает ячейку. До 6 слоёв (от 550 до 555 = слой 6 до 1).
+Разрушается при матче на этой ячейке (аналог льда, но НЕ блокирует движение гема).
 
-`type:'path'`. `level.pathCells=[[r,c],...]`. `state.pathProgress` (0..N). Матч на pathCells[progress] или рядом → `progress++`. Дорожка + персонаж на Canvas. `checkWin()`: progress>=length. Хардкодные L80-L100.
-
-**AC:** Персонаж движется. Победа при финише. Маршрут виден до игры.
-
----
-
-### TASK-19 · Территориальный захват
-**Приоритет: низкий | ~6-8 часов**
-
-`type:'territory'`. `state.territoryGrid[r][c]` = 0|1|2. `level.enemyStartCells`. Матч → уничтоженные+соседи → `territory=1`. Каждые `enemyExpandRate` ходов враг расширяется. `checkWin()`: playerCells/total >= targetPercent. Полупрозрачный тинт по faction.
-
-**AC:** Захват работает. Враг расширяется. Прогресс-бар % захвата.
+**Что делать:**
+- make_levels.py: добавить frostGrid [[r,c,layers]] из кодов 550-555
+- initBoard: читать frostGrid, ставить cell.frost = N (1-6)
+- drawBoard: рисовать frosting поверх гема
+- processMatches: при матче уменьшать cell.frost
 
 ---
 
-### TASK-24 · Острова — мета-прогрессия
-**Приоритет: высокий | ~8-10 часов**
+### 6. White Chocolate / Chocolate Fountain (коды 602–606)
+**Спрайты:** НЕТ — нужно создать chocolate_white.png
+**Механика:** Белый шоколад расширяется как обычный шоколад (код 320), но другой цвет.
+Chocolate fountain (602) — ячейка-источник, которая ГЕНЕРИРУЕТ белый шоколад.
 
-Экран "Остров" между меню и картой. `state.islandTiles[id]` (localStorage). 12-16 тайлов: 🌳(1⭐), 🏠(2⭐), ⛲(4⭐), 🏰(6⭐) и др. `state.totalStars`. На карте уровней — % прогресса острова.
-
-**AC:** Экран из меню. ⭐ вычитаются. Тайлы сохраняются. Минимум 12 тайлов.
-
----
-
-### TASK-25 · Компаньон-помощник (Sidekick)
-**Приоритет: средний | ~4-5 часов**
-
-`state.sidekick={id,charge,maxCharge}`. Разблокируется L25. `SIDEKICKS`: 🐢(ломает 3 льда), 🐦(создаёт STRIPE), 🐻(+3 хода). Заряд: +1 матч, +3 спешл, +5 каскад 3+. Шкала в HUD. `activateSidekick()` автоматически.
-
-**AC:** Шкала растёт. При заполнении — активация. Разные компаньоны делают разное.
+**Что делать:**
+- make_levels.py: добавить whiteChocGrid [[r,c]] и fountainGrid [[r,c]]
+- Нужен спрайт chocolate_white.png
+- Логика расширения аналогична chocolate (код 320)
 
 ---
 
-### TASK-28 · Гача-капсула
-**Приоритет: низкий | ~3-4 часа**
+### 7. Порталы (portals + portalTubes)
+**Спрайты:** portal.png — **ЕСТЬ**
+**Данные:** 5 856 уровней с порталами (пары из make_levels.py) — **ЕСТЬ**
+**Механика:** Гем входит в ячейку-вход → мгновенно появляется в ячейке-выход.
 
-Экран `capsule` раз в 5 побед. Бесплатно раз в 24ч. 🎁 трясётся 1.5с → лопается. Награды: 60%+15💎, 20% бустер, 15%+1жизнь, 5% скин. "Открыть" за 10💎 или "Пропустить".
-
-**AC:** Каждые 5 побед. Анимация видна. Бесплатно раз в сутки.
-
----
-
-### TASK-36 · Диорама — анимированный хаб
-**Приоритет: низкий | ~8-10 часов**
-
-Экран 'menu' → "живой" хаб: остров (правый угол), события (левый), маскот (центр). 5 состояний: `hub_idle` (float), `hub_level_unlocked` (pop), `hub_reward_ready` (пульс), `hub_no_lives` (разбитое сердце), `hub_event_active` (баннер). CSS classes + JS state machine.
-
-**AC:** 3 анимированных зоны. При награде — пульс. При 0 жизней — сломанное сердце.
+**Что делать:**
+- initBoard: уже читает portals [[r1,c1,r2,c2]] — нужно создать portalMap
+- applyGravity: при падении через ячейку-портала → переместить гем к выходу
+- drawBoard: рисовать portal.png в ячейках-порталах
 
 ---
 
-### TASK-44 · Ежедневный URM сундук
-**Приоритет: низкий | ~3 часа**
+### 8. Licorice Swirl (код 340)
+**Спрайты:** НЕТ — нужно создать licorice.png (лакричный завиток)
+**Механика:** Блокер на ячейке. Не перемещается. Разрушается при матче НА этой ячейке.
+Генерируется из ячеек с кодом 361.
 
-Экран `daily_chest` раз в сутки. `state.chestStreak` — дни подряд. При streak 7 → Legendary гарантирован. Награды: Common(50%)+5💎, Uncommon(25%), Rare(15%), Epic(8%), Legendary(2%)+100💎+скин. Анимация ≥1.5с. Тултип `?` → шансы.
-
-**AC:** Раз в сутки. Анимация ≥1.5с. Шансы в тултипе. День 7 → Legendary.
-
----
-
-
-### TASK-59 · Scrolling Board
-**Приоритет: низкий | ~5 часов**
-
-`level.boardCols/boardRows`. `drawBoard()` рендерит видимую часть (`viewOffsetY/X`). Touch drag не на гем → скроллинг. `cameraTargets` → плавный pan. `cellSize` auto (min 32px). Мини-скролл-бар.
-
-**AC:** Поле >8×10 рендерится и скроллится. Ходы работают при смещении.
+**Что делать:**
+- Нужен спрайт licorice.png
+- initBoard: cell.licorice = true для ячеек из licoriceGrid
+- drawBoard: рисовать licorice.png поверх гема
+- processMatches: при матче на licorice ячейке → убрать cell.licorice
 
 ---
 
-### TASK-61 · Сезонные скины
-**Приоритет: низкий | ~3 часа**
+### 9. Цветные пушки — candyCannons (коды 103–106)
+**Спрайты:** НЕТ — нужны cannon_up/down/left/right.png
+**Механика:** Пушка стреляет цветным гемом в заданном направлении каждые N ходов.
+JSON содержит candyCannons[] с colors[], coordinate, ammunition[].
 
-`SEASONS` по `getMonth()`. CSS-переменные `--season-bg-top/bottom/particle`. Spring: зел+розов; Summer: жёлт+голуб; Autumn: оранж+бордов; Winter: синий+белый. Партиклы по сезону . Fade 2s при смене месяца.
-
-**AC:** Хаб выглядит по-разному зимой и летом.
-
----
-
-### TASK-65 · Звуки сундука по редкости
-**Приоритет: средний | ~2 часа**
-
-В `openChest(rarity)` — аудио-цепочка: Common(pip→click→jingle 440-523-659), Rare(+0.15s reverb), Epic(harmonics+пан±0.3), Legendary(C major arpeggio 523-659-784-1047, 0.5s reverb). Фоновый 60-80Hz во время анимации.
-
-**AC:** Common и Legendary звучат принципиально по-разному. Синхронизировано с .
+**Что делать:**
+- Нужны спрайты пушек (4 направления)
+- Логика: каждые N ходов стрелять → гем летит → разрушает всё на пути (или matrix)
+- Пока: низкий приоритет до спрайтов
 
 ---
 
-### TASK-69 · Island hex-map
-**Приоритет: низкий | ~8 часов**
+### 10. Направленная гравитация (accelerationMap)
+**Механика:** [0,-2] = гемы плавают вверх. [-2,0] = горизонтальный дрейф.
+Поле в JSON сейчас игнорируется.
 
-`ISLAND_MAP={tiles:[...],chapter:1}`. Гекс-сетка на Canvas/CSS grid. Тайлы за `totalStars`. Landmark → mini-chest . Полоса прогресса главы.
-
-**AC:** Гекс-карта отображается. Разблокировка за ⭐. Landmark дают награды.
-
----
-
-
+**Что делать:**
+- make_levels.py: извлечь accelerationMap → записать как [dx, dy]
+- applyGravity: читать направление гравитации из lvl.gravity
+- fillFromTop: менять сторону заполнения под гравитацию
 
 ---
 
+## НИЗКИЙ ПРИОРИТЕТ
 
+### 11. Бонусные взрывы при завершении
+Сейчас: по одному. CCSS: все одновременно.
+
+### 12. Лакричная ограда (Liquorice Fence)
+Edge-блокер между клетками, неразрушим. Требует архитектурного изменения. Отложить.
+
+### 13. specialCandiesAmmunitionData
+В первых 500 уровнях все значения = 0. Редкая механика.
+
+### 14. minNumLiquoriceOnScreen
+licoriceMin уже извлекается в make_levels.py → нужна логика respawn.
+
+### 15. Spawner cells (код 101, 570–589)
+Ячейки-генераторы гемов. Нужна расшифровка + логика.
+
+---
+
+## ТАБЛИЦА: ОТСУТСТВУЮЩИЕ СПРАЙТЫ
+
+| Файл | Нужен для | CCSS коды | Приоритет |
+|------|-----------|-----------|-----------|
+| `licorice.png` | Licorice Swirl блокер | 340, 361 | 🔴 Высокий |
+| `frosting_1.png` … `frosting_6.png` | Frosting Ice (6 слоёв) | 550–555 | 🔴 Высокий |
+| `chocolate_white.png` | White Chocolate | 602–606 | 🔴 Высокий |
+| `cannon_down.png` | Пушка вниз | 103 | 🟡 Средний |
+| `cannon_right.png` | Пушка вправо | 104 | 🟡 Средний |
+| `cannon_left.png` | Пушка влево | 105 | 🟡 Средний |
+| `cannon_up.png` | Пушка вверх | 106 | 🟡 Средний |
+| `jelly_double.png` | Двойное желе (визуал 2-й слой) | 201, 271 | 🟡 Средний |
+| `carpet.png` | PaintBattle ковёр | 300 | 🟡 Средний |
+| `ingredient.png` | FloatingNuts орех/ингредиент | 570 | 🟡 Средний |
+| `licorice_fence.png` | Лакричная ограда (edge) | — | 🟢 Низкий |
+
+**Примечание:** Спрайты для chain blocker **уже есть** (`chain_1.png`, `chain_2.png`, `chain_3.png`).
+Спрайт `portal.png` **уже есть**.
+
+---
+
+## ТАБЛИЦА: ОТСУТСТВУЮЩИЕ ЗВУКИ (SFX)
+
+Текущий SFX: `match`, `combo`, `special`, `click`, `reward`, `win`, `lose`, `winJingle`, `loseJingle`
+
+| SFX-ключ | Когда играть | Приоритет |
+|----------|-------------|-----------|
+| `SFX.iceBreak()` | При разрушении льда (любой слой) | 🔴 Высокий |
+| `SFX.jellyPop()` | При разрушении желе | 🔴 Высокий |
+| `SFX.chocolateDestroy()` | При уничтожении шоколада | 🟡 Средний |
+| `SFX.honeyBreak()` | При разрушении мёда | 🟡 Средний |
+| `SFX.bearFreed()` | Когда медведь освобождён | 🟡 Средний |
+| `SFX.marmaladePop()` | При разрушении мармелада | 🟡 Средний |
+| `SFX.chainBreak()` | При разрушении цепи | 🟡 Средний |
+| `SFX.frostingBreak()` | При разрушении frosting ice | 🟡 Средний |
+| `SFX.portalWhoosh()` | Гем прошёл через портал | 🟡 Средний |
+| `SFX.licoriceMatch()` | При разрушении лакрицы | 🟡 Средний |
+| `SFX.carpetPaint()` | При покраске ковра | 🟢 Низкий |
+| `SFX.ingredientDrop()` | Ингредиент достиг выхода | 🟢 Низкий |
+| `SFX.cannonFire()` | Пушка выстрелила | 🟢 Низкий |
+| `SFX.bonusExplosion()` | Бонусный взрыв в конце уровня | 🟢 Низкий |
+
+**Реализация:** Все звуки на `noise2()` / `osc()` — Web Audio API синтез без файлов.
+Добавлять в объект `SFX` в секции строк 11168–11335.
