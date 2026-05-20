@@ -4667,6 +4667,16 @@ function initBoard(lvl) {
       state.portalGrid[r2][c2] = {id: idx, exitR: r1, exitC: c1, color: col};
     });
   }
+  // Portal tubes — physical path between portal pairs
+  state.portalTubeMap = {};
+  if (Array.isArray(lvl.portalTubes) && lvl.portalTubes.length > 0) {
+    for (const [a_r, a_c, b_r, b_c, segs] of lvl.portalTubes) {
+      const portal = state.portalGrid[a_r]?.[a_c];
+      if (!portal) continue;
+      const key = Math.min(a_r*COLS+a_c, b_r*COLS+b_c)+','+Math.max(a_r*COLS+a_c, b_r*COLS+b_c);
+      state.portalTubeMap[key] = { color: portal.color, segs };
+    }
+  }
   // Валидация: если уровень требует камни/лёд но их нет на доске — автофикс
   if (lvl.type==='stone' && lvl.stoneCount>0) {
     let actual=0; for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(board[r]?.[c]?.stone) actual++;
@@ -5148,13 +5158,36 @@ function drawBoard() {
       const p = state.portalGrid[r]?.[c]; if (!p) continue;
       const pKey = Math.min(r*COLS+c, p.exitR*COLS+p.exitC)+','+Math.max(r*COLS+c, p.exitR*COLS+p.exitC);
       if (_drawnPairs.has(pKey)) continue; _drawnPairs.add(pKey);
-      const x1=boardOffX+c*cs+cs/2, y1=boardOffY+r*cs+cs/2;
-      const x2=boardOffX+p.exitC*cs+cs/2, y2=boardOffY+p.exitR*cs+cs/2;
-      const cpx=(x1+x2)/2-(y2-y1)*0.3, cpy=(y1+y2)/2+(x2-x1)*0.3;
-      ctx.save();
-      ctx.strokeStyle=p.color+'66'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
-      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo(cpx,cpy,x2,y2); ctx.stroke();
-      ctx.setLineDash([]); ctx.restore();
+      const tube = state.portalTubeMap?.[pKey];
+      if (tube && tube.segs.length > 1) {
+        ctx.save();
+        ctx.strokeStyle = tube.color + '55'; ctx.lineWidth = cs * 0.22;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (let i = 0; i < tube.segs.length; i++) {
+          const [sr, sc] = tube.segs[i];
+          const sx = boardOffX + sc*cs + cs/2, sy = boardOffY + sr*cs + cs/2;
+          if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+        ctx.strokeStyle = tube.color + 'aa'; ctx.lineWidth = cs * 0.08;
+        ctx.beginPath();
+        for (let i = 0; i < tube.segs.length; i++) {
+          const [sr, sc] = tube.segs[i];
+          const sx = boardOffX + sc*cs + cs/2, sy = boardOffY + sr*cs + cs/2;
+          if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+        ctx.restore();
+      } else {
+        const x1=boardOffX+c*cs+cs/2, y1=boardOffY+r*cs+cs/2;
+        const x2=boardOffX+p.exitC*cs+cs/2, y2=boardOffY+p.exitR*cs+cs/2;
+        const cpx=(x1+x2)/2-(y2-y1)*0.3, cpy=(y1+y2)/2+(x2-x1)*0.3;
+        ctx.save();
+        ctx.strokeStyle=p.color+'66'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo(cpx,cpy,x2,y2); ctx.stroke();
+        ctx.setLineDash([]); ctx.restore();
+      }
     }
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
       const p = state.portalGrid[r]?.[c]; if (!p) continue;
@@ -12297,7 +12330,7 @@ function _simInitBoard(lvl) {
   }
   return {
     board, holes: holeSet, iceGrid, jellyGrid, carpetGrid,
-    portalGrid: null,
+    portalGrid: null, portalTubeMap: {},
     score: 0, moves: lvl.moves, comboCount: 0,
     collectedGems: {}, iceBroken: 0, stonesBroken: 0,
     ingredientsDelivered: 0, chocolateInitial: lvl.chocolateCount || 0,
