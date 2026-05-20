@@ -4502,11 +4502,12 @@ function initBoard(lvl) {
     state.pathProgress = 0;
   }
 
-  // Инициализируем сетки желе, ковра и льда (cell-bound, не движутся с гемами)
+  // Инициализируем сетки желе, ковра, льда и frosting (cell-bound, не движутся с гемами)
   state.jellyGrid  = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
   state.carpetGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
   state.carpetTotal = 0;
   state.iceGrid    = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
+  state.frostGrid  = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
   state.portalGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(null));
 
   const board = [];
@@ -4630,6 +4631,12 @@ function initBoard(lvl) {
     shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => board[r][c]?.type >= 0 && !board[r][c].marmalade)).slice(0, lvl.iceCount).forEach(([r,c]) => {
       state.iceGrid[r][c] = 1;
     });
+  }
+  // Frosting Ice (codes 550-555 → 1-6 layers, direct match only)
+  if (Array.isArray(lvl.frostGrid) && lvl.frostGrid.length > 0) {
+    for (const [fr, fc, flayers] of lvl.frostGrid) {
+      if (fr < ROWS && fc < COLS && !holeSet.has(`${fr},${fc}`)) state.frostGrid[fr][fc] = Math.max(1, Math.min(6, flayers||1));
+    }
   }
   // Камни — предпочитаем внутреннюю зону, но если там дыры — берём любые свободные клетки
   const innerPool = getAllNonHolePositions(holeSet).filter(([r,c]) => r>1&&r<ROWS-2&&c>1&&c<COLS-2 && !board[r][c]?.chocolate);
@@ -5105,6 +5112,32 @@ function drawBoard() {
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
     if (!state.iceGrid[r]?.[c]) continue;
     ctx.drawImage(_iceS, boardOffX+c*cs, boardOffY+r*cs, cs, cs);
+  }
+
+  // 4.1 Frosting Ice поверх фишек (1-6 слоёв, только direct match)
+  if (state.frostGrid) {
+    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+      const fl = state.frostGrid[r]?.[c]; if (!fl) continue;
+      const fx=boardOffX+c*cs, fy=boardOffY+r*cs;
+      const alpha = 0.35 + fl/6*0.55;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#c7f0ff';
+      roundRect(ctx, fx+1, fy+1, cs-2, cs-2, 8); ctx.fill();
+      // Кристальный паттерн
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.2;
+      const cx2=fx+cs/2, cy2=fy+cs/2, sr=cs*0.38;
+      for (let i=0;i<6;i++) {
+        const ang=i*Math.PI/3;
+        ctx.beginPath(); ctx.moveTo(cx2,cy2); ctx.lineTo(cx2+Math.cos(ang)*sr, cy2+Math.sin(ang)*sr); ctx.stroke();
+      }
+      ctx.strokeStyle='rgba(180,230,255,0.6)'; ctx.lineWidth=1.5;
+      roundRect(ctx, fx+2, fy+2, cs-4, cs-4, 7); ctx.stroke();
+      // Слои: число кружков = fl
+      ctx.fillStyle='rgba(255,255,255,0.85)';
+      for(let i=0;i<fl;i++){ctx.beginPath();ctx.arc(fx+8+i*10,fy+8,2.5,0,Math.PI*2);ctx.fill();}
+      ctx.restore();
+    }
   }
 
   // 4.3 Порталы — цветные кольца с анимацией
@@ -6846,7 +6879,8 @@ async function processMatches(hintR, hintC) {
       if (cell.locked) { cell.locked=false; spawnParticles(r,c,'#a78bfa',4); }
       if (cell.bottle) popBottle(r, c); // колба в матче — считаем её как сбитую
       const gem=GEMS[cell.type]; if (gem) { spawnParticles(r,c,getSkinColor(cell.type)); spawnScorePop(r,c,getSkinColor(cell.type)); }
-      if (state.iceGrid[r]?.[c]) { state.iceGrid[r][c]=0; state.iceBroken++; updateQuestProgress('ice', 1); }
+      if (state.iceGrid[r]?.[c]) { state.iceGrid[r][c]--; if(!state.iceGrid[r][c]){state.iceBroken++;updateQuestProgress('ice',1);} }
+      if (state.frostGrid[r]?.[c]) { state.frostGrid[r][c]--; spawnParticles(r,c,'#bae6fd',4); }
       clearJellyAt(r, c);
       clearCarpetAt(r, c, true); // spread to adjacent carpet on regular match
       if (cell.type>=0) state.collectedGems[cell.type]=(state.collectedGems[cell.type]||0)+1;
@@ -6867,6 +6901,8 @@ async function processMatches(hintR, hintC) {
         if (nb?.licorice > 0) { nb.licorice--; spawnParticles(nr,nc,'#b45309',nb.licorice===0?6:3); if(nb.licorice===0)rings.push({x:boardOffX+nc*cellSize+cellSize/2,y:boardOffY+nr*cellSize+cellSize/2,color:'rgba(180,83,9,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2}); }
         if (nb?.chain > 0) { nb.chain--; spawnParticles(nr,nc,'#8899aa',nb.chain===0?6:3); if(nb.chain===0)rings.push({x:boardOffX+nc*cellSize+cellSize/2,y:boardOffY+nr*cellSize+cellSize/2,color:'rgba(100,140,170,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2}); }
         if (nb?.honey > 0) { nb.honey--; spawnParticles(nr,nc,'#fde68a',3); if(nb.honey===0) _releaseBear(nr,nc); }
+        if (state.iceGrid[nr]?.[nc]) { state.iceGrid[nr][nc]--; if(!state.iceGrid[nr][nc]){state.iceBroken++;updateQuestProgress('ice',1);spawnParticles(nr,nc,'#93c5fd',4);} }
+        // frost NOT hit by adjacent matches — only direct
       }
     }
 
@@ -8111,14 +8147,15 @@ async function _bombPhase1(r, c) {
   const _ch1=[];let _pts1=0;
   for(const[nr,nc]of _td1){
     const cl=state.board[nr]?.[nc];if(!cl)continue;
-    if(state.iceGrid[nr]?.[nc]){state.iceGrid[nr][nc]=0;state.iceBroken++;updateQuestProgress('ice',1);}
+    if(state.iceGrid[nr]?.[nc]){state.iceGrid[nr][nc]--;if(!state.iceGrid[nr][nc]){state.iceBroken++;updateQuestProgress('ice',1);}}
+    if(state.frostGrid[nr]?.[nc]){state.frostGrid[nr][nc]--;spawnParticles(nr,nc,'#bae6fd',3);}
     if(cl.ingredient){}
     else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(nr,nc,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(nr,nc);}
     else if(cl.chocolate){destroyChocolate(nr,nc);breakAdjacentChocolate(nr,nc);}
     else if(cl.marmalade){cl.marmalade=false;}
     else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(nr,nc,'#a78bfa',4);}
+    else if(cl.chain>0){cl.chain--;spawnParticles(nr,nc,'#8899aa',cl.chain===0?6:3);if(cl.chain===0)rings.push({x:boardOffX+nc*cellSize+cellSize/2,y:boardOffY+nr*cellSize+cellSize/2,color:'rgba(100,140,170,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2});}
     else if(cl.licorice>0){cl.licorice=0;spawnParticles(nr,nc,'#b45309',6);}
-    else if(cl.chain>0){cl.chain=0;spawnParticles(nr,nc,'#8899aa',6);}
     else if(cl.honey>0){cl.honey=0;_releaseBear(nr,nc);}
     else if(cl.mystery){}
     else if(cl.ingredient){}
@@ -8150,14 +8187,15 @@ async function _bombBlast3x3(cr, cc) {
   const chains=[];let pts=0;
   for(const[r,c]of td){
     const cl=state.board[r]?.[c];if(!cl)continue;
-    if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]=0;state.iceBroken++;updateQuestProgress('ice',1);}
+    if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]--;if(!state.iceGrid[r][c]){state.iceBroken++;updateQuestProgress('ice',1);}}
+    if(state.frostGrid[r]?.[c]){state.frostGrid[r][c]--;spawnParticles(r,c,'#bae6fd',3);}
     if(cl.ingredient){}
     else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(r,c,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(r,c);}
     else if(cl.chocolate){destroyChocolate(r,c);breakAdjacentChocolate(r,c);}
     else if(cl.marmalade){cl.marmalade=false;}
     else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(r,c,'#a78bfa',4);}
+    else if(cl.chain>0){cl.chain--;spawnParticles(r,c,'#8899aa',cl.chain===0?6:3);if(cl.chain===0)rings.push({x:boardOffX+c*cellSize+cellSize/2,y:boardOffY+r*cellSize+cellSize/2,color:'rgba(100,140,170,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2});}
     else if(cl.licorice>0){cl.licorice=0;spawnParticles(r,c,'#b45309',6);}
-    else if(cl.chain>0){cl.chain=0;spawnParticles(r,c,'#8899aa',6);}
     else if(cl.honey>0){cl.honey=0;_releaseBear(r,c);}
     else if(cl.mystery){}
     else{if(cl.special!==SPECIAL.NONE)chains.push({r,c,special:cl.special,type:cl.type});state.board[r][c]=null;pts+=30;breakAdjacentChocolate(r,c);}
@@ -8190,12 +8228,14 @@ async function _bombPhase1_5x5(r, c) {
   const _ch1=[];let _pts1=0;
   for(const[nr,nc]of _td1){
     const cl=state.board[nr]?.[nc];if(!cl)continue;
-    if(state.iceGrid[nr]?.[nc]){state.iceGrid[nr][nc]=0;state.iceBroken++;updateQuestProgress('ice',1);}
+    if(state.iceGrid[nr]?.[nc]){state.iceGrid[nr][nc]--;if(!state.iceGrid[nr][nc]){state.iceBroken++;updateQuestProgress('ice',1);}}
+    if(state.frostGrid[nr]?.[nc]){state.frostGrid[nr][nc]--;spawnParticles(nr,nc,'#bae6fd',3);}
     if(cl.ingredient){}
     else if(cl.stone){cl.stone=false;cl.type=randGem();state.stonesBroken++;spawnParticles(nr,nc,'#6b7280');updateQuestProgress('stones',1);breakAdjacentChocolate(nr,nc);}
     else if(cl.chocolate){destroyChocolate(nr,nc);breakAdjacentChocolate(nr,nc);}
     else if(cl.marmalade){cl.marmalade=false;}
     else if(cl.locked){cl.locked=false;cl.anim={};spawnParticles(nr,nc,'#a78bfa',4);}
+    else if(cl.chain>0){cl.chain--;spawnParticles(nr,nc,'#8899aa',cl.chain===0?6:3);if(cl.chain===0)rings.push({x:boardOffX+nc*cellSize+cellSize/2,y:boardOffY+nr*cellSize+cellSize/2,color:'rgba(100,140,170,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2});}
     else if(cl.licorice>0){cl.licorice=0;spawnParticles(nr,nc,'#b45309',6);}
     else if(cl.honey>0){cl.honey=0;_releaseBear(nr,nc);}
     else if(cl.mystery){}
@@ -8406,12 +8446,14 @@ async function triggerSpecial(r,c,special,partnerType=-1) {
   let bonusPts=0;
   for (const [rr,cc] of td) {
     const cl=state.board[rr]?.[cc]; if (!cl) continue;
-    if (state.iceGrid[rr]?.[cc]) { state.iceGrid[rr][cc]=0; state.iceBroken++; updateQuestProgress('ice',1); }
+    if (state.iceGrid[rr]?.[cc]) { state.iceGrid[rr][cc]--; if(!state.iceGrid[rr][cc]){state.iceBroken++;updateQuestProgress('ice',1);} }
+    if (state.frostGrid[rr]?.[cc]) { state.frostGrid[rr][cc]--; spawnParticles(rr,cc,'#bae6fd',3); }
     if (cl.ingredient) { /* ингредиенты взрывами не уничтожаются — падают сами */ }
     else if (cl.stone) { cl.stone=false; cl.type=randGem(); state.stonesBroken++; spawnParticles(rr,cc,'#6b7280'); updateQuestProgress('stones',1); breakAdjacentChocolate(rr,cc); }
     else if (cl.chocolate) { destroyChocolate(rr, cc); breakAdjacentChocolate(rr, cc); }
     else if (cl.marmalade) { cl.marmalade=false; }
     else if (cl.locked) { cl.locked=false; cl.anim={}; spawnParticles(rr,cc,'#a78bfa',4); }
+    else if (cl.chain > 0) { cl.chain--; spawnParticles(rr,cc,'#8899aa',cl.chain===0?6:3); if(cl.chain===0)rings.push({x:boardOffX+cc*cellSize+cellSize/2,y:boardOffY+rr*cellSize+cellSize/2,color:'rgba(100,140,170,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2}); }
     else if (cl.licorice > 0) { cl.licorice=0; spawnParticles(rr,cc,'#b45309',6); }
     else if (cl.honey > 0) { cl.honey=0; _releaseBear(rr,cc); }
     else if (cl.mystery) { /* mystery иммунен к прямым взрывам */ }
@@ -8654,12 +8696,13 @@ async function explodeCell(r,c) {
   const cl=state.board[r]?.[c]; if(!cl) return;
   spawnParticles(r,c,getSkinColor(Math.max(0,cl.type))||'#00cccc',8);
   await animateDestroy([{r,c}]);
-  if (state.iceGrid[r]?.[c]) { state.iceGrid[r][c]=0; state.iceBroken++; updateQuestProgress('ice',1); }
+  if (state.iceGrid[r]?.[c]) { state.iceGrid[r][c]--; if(!state.iceGrid[r][c]){state.iceBroken++;updateQuestProgress('ice',1);} }
+  if (state.frostGrid[r]?.[c]) { state.frostGrid[r][c]--; spawnParticles(r,c,'#bae6fd',3); }
   if (cl.ingredient) { /* ingredients fall on their own */ }
   else if (cl.stone) { cl.stone=false; cl.type=randGem(); state.stonesBroken++; spawnParticles(r,c,'#6b7280'); updateQuestProgress('stones',1); breakAdjacentChocolate(r,c); }
   else if (cl.chocolate) { destroyChocolate(r, c); breakAdjacentChocolate(r, c); }
   else if (cl.locked) { cl.locked=false; cl.anim={}; spawnParticles(r,c,'#a78bfa',4); }
-  else if (cl.chain > 0) { cl.chain=0; spawnParticles(r,c,'#8899aa',6); }
+  else if (cl.chain > 0) { cl.chain--; spawnParticles(r,c,'#8899aa',cl.chain===0?6:3); if(cl.chain===0)rings.push({x:boardOffX+c*cellSize+cellSize/2,y:boardOffY+r*cellSize+cellSize/2,color:'rgba(100,140,170,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2}); }
   else { const _sp=cl.special,_tp=cl.type; state.board[r][c]=null; state.score+=30; breakAdjacentChocolate(r,c); if(_sp!==SPECIAL.NONE){await triggerSpecial(r,c,_sp,_tp);} }
   clearJellyAt(r,c); clearCarpetAt(r,c,false);
   if(cl.type>=0&&!cl.ingredient) state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
@@ -9159,6 +9202,33 @@ function spendMove() {
     const lvl = getLevel(state.currentLevel);
     const spent = (lvl?.moves || 20) - state.moves;
     if (spent > 0 && spent % state.licoriceSpawnRate === 0) spawnLicorice();
+  }
+  // BubbleGum jelly spread
+  if (getLevel(state.currentLevel)?.type === 'jelly') applyJellySpread();
+}
+
+function applyJellySpread() {
+  const lvl = getLevel(state.currentLevel);
+  const chance = (lvl?.jellyGrowChance ?? 50) / 100;
+  const holes = state.holes;
+  const spreadCells = [];
+  for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) {
+    if (!state.jellyGrid[r]?.[c]) continue;
+    for (const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+      const nr=r+dr, nc=c+dc;
+      if (nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+      if (holes.has(`${nr},${nc}`)) continue;
+      if (state.jellyGrid[nr]?.[nc]) continue;
+      const cell=state.board[nr]?.[nc];
+      if (!cell||cell.stone||cell.chocolate||cell.marmalade||cell.locked) continue;
+      if (Math.random()<chance) spreadCells.push([nr,nc]);
+    }
+  }
+  const seen=new Set();
+  for (const [r,c] of spreadCells) {
+    const k=`${r},${c}`; if(seen.has(k)) continue; seen.add(k);
+    state.jellyGrid[r][c]=2;
+    spawnParticles(r,c,'#ff80c8',3);
   }
 }
 
