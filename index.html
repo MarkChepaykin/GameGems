@@ -7371,7 +7371,8 @@ function fillFromTop() {
 
   // ── Cannon-based spawn (accelMap levels) ─────────────────────────────────────
   // CCSS: BoardPopulator fills all empty cells reachable from the cannon in gravity direction
-  if (lvl?.cannons?.length) {
+  // Requires accelMap — without it, vCell check would immediately break and nothing spawns
+  if (lvl?.cannons?.length && lvl?.accelMap) {
     const accelMap = lvl.accelMap;
     for (const [cr, cc] of lvl.cannons) {
       if (holes.has(`${cr},${cc}`)) continue;
