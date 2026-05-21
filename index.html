@@ -2211,7 +2211,7 @@ const LIFE_REGEN_MS = 30 * 60 * 1000; // 30 минут
 const PHYSICS = {
   SWAP_MS:        75,    // swap_time 0.075s
   UNDO_MS:       100,    // undo_swap_time 0.1s
-  DROP_MS:       320,    // длительность анимации падения
+  DROP_MS:       430,    // t=√(2×ROWS×tile_height/accel); ROWS=10, tile=74px, accel=wrapped_explosion_acceleration=8000px/s² → 430ms
   DESTROY_MS:    200,    // item_default_destruction_process_ticks 12/60
   COLORBOMB_MS:  500,    // colorbomb_destruction_process_ticks 30/60
   ROCKET_MS:      1000,    // rocket_duration_to_target 1.0s
@@ -7032,9 +7032,7 @@ async function processMatches(hintR, hintC) {
     // из-за чего фишка оставалась невидимой (пустая клетка) до следующего drawBoard
     if (ng) ng.anim = {};
 
-    applyGravity();   await animateDrop();
-    if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
-    fillFromTop();    await animateDrop();
+    applyGravity(); fillFromTop(); await animateDrop();
     if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
     updateGoalProgress(); updateHUD();
 
@@ -7372,20 +7370,30 @@ function fillFromTop() {
   const sodaStart = ROWS - sodaLevel;
 
   // ── Cannon-based spawn (accelMap levels) ─────────────────────────────────────
+  // CCSS: BoardPopulator fills all empty cells reachable from the cannon in gravity direction
   if (lvl?.cannons?.length) {
     const accelMap = lvl.accelMap;
     for (const [cr, cc] of lvl.cannons) {
       if (holes.has(`${cr},${cc}`)) continue;
       if (cr >= sodaStart) continue;
-      if (state.board[cr][cc] !== null) continue;
-      // Entry offset: gem enters from opposite direction of gravity at cannon
       const v = accelMap?.[cr]?.[cc] || [0, 2];
-      const enterOy = v[1] > 0 ? -cellSize : v[1] < 0 ? cellSize : 0;
-      const enterOx = v[0] > 0 ? -cellSize : v[0] < 0 ? cellSize : 0;
-      const g = _spawnGem(cr, cc, honeyNeeded, enterOy, enterOx);
-      if (honeyNeeded > 0 && g.honey) honeyNeeded--;
-      state.board[cr][cc] = g;
-      newGemPositions.push({r: cr, c: cc});
+      const dr = v[1] / 2; // row step (gravity direction from cannon)
+      const dc = v[0] / 2; // col step
+      // Walk from cannon in gravity direction, fill all consecutive empty cells
+      let step = 0, r = cr, c = cc;
+      while (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+        if (holes.has(`${r},${c}`)) break;
+        if (r >= sodaStart) break;
+        const vCell = accelMap?.[r]?.[c];
+        if (!vCell || (vCell[0] === 0 && vCell[1] === 0)) break;
+        if (state.board[r][c] !== null) break;
+        step++;
+        const g = _spawnGem(r, c, honeyNeeded, -dr * step * cellSize, -dc * step * cellSize);
+        if (honeyNeeded > 0 && g.honey) honeyNeeded--;
+        state.board[r][c] = g;
+        newGemPositions.push({r, c});
+        r += dr; c += dc;
+      }
     }
     if (iceNeeded>0&&newGemPositions.length>0) {
       shuffleArray([...newGemPositions]).slice(0,iceNeeded).forEach(({r,c})=>{ state.iceGrid[r][c]=1; });
@@ -8870,48 +8878,59 @@ function spawnExplosionSparks(r, c, count=18, color='#ff8800') {
 }
 
 function animateDrop() {
-  const STAGGER = 45;
-  const colData=[];
-  for (let c=0;c<COLS;c++) {
-    const drops=[];
-    let maxAbs=0, newIdx=0;
-    for (let r=ROWS-1;r>=0;r--) {
-      const cl=state.board[r]?.[c];
-      if (cl?.anim && (cl.anim.oy || cl.anim.ox)) {
-        const delay = cl.anim._new ? (newIdx++ * STAGGER) : 0;
-        drops.push({cl, startOy: cl.anim.oy||0, startOx: cl.anim.ox||0, slide: !!cl.anim._slide, delay});
-        maxAbs=Math.max(maxAbs, Math.abs(cl.anim.oy||0), Math.abs(cl.anim.ox||0));
-      }
-    }
-    if (drops.length) {
-      const scale=Math.min(1, 0.35+maxAbs/(cellSize*ROWS*0.55));
-      colData.push({drops, dur:Math.round(PHYSICS.DROP_MS*scale)});
+  // CCSS physics (tweakdata.json):
+  //   Fall:  t ∝ √(distance)  — from constant falling_acceleration (proxy: wrapped_explosion_acceleration=8000px/s²)
+  //   Slide: constant speed   — tile_speed_slow=800px/s, tile_width=74px → 92.5ms/cell
+  //   Bounce: all falls ≥1 cell bounce — min landing speed=√(2×8000×74)=1089px/s > item_bounce_above_speed=800px/s
+  //   Stagger: 1 CCSS gravity tick = 1000/60 ≈ 17ms, cannon fills top→bottom
+  const STAGGER = 17;               // 1/60 s — one CCSS gravity tick (ticks_per_second=60)
+  const SLIDE_MS_PER_CELL = 74 / 800 * 1000; // tile_speed_slow=800px/s, tile_width=74px → 92.5ms
+  const colNewIdx = {};
+  for (let c = 0; c < COLS; c++) colNewIdx[c] = 0;
+
+  const gemData = [];
+  for (let c = 0; c < COLS; c++) {
+    for (let r = 0; r < ROWS; r++) {  // top→bottom: topmost new gem = delay 0 (cannon fires top first)
+      const cl = state.board[r]?.[c];
+      if (!cl?.anim || (!cl.anim.oy && !cl.anim.ox)) continue;
+      const startOy = cl.anim.oy || 0;
+      const startOx = cl.anim.ox || 0;
+      const isNew   = !!cl.anim._new;
+      const isSlide = !!cl.anim._slide;
+      const dist    = Math.max(Math.abs(startOy), Math.abs(startOx));
+      const cells   = dist / cellSize;
+      // slide: constant tile_speed_slow; fall: √-physics calibrated to DROP_MS for ROWS cells
+      const dur = isSlide
+        ? _d(Math.round(cells * SLIDE_MS_PER_CELL))
+        : Math.round(PHYSICS.DROP_MS * Math.sqrt(Math.max(cells, 0.5) / ROWS));
+      const delay  = isNew ? (colNewIdx[c]++ * STAGGER) : 0;
+      const bounce = !isSlide && cells >= 1.0;  // all ≥1-cell falls bounce (landing speed always > 800px/s)
+      gemData.push({ cl, startOy, startOx, dur, delay, bounce });
     }
   }
-  if (!colData.length) return Promise.resolve();
-  const t0=performance.now(), _ep=_matchEpoch;
-  return new Promise(res=>{
-    function f(now){
-      if (_matchEpoch!==_ep) {
-        colData.forEach(({drops})=>drops.forEach(({cl})=>{if(cl.anim){cl.anim.oy=0;cl.anim.ox=0;}}));
+
+  if (!gemData.length) return Promise.resolve();
+  const t0 = performance.now(), _ep = _matchEpoch;
+  return new Promise(res => {
+    function f(now) {
+      if (_matchEpoch !== _ep) {
+        gemData.forEach(({ cl }) => { if (cl.anim) { cl.anim.oy = 0; cl.anim.ox = 0; } });
         res(); return;
       }
-      let allDone=true;
-      for (const {drops,dur} of colData){
-        drops.forEach(({cl,startOy,startOx,slide,delay})=>{
-          const elapsed=now-t0-delay;
-          if(elapsed<=0){allDone=false;return;}
-          const t=Math.min(elapsed/dur,1);
-          if(t<1) allDone=false;
-          const ease = slide ? EASE.outQuad(t) : EASE.outBounce(t);
-          if(cl.anim){ cl.anim.oy=startOy*(1-ease); cl.anim.ox=startOx*(1-ease); }
-        });
+      let allDone = true;
+      for (const { cl, startOy, startOx, dur, delay, bounce } of gemData) {
+        const elapsed = now - t0 - delay;
+        if (elapsed <= 0) { allDone = false; continue; }
+        const t = Math.min(elapsed / dur, 1);
+        if (t < 1) allDone = false;
+        const ease = bounce ? EASE.outBounce(t) : EASE.outQuad(t);
+        if (cl.anim) { cl.anim.oy = startOy * (1 - ease); cl.anim.ox = startOx * (1 - ease); }
       }
-      if(!allDone) requestAnimationFrame(f);
+      if (!allDone) requestAnimationFrame(f);
       else {
-        colData.forEach(({drops})=>drops.forEach(({cl})=>{
-          if(cl.anim){cl.anim.oy=0;cl.anim.ox=0;delete cl.anim._new;delete cl.anim._slide;}
-        }));
+        gemData.forEach(({ cl }) => {
+          if (cl.anim) { cl.anim.oy = 0; cl.anim.ox = 0; delete cl.anim._new; delete cl.anim._slide; }
+        });
         res();
       }
     }
@@ -9037,7 +9056,7 @@ async function trySwap(r1,c1,r2,c2) {
       if (state.frostGrid[r]?.[c]) { state.frostGrid[r][c]--; spawnParticles(r,c,'#bae6fd',3); }
     }
     await triggerCombinedSpecial(r1,c1,_sp1combo,r2,c2,_sp2combo);
-    applyGravity(); await animateDrop(); fillFromTop(); await animateDrop();
+    applyGravity(); fillFromTop(); await animateDrop();
     await processMatches(r2,c2);
     return;
   }
@@ -9069,7 +9088,7 @@ async function trySwap(r1,c1,r2,c2) {
       }
       if(pts>0){state.score+=pts;spawnFloatingScore(r1,c1,pts,'#ff00ff');}
       spawnScreenShake(); spendMove(); updateGoalProgress();
-      applyGravity(); await animateDrop(); fillFromTop(); await animateDrop();
+      applyGravity(); fillFromTop(); await animateDrop();
       await processMatches(r2,c2);
       return;
     }
@@ -9105,7 +9124,7 @@ async function trySwap(r1,c1,r2,c2) {
       }
       if(pts>0){state.score+=pts;spawnFloatingScore(r1,c1,pts,'#a855f7');}
       spendMove(); updateGoalProgress();
-      applyGravity(); await animateDrop(); fillFromTop(); await animateDrop();
+      applyGravity(); fillFromTop(); await animateDrop();
       await processMatches(r2,c2);
       return;
     }
@@ -9131,7 +9150,7 @@ async function trySwap(r1,c1,r2,c2) {
     }
     if(rainbowPts>0){state.score+=rainbowPts;spawnFloatingScore(r1,c1,rainbowPts,'#a855f7');}
     spawnScreenShake(); spendMove();
-    applyGravity(); await animateDrop(); fillFromTop(); await animateDrop();
+    applyGravity(); fillFromTop(); await animateDrop();
     await processMatches(r2,c2);
     return;
   }
@@ -9165,8 +9184,7 @@ async function trySwap(r1,c1,r2,c2) {
   _updateUndoBtn();
   spendMove();
   // Спешлы активируются через processMatches как часть матча (не как прямой свап)
-  applyGravity(); await animateDrop();
-  fillFromTop(); await animateDrop();
+  applyGravity(); fillFromTop(); await animateDrop();
   await processMatches(r2,c2);
 }
 
@@ -9836,7 +9854,7 @@ async function fireBuffNuke(r, c) {
     }
   }
   if (pts > 0) { state.score += pts; spawnFloatingScore(r, c, pts, '#ef4444'); updateGoalProgress(); }
-  applyGravity(); await animateDrop(); fillFromTop(); await animateDrop();
+  applyGravity(); fillFromTop(); await animateDrop();
   await processMatches(r, c);
   updateHUD();
 }
@@ -10102,7 +10120,7 @@ async function applyHammerBooster(r, c) {
     if (_hsp !== SPECIAL.BOMB) state.board[r][c] = null; // null before trigger (bomb stays for 2-phase fall)
     updateHUD();
     await triggerSpecial(r, c, _hsp, _htp);
-    applyGravity(); await animateDrop(); fillFromTop(); await animateDrop();
+    applyGravity(); fillFromTop(); await animateDrop();
     await processMatches();
     return;
   } else if (cell.chocolate) {
@@ -10121,7 +10139,7 @@ async function applyHammerBooster(r, c) {
   spawnParticles(r, c, '#f59e0b', 10);
   updateGoalProgress(); updateHUD();
   if (checkWin()) { state.busy=false; setTimeout(showWin,300); return; }
-  applyGravity(); await animateDrop(); fillFromTop(); await animateDrop();
+  applyGravity(); fillFromTop(); await animateDrop();
   await processMatches();
 }
 
