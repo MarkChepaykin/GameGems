@@ -4624,9 +4624,10 @@ function initBoard(lvl) {
   state.licoriceMax       = lvl.licoriceMax || 0;
   // Мёд — точные позиции из honeyGrid, иначе рандом
   if (Array.isArray(lvl.honeyGrid) && lvl.honeyGrid.length > 0) {
-    for (const [hr, hc] of lvl.honeyGrid) {
+    for (const pos of lvl.honeyGrid) {
+      const hr = pos[0], hc = pos[1], hlayers = pos[2] || 2;
       if (hr < ROWS && hc < COLS && board[hr][hc] && !holeSet.has(`${hr},${hc}`)) {
-        board[hr][hc].honey = 2; board[hr][hc].special = SPECIAL.NONE;
+        board[hr][hc].honey = hlayers; board[hr][hc].special = SPECIAL.NONE;
       }
     }
   } else if ((lvl.honeyCount || 0) > 0) {
@@ -5562,16 +5563,16 @@ function drawCellGem(r,c,cell) {
     ctx.font=`${cs*.48}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('❓',cx,cy);
   } else if (cell.bottle) {
-    // Колба: рисуем гем-цвет фишки, поверх — спрайт или эмодзи колбы
-    const _bGem = GEMS[cell.type];
-    if (_bGem) drawShape(ctx, _bGem.shape, _bGem.color, cx, cy, cs / 2 - pad + 2, cell.type);
+    // Колба: спрайт, окрашенный в цвет гема через source-atop
     if (BLOCK_SPRITES[12]) {
-      ctx.globalAlpha = 0.88;
-      ctx.drawImage(BLOCK_SPRITES[12], x, y, cs, cs);
-      ctx.globalAlpha = cell.anim?.alpha??1;
+      ctx.globalAlpha = (cell.anim?.alpha ?? 1) * 0.92;
+      const _cb = _getColoredBottle(cell.type);
+      ctx.drawImage(_cb || BLOCK_SPRITES[12], x, y, cs, cs);
+      ctx.globalAlpha = cell.anim?.alpha ?? 1;
     } else {
       ctx.globalAlpha = 0.82;
       ctx.font = `${cs * 0.42}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = GEMS[cell.type]?.color || '#fff';
       ctx.fillText('🍶', cx, cy);
       ctx.globalAlpha = 1;
     }
@@ -6296,13 +6297,33 @@ function _gemPath(ctx,shape,cx,cy,r) {
 // ─── Crystal gem sprite cache (perf) ──────────────────────
 const _gemSpriteCache = new Map();
 let _gemCacheGen = 0;
+// ─── Bottle color cache (keyed by gem type) ─────────────────
+const _bottleColorCache = new Map();
 // ─── Кеши статичных клеток ───────────────────────────────────────────────
 let _iceSprite = null, _iceSpriteSz = 0;
 const _jellySprites = {};
 let _carpetSprite = null, _carpetSpriteSz = 0;
 
+function _getColoredBottle(type) {
+  const sprite = BLOCK_SPRITES[12];
+  if (!sprite) return null;
+  if (_bottleColorCache.has(type)) return _bottleColorCache.get(type);
+  const sz = Math.round(cellSize) || 64;
+  const oc = document.createElement('canvas');
+  oc.width = sz; oc.height = sz;
+  const ocx = oc.getContext('2d');
+  ocx.drawImage(sprite, 0, 0, sz, sz);
+  ocx.globalCompositeOperation = 'source-atop';
+  ocx.globalAlpha = 0.62;
+  ocx.fillStyle = GEMS[type]?.color || '#ffffff';
+  ocx.fillRect(0, 0, sz, sz);
+  _bottleColorCache.set(type, oc);
+  return oc;
+}
+
 function invalidateGemCache() {
   _gemSpriteCache.clear(); _gemCacheGen++;
+  _bottleColorCache.clear();
   _iceSprite = null; _iceSpriteSz = 0;
   for (const k in _jellySprites) delete _jellySprites[k];
   _carpetSprite = null; _carpetSpriteSz = 0;
