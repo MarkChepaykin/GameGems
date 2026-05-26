@@ -1,11 +1,31 @@
-﻿# GameGems — Gem Blast · Контекст для разработчика
+# GameGems — Ore Rush · Контекст для Claude Code
+
+## Кто ты и как думаешь
+
+Пользователь — PM без технического бэкграунда. Он формулирует задачи размыто и может предлагать неоптимальные решения. Твоя работа — не выполнять запрос буквально, а решать проблему за ним.
+
+**Перед любой задачей задай себе три вопроса:**
+
+1. **Нужен ли здесь Claude вообще?** Если задачу можно решить одним скриптом, который запустится сам и вернёт готовый ответ — напиши скрипт. Не трать токены на итерации.
+
+2. **Есть ли более дешёвый способ?** Один умный batch-скрипт лучше десяти итераций с Claude. Предлагай его без спроса.
+
+3. **Что на самом деле хочет пользователь?** Игнорируй буквальный запрос, если за ним стоит более простая цель.
+
+**Правила экономии контекста (обязательно):**
+- Никогда не выводить в консоль больше 20-30 строк. Остальное — в файл, в ответ только путь и итог одной строкой.
+- Никогда не читать большие файлы целиком. Только нужный диапазон строк или grep.
+- Не делать итеративно то, что решается за один проход.
+- Длинная сессия — использовать `/compact`.
+
+---
 
 ## О проекте
 
-**Gem Blast** — мобильная match-3 игра.  
-Весь код в **одном файле**: `index.html` (~500 KB, ~10 000+ строк).  
-Canvas 2D + Web Audio API. Никаких фреймворков, никаких зависимостей.  
-Открывается прямо в браузере — `file:///...GameGems/index.html`.
+**Ore Rush** — мобильная match-3 игра.
+Canvas 2D + Web Audio API. Никаких фреймворков, никаких зависимостей.
+
+Код разбит на модули в `src/`. Главный файл — `index.html` (только HTML + теги `<script src>`).
 
 **Роли:**
 - Пользователь = PM / тестировщик. Говорит ЧТО нужно.
@@ -16,8 +36,44 @@ Canvas 2D + Web Audio API. Никаких фреймворков, никаких
 ## ⚠️ Критические правила
 
 - **НЕ ЗАПУСКАТЬ Playwright и любые другие тесты** — пользователь категорически против
-- **НЕ РАЗБИВАТЬ** `index.html` на несколько файлов без явного запроса
+- **НЕ ТРОГАТЬ git backup ветку** без явной команды пользователя
 - **Тестировать в браузере** вручную — запустить dev-сервер и проверить UI
+- **НЕ выводить** весь tileMap / большие массивы данных в консоль — только в файл
+
+---
+
+## Структура файлов
+
+Код разбит на 23 модуля. Все функции глобальные (нет import/export).
+
+| Файл | Секция | Строк |
+|------|--------|-------|
+| `style.css` | CSS / стили | ~1174 |
+| `src/sdk.js` | Яндекс SDK адаптер | 167 |
+| `src/audio.js` | Фоновая музыка (BGM) | 69 |
+| `src/constants.js` | Константы (COLS, ROWS, SPECIAL, PHYSICS, EASE, GEMS) | 182 |
+| `src/level-engine.js` | Переупорядочивание уровней + процедурный генератор | 334 |
+| `src/state.js` | Глобальный state + persistence (save/load) | 268 |
+| `src/i18n.js` | Переводы + язык | 282 |
+| `src/screens.js` | Экраны, жизни, стрик, магазин, карта эпизодов | 1182 |
+| `src/board.js` | Инициализация поля + Canvas/resize | 615 |
+| `src/renderer.js` | Рендер (drawBoard, drawShape, биомы, текстуры) | 1623 |
+| `src/particles.js` | Частицы | 182 |
+| `src/matches.js` | Поиск матчей + processMatches | 750 |
+| `src/specials.js` | Спец-фишки + MYSTERY + ROCKET + анимации | 1587 |
+| `src/gameplay.js` | Свап + gesture hints + ввод + HUD + комбо | 438 |
+| `src/level-flow.js` | Win/Lose + старт уровня + пауза + подсказки + тост | 876 |
+| `src/sound.js` | SFX (Web Audio API) | 132 |
+| `src/season.js` | Сезон + турнир + push + интеграция звука | 1616 |
+| `src/game-loop.js` | Game loop + таймер жизней + загрузка + точка входа | 290 |
+| `src/balance.js` | Симулятор баланса | 351 |
+| `src/dev.js` | Dev-панель | 350 |
+| `src/quests.js` | Квесты | 181 |
+| `src/achievements.js` | Достижения | 146 |
+| `src/piggy.js` | Пигги-банк | 71 |
+| `src/offers.js` | Динамический оффер + стартовый оффер + re-engagement + бустеры | 124 |
+
+**Нужно починить баг** → открой только нужный файл, не читай остальные.
 
 ---
 
@@ -63,48 +119,6 @@ GEM_TYPES = 6   // цветов гемов на стандартном уров�
 
 ---
 
-## Структура файлов (после рефакторинга)
-
-Весь код разбит на модули в папке `src/`. Загружаются через `<script src>` в `index.html`.
-CSS вынесен в `style.css`.
-
-| Файл | Секция | Строк |
-|------|--------|-------|
-| `style.css` | CSS / стили | ~1174 |
-| `src/sdk.js` | Яндекс SDK адаптер | 167 |
-| `src/audio.js` | Фоновая музыка (BGM) | 69 |
-| `src/constants.js` | Константы (COLS, ROWS, SPECIAL, PHYSICS, EASE, GEMS) | 182 |
-| `src/level-engine.js` | Переупорядочивание уровней + процедурный генератор | 334 |
-| `src/state.js` | Глобальный state + persistence (save/load) | 268 |
-| `src/i18n.js` | Переводы + язык | 282 |
-| `src/screens.js` | Экраны, жизни, стрик, магазин, карта эпизодов | 1182 |
-| `src/board.js` | Инициализация поля + Canvas/resize | 615 |
-| `src/renderer.js` | Рендер (drawBoard, drawShape, биомы, текстуры) | 1623 |
-| `src/particles.js` | Частицы | 182 |
-| `src/matches.js` | Поиск матчей + processMatches | 750 |
-| `src/specials.js` | Спец-фишки + MYSTERY + ROCKET + анимации | 1587 |
-| `src/gameplay.js` | Свап + gesture hints + ввод + HUD + комбо | 438 |
-| `src/level-flow.js` | Win/Lose + старт уровня + пауза + подсказки + тост | 876 |
-| `src/sound.js` | SFX (Web Audio API) | 132 |
-| `src/season.js` | Сезон + турнир + push + интеграция звука | 1616 |
-| `src/game-loop.js` | Game loop + таймер жизней + загрузка + точка входа | 290 |
-| `src/balance.js` | Симулятор баланса | 351 |
-| `src/dev.js` | Dev-панель | 350 |
-| `src/quests.js` | Квесты (P2-2) | 181 |
-| `src/achievements.js` | Достижения (P2-3) | 146 |
-| `src/piggy.js` | Пигги-банк (P3-1) | 71 |
-| `src/offers.js` | Динамический оффер + стартовый оффер + re-engagement + бустеры | 124 |
-
-### Как работать с модулями
-
-Нужно починить баг в матчах → открой только `src/matches.js` (750 строк).  
-Нужно поправить рендер → только `src/renderer.js` (1623 строки).  
-Нужно поправить win/lose → только `src/level-flow.js` (876 строк).
-
-**Никаких import/export** — все функции глобальные, как раньше. Просто разные файлы.
-
-
-## 
 ## Ключевые функции
 
 ```
@@ -151,7 +165,7 @@ SFX.win/lose/reward/winJingle/loseJingle()  // osc+noise2 — финальные
 
 ## Dev-панель
 
-Всегда видима (FAB-кнопка 🛠️ на игровом экране), не требует `?dev=1`.  
+Всегда видима (FAB-кнопка 🛠️ на игровом экране), не требует `?dev=1`.
 Позволяет: добавить ходы, выиграть уровень, спавнить спешлы, телепорт по уровням.
 
 ---
@@ -160,86 +174,48 @@ SFX.win/lose/reward/winJingle/loseJingle()  // osc+noise2 — финальные
 
 ### Пустые ячейки после комбо-спешла
 **Причина:** `trySwap` обнулял ячейки r1,c1 и r2,c2 ПОСЛЕ `triggerCombinedSpecial`,
-которая уже применяла гравитацию внутри → удалялись гемы, упавшие сверху.  
-**Исправление:** `triggerCombinedSpecial` обнуляет ячейки в самом НАЧАЛЕ (строки ~5277-5278).
+которая уже применяла гравитацию внутри → удалялись гемы, упавшие сверху.
+**Исправление:** `triggerCombinedSpecial` обнуляет ячейки в самом НАЧАЛЕ.
 
 ### ROCKET (ракета) оставляет дырку
-**Причина:** `triggerSpecial(ROCKET)` не вызывал `applyGravity` после `explodeCell`.  
+**Причина:** `triggerSpecial(ROCKET)` не вызывал `applyGravity` после `explodeCell`.
 **Исправление:** добавлен `applyGravity(); fillFromTop(); await animateDrop()` после `explodeCell`.
 
 ### Двойной клик на спешл не тратил ход
-**Причина:** `activateSpecialByTap` устанавливала `state.busy=true` но не вызывала `spendMove()`.  
+**Причина:** `activateSpecialByTap` устанавливала `state.busy=true` но не вызывала `spendMove()`.
 **Исправление:** добавлен вызов `spendMove()` сразу после `state.busy=true`.
 
 ### Подсказка ускорялась со временем
-**Причина:** каждый `showAutoHint` запускал новый `requestAnimationFrame` цикл, не отменяя старый.  
+**Причина:** каждый `showAutoHint` запускал новый `requestAnimationFrame` цикл, не отменяя старый.
 **Исправление:** `_gestureHintRaf` — глобальный handle, `cancelAnimationFrame` перед новым запуском.
 
-### Экран заданий пустой
-**Причина:** `renderQuestsFull()` обращался к `document.getElementById('qst-lives')` которого
-не было в HTML → null exception → функция падала до рендера заданий.  
-**Исправление:** добавлен `<span id="qst-lives">` в HTML.
-
 ### COLORING сбрасывала бонусы при перекраске
-**Причина:** `triggerSpecial(COLORING)` делал `cl.special=SPECIAL.NONE` при смене цвета.  
+**Причина:** `triggerSpecial(COLORING)` делал `cl.special=SPECIAL.NONE` при смене цвета.
 **Исправление:** убрана строка `cl.special=SPECIAL.NONE` — перекраска меняет только цвет.
 
-### Спешлы не взрывались по цепочке из `explodeCell` (ракета попадает в спешл)
-**Причина:** `explodeCell` вызывал `triggerSpecial` ДО обнуления ячейки → BOMB видел
-`bombRef != null` и уходил в режим "падения", после чего `state.board[r][c]=null`
-уничтожал другой гем.  
-**Исправление:** `explodeCell` сначала нуллит ячейку, сохранив `cl.special`/`cl.type`, потом вызывает `triggerSpecial`. 
+### Спешлы не взрывались по цепочке из `explodeCell`
+**Причина:** `explodeCell` вызывал `triggerSpecial` ДО обнуления ячейки → BOMB уходил в режим "падения".
+**Исправление:** `explodeCell` сначала нуллит ячейку, потом вызывает `triggerSpecial`.
 
-### Пятёрка+врап / ракеты взрывались по одному
-**Причина:** в `triggerCombinedSpecial` (Rainbow+Special, Coloring+Special) цели тригерились
-в `for...await` — строго последовательно.  
-**Исправление:** BOMB → `Promise.all` (одновременно первый взрыв, gravity, второй);
-ROCKET → предвыбор уникальных целей, `Promise.all` полётов и попаданий;
+### Ракеты/пятёрки взрывались по одному
+**Причина:** в `triggerCombinedSpecial` цели тригерились в `for...await` — строго последовательно.
+**Исправление:** BOMB → `Promise.all`; ROCKET → предвыбор уникальных целей, `Promise.all` полётов;
 STRIPE → собрать все строки/столбцы в один Set, `Promise.all` анимаций, один destroy-проход.
 
 ### Бесконечный каскад / перенос взрывов между уровнями
-**Причина:**
-1. COLORING создаёт 7+ матч → новый COLORING → feedback-loop на 120 итераций (~2 мин).
-2. `processMatches` и `triggerCombinedSpecial` — async; при смене уровня старые экземпляры продолжали работать на новом поле.
-3. (Повтор бага) Несколько pre-existing COLORING на поле → cascade-triggered COLORING scatter создаёт новые матчи с ещё COLORINGs → 15+ итераций.
+**Причина:** COLORING feedback-loop + async processMatches продолжали работать на новом поле.
+**Исправление:** `_matchEpoch` инкрементируется в `playLevel`. Все async-функции захватывают
+`_myEpoch` и проверяют его после каждого `await`. Лимит итераций снижен до 25.
 
+### Бомба взрывалась на исходной позиции (не падала)
+**Причина:** бомба null'илась ДО захвата `_bombData` → трекинг по ссылке не работал.
+**Исправление:** `_bombsInMatch`/`_bombData` захватываются ДО animateDestroy и null-инга.
+
+### Win screen появлялась до конца бонусного взрыва
+**Причина:** `setTimeout(showWin, 600)` без проверки эпохи; `.then(_doShowWin)` резолвился даже после break.
 **Исправление:**
-- `_matchEpoch` (глобал) инкрементируется в `playLevel(n, fresh)`.
-- `processMatches`, `triggerSpecial` **и `triggerCombinedSpecial`** захватывают `_myEpoch = _matchEpoch` при старте
-  и после каждого `await` делают `if (_matchEpoch !== _myEpoch) return`.
-- Лимит итераций снижен с 120 до **25** (`_loopGuard > 25`).
-- CC cascade rule (два места): cascade-матчи (`_loopGuard > 1`) не создают новый COLORING (downgrade → BOMB) **и** не тригерят scatter существующих COLORING из `_othersInMatch` (continue — ячейка уже обнулена матчем, scatter подавляется).
-
-### Бомба из матча взрывалась на исходной позиции (не падала)
-**Причина:** В `processMatches` бомба null'илась в строке `for (const {r,c} of cellsArr) ... state.board[r][c]=null` ДО захвата `_bombData`. Поэтому `cell: state.board[r]?.[c]` = null, трекинг по ссылке не работал, фаза 2 взрывала исходную позицию.  
-**Исправление:** `_bombsInMatch`/`_bombData` захватываются ДО animateDestroy и null-инга. Бомба исключается из `animateDestroy` и из цикла null'инга — остаётся на доске, проходит гравитацию, падает, фаза 2 по новой позиции.
-
-### Несколько бомб взрывались по одному (медленно)
-**Причина:** в `processMatches` `specialsInMatch` обрабатывался циклом `for...await` — каждая бомба ждала полного завершения (фаза1 + гравитация + дым + фаза2) перед следующей.  
-**Исправление:** `_bombPhase1(r,c)` — выделена отдельная функция для первого взрыва бомбы (без гравитации).
-В `processMatches`: все бомбы из матча делают фазу1 одновременно (`Promise.all`), затем одна гравитация, затем фаза2 одновременно.  
-`triggerSpecial(BOMB)` (для одиночных бомб вне `specialsInMatch`) по-прежнему использует `_bombPhase1` + гравитация + фаза2.
-
-### Win screen появлялась до конца бонусного взрыва + каскады между уровнями
-**Причина:**
-1. `processMatches` при `_cascadeWon` вызывал `setTimeout(showWin, 600)` и сбрасывал `state.busy=false` — даже если был вызван изнутри `bonusMovesExplosion`. Экран победы появлялся пока взрывы ещё шли.
-2. `bonusMovesExplosion` не проверял `_matchEpoch` — при быстром переходе на следующий уровень взрывы продолжали работать на новом поле.
-3. При >12 оставшихся ходах ставился batch из 2 бонусов — нарушало принцип «один ход — один бонус».
-
-**Исправление:**
-- `state._inBonusExplosion` флаг: устанавливается в начале `bonusMovesExplosion`, сбрасывается в конце и в `playLevel`.
-- `processMatches`: `if (_cascadeWon)` — вызов `showWin` и сброс `busy` только при `!state._inBonusExplosion`.
-- `bonusMovesExplosion`: захватывает `_myEpoch = _matchEpoch` при старте, проверяет эпоху после каждого `await`.
-- Убран batch-of-2 (всегда один бонус за один оставшийся ход).
-
-### (Рецидив) showWin/бонусные взрывы переносились на следующий уровень
-**Причина:** Две дыры в эпоха-гарде:
-1. `processMatches` → `setTimeout(showWin, 600)` без проверки эпохи: если за 600мс пользователь стартовал следующий уровень, `showWin()` запускала бонусный взрыв на новом поле.
-2. `showWin()` → `bonusMovesExplosion().then(()=>_doShowWin())`: после break по эпохе Promise всё равно резолвился, `.then()` вызывал `_doShowWin()` на новом уровне — `state._winShowing` был уже сброшен в `playLevel`, поэтому guard не срабатывал.
-
-**Исправление:**
-- `processMatches` (строка ~6732): `const _ep=_myEpoch; setTimeout(()=>{ if (_matchEpoch===_ep) showWin(); }, 600)`
-- `showWin()` (строка ~9675): `const _winEpoch=_matchEpoch; bonusMovesExplosion().then(()=>{ if (_matchEpoch===_winEpoch) _doShowWin(); })`
+- `const _ep=_myEpoch; setTimeout(()=>{ if (_matchEpoch===_ep) showWin(); }, 600)`
+- `const _winEpoch=_matchEpoch; bonusMovesExplosion().then(()=>{ if (_matchEpoch===_winEpoch) _doShowWin(); })`
 
 ---
 
@@ -260,7 +236,6 @@ STRIPE → собрать все строки/столбцы в один Set, `P
 - Цилиндрическое тело В ЦВЕТ ФИШКИ, горящий нос (белое свечение), хвостовое пламя
 - Серый+чёрный дым, цветной туман, белые искры — трейл из частиц
 - Мерцание: `flicker=0.85+0.15*sin(Date.now()/32)`
-`animateRocketBlast(r,c,gemColor)` — взрыв флэра: вспышка + кольца дыма в цвет + разлёт искр
 
 ---
 
@@ -288,13 +263,10 @@ STRIPE → собрать все строки/столбцы в один Set, `P
 ## Рабочий процесс
 
 ```bash
-# Клонировать
 git clone https://github.com/MarkChepaykin/GameGems.git
-
-# После изменений — пушить
-git add index.html CLAUDE.md
+git add -A
 git commit -m "описание"
 git push
 ```
 
-Открывать игру: просто открыть `index.html` в браузере.
+Открывать игру: `index.html` в браузере (через локальный сервер, не file://).
