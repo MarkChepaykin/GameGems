@@ -17,7 +17,7 @@ async function bonusMovesExplosion() {
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
     if (state.holes.has(`${r},${c}`)) continue;
     const cl=state.board[r]?.[c];
-    if (cl&&!cl.stone&&!cl.chocolate&&cl.type>=0&&cl.special===SPECIAL.NONE) free.push([r,c]);
+    if (cl&&!cl.stone&&!cl.lava&&cl.type>=0&&cl.special===SPECIAL.NONE) free.push([r,c]);
   }
   if (!free.length) {
     state._inBonusExplosion=false;
@@ -86,15 +86,17 @@ async function bonusMovesExplosion() {
     const [rr, cc] = key.split(',').map(Number);
     const cl = state.board[rr]?.[cc]; if (!cl) continue;
     if (state.iceGrid[rr]?.[cc]) { state.iceGrid[rr][cc]--; if(!state.iceGrid[rr][cc]){state.iceBroken++;} }
-    if (state.frostGrid[rr]?.[cc]) { state.frostGrid[rr][cc]--; }
-    if (cl.ingredient||cl.stone||cl.mystery) continue;
-    if (cl.chocolate) { state.board[rr][cc]=null; spawnParticles(rr,cc,'#92400e',4); continue; }
-    if (cl.marmalade) { cl.marmalade=false; continue; }
+    _hitFrost(rr,cc);
+    if (cl.bucket||cl.stone||cl.mystery) continue;
+    if (cl.lava) { state.board[rr][cc]=null; spawnParticles(rr,cc,'#92400e',4); continue; }
+    if (cl.web) { cl.web=false; continue; }
     if (cl.chain>0) { cl.chain=0; spawnParticles(rr,cc,'#8899aa',4); continue; }
-    if (cl.licorice>0) { cl.licorice=0; spawnParticles(rr,cc,'#b45309',4); continue; }
-    if (cl.honey>0) { cl.honey=0; _releaseBear(rr,cc); continue; }
-    if (cl.whiteChoc>0) { cl.whiteChoc=0; cl.type=randGem(); continue; }
-    clearJellyAt(rr,cc); clearCarpetAt(rr,cc,false);
+    if (cl.sand>0) { cl.sand=0; spawnParticles(rr,cc,'#b45309',4); continue; }
+    if (cl.amber>0) { cl.amber=0; SFX.amberBreak&&SFX.amberBreak(); _onAmberCleared(rr,cc); continue; }
+    if (cl.geode>0) { cl.geode=1; _hitGeode(cl,rr,cc); continue; }
+    if (cl.memGem!==undefined||cl.relic||cl.giantId!==undefined) continue;
+    if (cl.mycelium>0) { cl.mycelium=0; cl.type=randGem(); continue; }
+    clearDirtAt(rr,cc); clearBricksAt(rr,cc,false);
     if (cl.type>=0) { state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1; _bonusPts+=30; }
     state.board[rr][cc]=null;
   }
@@ -565,7 +567,7 @@ function showLose() {
       pbWrap.style.display = '';
       pbBar.style.width = '0%';
       const lvl = getLevel(state.currentLevel);
-      const icons = { score:'⭐', collect:'💎', ice:'🧊', jelly:'🎀', stone:'🪨', ingredients:'🍎', chocolate:'🍫', soda:'🫧', carpet:'🧡', bears:'🐻' };
+      const icons = { score:'⭐', collect:'💎', ice:'🧊', dirt:'🟫', stone:'🪨', buckets:'🪣', lava:'🌋', flood:'🫧', bricks:'🧱', relics:'🐾', path:'🧙' };
       const icon = icons[lvl?.type] || '🎯';
       if (pbLbl) pbLbl.textContent = `${icon} ${Math.round(nearMiss*100)}% выполнено`;
       setTimeout(()=>{ pbBar.style.width = `${Math.round(nearMiss*100)}%`; }, 100);
@@ -653,11 +655,11 @@ function getNearMissProgress() {
     case 'collect': { let t=0; lvl.gems.forEach(g=>t+=(state.collectedGems[g]||0)); return t/lvl.target; }
     case 'ice':     return state.iceBroken / lvl.target;
     case 'stone':   return state.stonesBroken / lvl.target;
-    case 'jelly':        return state.jellyTotal>0 ? 1 - countJellyRemaining()/state.jellyTotal : 0;
-    case 'ingredients':  return state.ingredientsDelivered / lvl.target;
-    case 'soda':         return lvl.target > 0 ? state.bottlesBroken / lvl.target : 0;
-    case 'chocolate': { const ini=state.chocolateInitial||1; return Math.max(0, 1 - countChocolateRemaining()/ini); }
-    case 'carpet':    { const tot=state.carpetTotal||1; return Math.max(0, 1 - countCarpetRemaining()/tot); }
+    case 'dirt':        return state.dirtTotal>0 ? 1 - countDirtRemaining()/state.dirtTotal : 0;
+    case 'buckets':  return state.bucketsDelivered / lvl.target;
+    case 'flood':         return lvl.target > 0 ? state.flasksBroken / lvl.target : 0;
+    case 'lava': { const ini=state.lavaInitial||1; return Math.max(0, 1 - countLavaRemaining()/ini); }
+    case 'bricks':    { const tot=state.bricksTotal||1; return Math.max(0, 1 - countBricksRemaining()/tot); }
   }
   return 0;
 }
@@ -670,12 +672,12 @@ function isCloseToWin() {
     case 'collect': { let t=0; lvl.gems.forEach(g=>t+=(state.collectedGems[g]||0)); progress=t/lvl.target; break; }
     case 'ice':     progress = state.iceBroken / lvl.target; break;
     case 'stone':   progress = state.stonesBroken / lvl.target; break;
-    case 'jelly':        progress = state.jellyTotal>0 ? 1 - countJellyRemaining()/state.jellyTotal : 0; break;
-    case 'ingredients':  progress = state.ingredientsDelivered / lvl.target; break;
-    case 'soda':         progress = lvl.target > 0 ? state.bottlesBroken / lvl.target : 0; break;
-    case 'chocolate': { const ini=state.chocolateInitial||1; progress = Math.max(0, 1 - countChocolateRemaining()/ini); break; }
-    case 'carpet':    { const tot=state.carpetTotal||1; progress = Math.max(0, 1 - countCarpetRemaining()/tot); break; }
-    case 'bears':     { progress = Math.min((state.bearsFreed||0)/(lvl.bearsTarget||lvl.honeyCount||1), 1); break; }
+    case 'dirt':        progress = state.dirtTotal>0 ? 1 - countDirtRemaining()/state.dirtTotal : 0; break;
+    case 'buckets':  progress = state.bucketsDelivered / lvl.target; break;
+    case 'flood':         progress = lvl.target > 0 ? state.flasksBroken / lvl.target : 0; break;
+    case 'lava': { const ini=state.lavaInitial||1; progress = Math.max(0, 1 - countLavaRemaining()/ini); break; }
+    case 'bricks':    { const tot=state.bricksTotal||1; progress = Math.max(0, 1 - countBricksRemaining()/tot); break; }
+    case 'relics':     { progress = Math.min((state.relicsFreed||0)/(lvl.relicsTarget||lvl.amberCount||1), 1); break; }
   }
   // На spike-уровнях (26+) показываем даже при 60% — провоцируем покупку
   const threshold = state.currentLevel >= 26 ? 0.60 : 0.70;
@@ -754,8 +756,8 @@ function playLevel(n, fresh) {
     state._firstAttemptLevel = (state.levelAttempts[n] || 0) === 0 ? n : -1;
     state.moves=lvl.moves; state.score=0;
     state.collectedGems={}; state.iceBroken=0; state.stonesBroken=0;
-    state.comboCount=0; state.adMovesUsed=false; state.extraMovesUsed=false; state.ingredientsDelivered=0;
-    state.chocolateInitial=0; state.sodaLevel=0; state.bottlesBroken=0; state._winShowing=false; state.bearsFreed=0; state._inBonusExplosion=false;
+    state.comboCount=0; state.adMovesUsed=false; state.extraMovesUsed=false; state.bucketsDelivered=0;
+    state.lavaInitial=0; state.floodLevel=0; state.flasksBroken=0; state._winShowing=false; state.relicsFreed=0; state._inBonusExplosion=false;
     if (state.rainbowRound) { state.rainbowRound.active=false; state.rainbowRound.movesLeft=0; }
     state.lastSwap=null; state.undoUsedThisLevel=false; state.activeIngameBooster=null; state._swapFirst=null; hideGestureHint();
     state.buffPieces=0; state.buffNukeReady=false; state.buffNukeActive=false;
@@ -770,14 +772,14 @@ function playLevel(n, fresh) {
       if (ssBtn) ssBtn.style.display = getTotalStars() >= 20 ? '' : 'none';
     }, 100);
     setTimeout(_updateUndoBtn, 0);
-    // jellyGrid, carpetGrid и holes инициализируются внутри initBoard
-    state.jellyTotal=0; state.carpetTotal=0;
+    // dirtGrid, bricksGrid и holes инициализируются внутри initBoard
+    state.dirtTotal=0; state.bricksTotal=0;
     _matchEpoch++; // прерываем любые зависшие async-операции предыдущего уровня
     particles.length=0; // сбрасываем частицы от предыдущего уровня
     state.board=initBoard(lvl);
     clearInitialMatches(state.board); // убираем совпадения до старта
-    state.jellyTotal=countJellyRemaining(); // фиксируем стартовое кол-во слоёв
-    state.chocolateInitial=countChocolateRemaining(); // фиксируем шоколад на старте
+    state.dirtTotal=countDirtRemaining(); // фиксируем стартовое кол-во слоёв
+    state.lavaInitial=countLavaRemaining(); // фиксируем шоколад на старте
   }
   state.busy=false; state.paused=false;
   showScreen('game'); resizeCanvas(); updateHUD(); updateGoalProgress();
@@ -799,7 +801,7 @@ function applyBoosters() {
     for (let c=0;c<COLS;c++) {
       const cl=state.board[0][c]; if (!cl) continue;
       if (cl.stone) { cl.stone=false; state.stonesBroken++; }
-      else if (cl.chocolate) { state.chocolateBrokenThisMove=true; state.chocolateInitial=Math.max(0,(state.chocolateInitial||0)-1); }
+      else if (cl.lava) { state.lavaBrokenThisMove=true; state.lavaInitial=Math.max(0,(state.lavaInitial||0)-1); }
       state.board[0][c]=null;
     }
     applyGravity(); fillFromTop();
@@ -986,7 +988,7 @@ function canSwap(r,c) {
   if ((state.iceGrid[r]?.[c]||0) > 0) return false;
   const cl=state.board[r]?.[c];
   if (!cl) return false;
-  if (cl.stone||cl.chocolate||cl.marmalade||cl.ingredient||cl.locked||cl.mystery||(cl.licorice>0)||(cl.chain>0)||(cl.honey>0)) return false;
+  if (cl.stone||cl.lava||cl.web||cl.bucket||cl.locked||cl.mystery||(cl.sand>0)||(cl.chain>0)||(cl.amber>0)||(cl.geode>0)||cl.type<0) return false;
   return true;
 }
 function findBestHint() {
@@ -1013,7 +1015,7 @@ function findBestHint() {
     const nr=r+dr, nc=c+dc; if(nr>=ROWS||nc>=COLS) continue;
     const cl=state.board[r]?.[c], cl2=state.board[nr]?.[nc];
     if (!cl||!cl2) continue;
-    if ((cl.ingredient&&canSwap(nr,nc))||(cl2.ingredient&&canSwap(r,c))) {
+    if ((cl.bucket&&canSwap(nr,nc))||(cl2.bucket&&canSwap(r,c))) {
       doSwap(r,c,nr,nc); const m=findMatches().size; doSwap(r,c,nr,nc);
       if (m>0) return [r,c,nr,nc];
     }
@@ -1237,13 +1239,13 @@ const SFX = (() => {
     },
 
     // Желе — упругий хлопок
-    jellyPop() {
+    dirtPop() {
       noise2(0.30, 0.10, 340, 6);
       noise2(0.16, 0.07, 860, 8, 0.02);
     },
 
     // Мёд — вязкий шлепок
-    honeyBreak() {
+    amberBreak() {
       noise2(0.32, 0.15, 190, 4);
       noise2(0.18, 0.11, 540, 5, 0.03);
     },
@@ -1262,19 +1264,19 @@ const SFX = (() => {
     },
 
     // Лакрица — резиновый щелчок
-    licoriceMatch() {
+    sandBreak() {
       noise2(0.26, 0.10, 680, 9);
       noise2(0.14, 0.08, 270, 4, 0.02);
     },
 
     // JAM — влажный взрыв
-    jamBreak() {
+    webBreak() {
       noise2(0.30, 0.13, 230, 5);
       noise2(0.17, 0.10, 500, 6, 0.02);
     },
 
     // Белый шоколад — хруст
-    whiteChocBreak() {
+    myceliumBreak() {
       noise2(0.24, 0.10, 820, 7);
       noise2(0.15, 0.08, 340, 4, 0.02);
     },
@@ -1292,6 +1294,46 @@ const SFX = (() => {
       noise2(0.18, 0.16, 900, 4);
       noise2(0.10, 0.12, 3000, 5, 0.04);
       osc(1400, 'sine', 0.05, 0.002, 0.14, 0, 0, 350);
+    },
+
+    // Камень — глухой удар породы
+    stoneBreak() {
+      noise2(0.38, 0.18, 280, 2.5);
+      noise2(0.24, 0.12, 700,  4,   0.03);
+      noise2(0.10, 0.07, 2000, 3,   0.06);
+    },
+
+    // Камень — частичный урон (треск без разрушения)
+    iceCrack() {
+      noise2(0.13, 0.05, 2600, 8);
+    },
+
+    // Шоколад — вязкий тяжёлый шлепок
+    lavaBreak() {
+      noise2(0.32, 0.16, 140, 2.5);
+      noise2(0.18, 0.10, 380, 4,   0.03);
+    },
+
+    // Тайник (Mystery) — магическая искра
+    mysteryReveal() {
+      noise2(0.20, 0.10, 1900, 8);
+      noise2(0.12, 0.07, 3400, 10, 0.03);
+      osc(1047, 'triangle', 0.07, 0.004, 0.18, 0.02);
+    },
+
+    // Перемешивание — вихревой свист
+    shuffleSfx() {
+      noise2(0.22, 0.25, 550, 2);
+      noise2(0.14, 0.20, 180, 1.5, 0.06);
+      osc(440, 'sine', 0.04, 0.01, 0.22, 0, 0, 880);
+    },
+
+    // Медведь освобождён — радостный звон
+    bearFreed() {
+      [0, 0.07, 0.14].forEach((d, i) =>
+        osc(880 + i * 220, 'triangle', 0.10, 0.003, 0.28, d)
+      );
+      noise2(0.12, 0.12, 2400, 6, 0.10);
     },
 
     _tone: (f,t,d,v,delay,pan) => osc(f,t,v,0.005,d,delay||0,pan||0),
@@ -1592,7 +1634,7 @@ function checkTournamentEnd() {
     const prizes = [50, 25, 10];
     state.crystals += prizes[rank - 1];
     saveGame();
-    setTimeout(() => showTournEndPopup(rank, prizes[rank-1]), 1200);
+    queueStartupPopup('popup-tourn-end', () => showTournEndPopup(rank, prizes[rank-1]), 20);
   }
   state.tournEndChecked = true;
   saveGame();

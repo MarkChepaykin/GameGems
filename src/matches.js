@@ -5,31 +5,31 @@ function findMatches() {
   const board=state.board, matched=new Set();
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS-2;c++) {
     const tt=board[r][c]?.type;
-    if (tt===undefined||tt<0||board[r][c]?.stone||board[r][c]?.mystery||(board[r][c]?.licorice>0)||(board[r][c]?.honey>0)) continue;
-    if (board[r][c+1]?.type===tt&&!board[r][c+1]?.stone&&!board[r][c+1]?.mystery&&!(board[r][c+1]?.licorice>0)&&!(board[r][c+1]?.honey>0)&&
-        board[r][c+2]?.type===tt&&!board[r][c+2]?.stone&&!board[r][c+2]?.mystery&&!(board[r][c+2]?.licorice>0)&&!(board[r][c+2]?.honey>0)) {
-      let len=3; while(c+len<COLS&&board[r][c+len]?.type===tt&&!board[r][c+len]?.stone&&!board[r][c+len]?.mystery&&!(board[r][c+len]?.licorice>0)&&!(board[r][c+len]?.honey>0)) len++;
+    if (tt===undefined||tt<0||board[r][c]?.stone||board[r][c]?.mystery||(board[r][c]?.sand>0)||(board[r][c]?.amber>0)) continue;
+    if (board[r][c+1]?.type===tt&&!board[r][c+1]?.stone&&!board[r][c+1]?.mystery&&!(board[r][c+1]?.sand>0)&&!(board[r][c+1]?.amber>0)&&
+        board[r][c+2]?.type===tt&&!board[r][c+2]?.stone&&!board[r][c+2]?.mystery&&!(board[r][c+2]?.sand>0)&&!(board[r][c+2]?.amber>0)) {
+      let len=3; while(c+len<COLS&&board[r][c+len]?.type===tt&&!board[r][c+len]?.stone&&!board[r][c+len]?.mystery&&!(board[r][c+len]?.sand>0)&&!(board[r][c+len]?.amber>0)) len++;
       for (let k=0;k<len;k++) matched.add(`${r},${c+k}`);
     }
   }
   for (let c=0;c<COLS;c++) for (let r=0;r<ROWS-2;r++) {
     const tt=board[r][c]?.type;
-    if (tt===undefined||tt<0||board[r][c]?.stone||board[r][c]?.mystery||(board[r][c]?.licorice>0)||(board[r][c]?.honey>0)) continue;
-    if (board[r+1]?.[c]?.type===tt&&!board[r+1]?.[c]?.stone&&!board[r+1]?.[c]?.mystery&&!(board[r+1]?.[c]?.licorice>0)&&!(board[r+1]?.[c]?.honey>0)&&
-        board[r+2]?.[c]?.type===tt&&!board[r+2]?.[c]?.stone&&!board[r+2]?.[c]?.mystery&&!(board[r+2]?.[c]?.licorice>0)&&!(board[r+2]?.[c]?.honey>0)) {
-      let len=3; while(r+len<ROWS&&board[r+len]?.[c]?.type===tt&&!board[r+len]?.[c]?.stone&&!board[r+len]?.[c]?.mystery&&!(board[r+len]?.[c]?.licorice>0)&&!(board[r+len]?.[c]?.honey>0)) len++;
+    if (tt===undefined||tt<0||board[r][c]?.stone||board[r][c]?.mystery||(board[r][c]?.sand>0)||(board[r][c]?.amber>0)) continue;
+    if (board[r+1]?.[c]?.type===tt&&!board[r+1]?.[c]?.stone&&!board[r+1]?.[c]?.mystery&&!(board[r+1]?.[c]?.sand>0)&&!(board[r+1]?.[c]?.amber>0)&&
+        board[r+2]?.[c]?.type===tt&&!board[r+2]?.[c]?.stone&&!board[r+2]?.[c]?.mystery&&!(board[r+2]?.[c]?.sand>0)&&!(board[r+2]?.[c]?.amber>0)) {
+      let len=3; while(r+len<ROWS&&board[r+len]?.[c]?.type===tt&&!board[r+len]?.[c]?.stone&&!board[r+len]?.[c]?.mystery&&!(board[r+len]?.[c]?.sand>0)&&!(board[r+len]?.[c]?.amber>0)) len++;
       for (let k=0;k<len;k++) matched.add(`${r+k},${c}`);
     }
   }
   // 2×2 squares → ROCKET special
   for (let r=0;r<ROWS-1;r++) for (let c=0;c<COLS-1;c++) {
     const tt=board[r][c]?.type;
-    if (tt===undefined||tt<0||board[r][c]?.stone||board[r][c]?.chocolate||board[r][c]?.mystery||(board[r][c]?.licorice>0)||(board[r][c]?.honey>0)) continue;
+    if (tt===undefined||tt<0||board[r][c]?.stone||board[r][c]?.lava||board[r][c]?.mystery||(board[r][c]?.sand>0)||(board[r][c]?.amber>0)) continue;
     if (board[r][c+1]?.type===tt&&board[r+1]?.[c]?.type===tt&&board[r+1]?.[c+1]?.type===tt&&
         !board[r][c+1]?.stone&&!board[r+1]?.[c]?.stone&&!board[r+1]?.[c+1]?.stone&&
         !board[r][c+1]?.mystery&&!board[r+1]?.[c]?.mystery&&!board[r+1]?.[c+1]?.mystery&&
-        !(board[r][c+1]?.licorice>0)&&!(board[r+1]?.[c]?.licorice>0)&&!(board[r+1]?.[c+1]?.licorice>0)&&
-        !(board[r][c+1]?.honey>0)&&!(board[r+1]?.[c]?.honey>0)&&!(board[r+1]?.[c+1]?.honey>0)) {
+        !(board[r][c+1]?.sand>0)&&!(board[r+1]?.[c]?.sand>0)&&!(board[r+1]?.[c+1]?.sand>0)&&
+        !(board[r][c+1]?.amber>0)&&!(board[r+1]?.[c]?.amber>0)&&!(board[r+1]?.[c+1]?.amber>0)) {
       matched.add(`${r},${c}`); matched.add(`${r},${c+1}`);
       matched.add(`${r+1},${c}`); matched.add(`${r+1},${c+1}`);
     }
@@ -80,9 +80,9 @@ async function processMatches(hintR, hintC) {
   let streakBonus = state.streakDays >= 7 ? 1.1 : 1;
   let firstIter = true;
   let _cascadeWon = false;
-  const _prevChocBroken = state.chocolateBrokenThisMove;
-  state.chocolateBrokenThisMove = false;
-  state.whiteChocBrokenThisMove = false;
+  const _prevChocBroken = state.lavaBrokenThisMove;
+  state.lavaBrokenThisMove = false;
+  state.myceliumBrokenThisMove = false;
 
   let _loopGuard = 0;
   while (true) {
@@ -136,7 +136,7 @@ async function processMatches(hintR, hintC) {
         const _p=state.portalGrid[r]?.[c]; if (!_p) continue;
         const {exitR,exitC}=_p;
         const _ec=state.board[exitR]?.[exitC];
-        if (!_ec||_ec.stone||_ec.chocolate||_ec.ingredient) continue;
+        if (!_ec||_ec.stone||_ec.lava||_ec.bucket) continue;
         if (cellsArr.some(x=>x.r===exitR&&x.c===exitC)) continue;
         _portalExtras.push({r:exitR,c:exitC});
         spawnParticles(exitR,exitC,_p.color,5);
@@ -182,14 +182,14 @@ async function processMatches(hintR, hintC) {
 
     for (const {r,c} of cellsArr) {
       const cell=state.board[r][c]; if (!cell) continue;
-      if (cell.ingredient) continue; // ингредиенты не уничтожаются матчем — падают сами
+      if (cell.bucket) continue; // ингредиенты не уничтожаются матчем — падают сами
       if (cell.locked) { cell.locked=false; spawnParticles(r,c,'#a78bfa',4); }
-      if (cell.bottle) popBottle(r, c); // колба в матче — считаем её как сбитую
+      if (cell.flask) popFlask(r, c); // колба в матче — считаем её как сбитую
       const gem=GEMS[cell.type]; if (gem) { spawnParticles(r,c,getSkinColor(cell.type)); spawnScorePop(r,c,getSkinColor(cell.type)); }
-      if (state.iceGrid[r]?.[c]) { state.iceGrid[r][c]--; if(!state.iceGrid[r][c]){SFX.iceBreak();state.iceBroken++;updateQuestProgress('ice',1);} }
-      if (state.frostGrid[r]?.[c]) { state.frostGrid[r][c]--; SFX.frostingBreak(); spawnParticles(r,c,'#bae6fd',4); }
-      clearJellyAt(r, c);
-      clearCarpetAt(r, c, true); // spread to adjacent carpet on regular match
+      if (state.iceGrid[r]?.[c]) { state.iceGrid[r][c]--; if(!state.iceGrid[r][c]){SFX.iceBreak();state.iceBroken++;updateQuestProgress('ice',1);}else{SFX.iceCrack&&SFX.iceCrack();} }
+      _hitFrost(r,c);
+      clearDirtAt(r, c);
+      clearBricksAt(r, c, true); // spread to adjacent bricks on regular match
       if (cell.type>=0) state.collectedGems[cell.type]=(state.collectedGems[cell.type]||0)+1;
       if (cell.special!==SPECIAL.NONE) specialsInMatch.push({r,c,special:cell.special,type:cell.type});
     }
@@ -199,17 +199,18 @@ async function processMatches(hintR, hintC) {
         const nr=r+dr, nc=c+dc;
         if (nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
         const nb=state.board[nr][nc];
-        if (nb?.stone) { nb.stone=false; nb.type=randGem(); state.stonesBroken++; spawnParticles(nr,nc,'#6b7280'); updateQuestProgress('stones', 1); breakAdjacentChocolate(nr,nc); }
-        if (nb?.chocolate) { destroyChocolate(nr, nc); }
-        if (nb?.marmalade) { nb.marmalade=false; spawnParticles(nr,nc,'#f97316',4); }
+        if (nb?.stone) { nb.stone=false; nb.type=randGem(); SFX.stoneBreak&&SFX.stoneBreak(); state.stonesBroken++; spawnParticles(nr,nc,'#6b7280'); updateQuestProgress('stones', 1); breakAdjacentLava(nr,nc); }
+        if (nb?.geode > 0) { _hitGeode(nb, nr, nc); }
+        if (nb?.lava) { destroyLava(nr, nc); }
+        if (nb?.web) { nb.web=false; SFX.webBreak&&SFX.webBreak(); spawnParticles(nr,nc,'#f97316',4); }
         if (nb?.locked) { nb.locked=false; spawnParticles(nr,nc,'#a78bfa',4); }
         if (nb?.mystery) { popMystery(nr,nc); }
-        if (nb?.bottle) { popBottle(nr,nc); }
-        if (nb?.licorice > 0) { nb.licorice--; spawnParticles(nr,nc,'#b45309',nb.licorice===0?6:3); if(nb.licorice===0){SFX.licoriceMatch();rings.push({x:boardOffX+nc*cellSize+cellSize/2,y:boardOffY+nr*cellSize+cellSize/2,color:'rgba(180,83,9,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2});} }
+        if (nb?.flask) { popFlask(nr,nc); }
+        if (nb?.sand > 0) { nb.sand--; spawnParticles(nr,nc,'#b45309',nb.sand===0?6:3); if(nb.sand===0){SFX.sandBreak();rings.push({x:boardOffX+nc*cellSize+cellSize/2,y:boardOffY+nr*cellSize+cellSize/2,color:'rgba(180,83,9,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2});} }
         if (nb?.chain > 0) { nb.chain--; spawnParticles(nr,nc,'#8899aa',nb.chain===0?6:3); if(nb.chain===0){SFX.chainBreak();rings.push({x:boardOffX+nc*cellSize+cellSize/2,y:boardOffY+nr*cellSize+cellSize/2,color:'rgba(100,140,170,0.8)',r:4,maxR:cellSize*1.0,life:1,lw:2});} }
-        if (nb?.honey > 0) { nb.honey--; spawnParticles(nr,nc,'#fde68a',3); if(nb.honey===0){SFX.honeyBreak();_releaseBear(nr,nc);} }
-        if (nb?.whiteChoc > 0) { nb.whiteChoc--; spawnParticles(nr,nc,'#f5e6ca',4); if(nb.whiteChoc===0){SFX.whiteChocBreak();nb.type=randGem();state.whiteChocBrokenThisMove=true;} }
-        if (state.iceGrid[nr]?.[nc]) { state.iceGrid[nr][nc]--; if(!state.iceGrid[nr][nc]){SFX.iceBreak();state.iceBroken++;updateQuestProgress('ice',1);spawnParticles(nr,nc,'#93c5fd',4);} }
+        if (nb?.amber > 0) { _hitAmber(nb, nr, nc); }
+        if (nb?.mycelium > 0) { nb.mycelium--; spawnParticles(nr,nc,'#f5e6ca',4); if(nb.mycelium===0){SFX.myceliumBreak();nb.type=randGem();state.myceliumBrokenThisMove=true;} }
+        if (state.iceGrid[nr]?.[nc]) { state.iceGrid[nr][nc]--; if(!state.iceGrid[nr][nc]){SFX.iceBreak();state.iceBroken++;updateQuestProgress('ice',1);spawnParticles(nr,nc,'#93c5fd',4);}else{SFX.iceCrack&&SFX.iceCrack();} }
         // frost NOT hit by adjacent matches — only direct
       }
     }
@@ -220,10 +221,10 @@ async function processMatches(hintR, hintC) {
     const _bombCellSet = new Set(_bombsInMatch.map(({r,c})=>`${r},${c}`));
     const _bombData = _bombsInMatch.map(({r,c}) => ({cell: state.board[r]?.[c], r, c}));
     // Анимируем уничтожение — бомбы исключаем (они остаются видимыми)
-    await animateDestroy(cellsArr.filter(({r,c})=>!state.board[r]?.[c]?.ingredient && !_bombCellSet.has(`${r},${c}`)));
+    await animateDestroy(cellsArr.filter(({r,c})=>!state.board[r]?.[c]?.bucket && !_bombCellSet.has(`${r},${c}`)));
     if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
     // Обнуляем ячейки — бомбы НЕ трогаем (они упадут сами)
-    for (const {r,c} of cellsArr) { if (!state.board[r]?.[c]?.ingredient && !_bombCellSet.has(`${r},${c}`)) state.board[r][c]=null; }
+    for (const {r,c} of cellsArr) { if (!state.board[r]?.[c]?.bucket && !_bombCellSet.has(`${r},${c}`)) state.board[r][c]=null; }
 
     let ng=null, ngPlacedR=-1, ngPlacedC=-1;
     if (specialResult) {
@@ -296,7 +297,7 @@ async function processMatches(hintR, hintC) {
       for (let rr=0;rr<ROWS;rr++) for (let cc=0;cc<COLS;cc++) {
         if (state.holes.has(`${rr},${cc}`)) continue;
         const cl=state.board[rr]?.[cc];
-        if (cl && !cl.stone && !cl.chocolate && !cl.ingredient && cl.special===SPECIAL.NONE) {
+        if (cl && !cl.stone && !cl.lava && !cl.bucket && cl.special===SPECIAL.NONE) {
           const d=Math.abs(rr-avgR2)+Math.abs(cc-avgC2);
           if (d<rescueDist) { rescueDist=d; rescuePos={r:rr,c:cc}; }
         }
@@ -348,16 +349,16 @@ async function processMatches(hintR, hintC) {
   }
   if (_matchEpoch !== _myEpoch) return; // уровень сменился — прерываем
   // Тьма (шоколад) распространяется каждый ход если не была уничтожена в этот ход
-  if (!state.chocolateBrokenThisMove && !_prevChocBroken && hasChocolate()) spreadChocolate();
+  if (!state.lavaBrokenThisMove && !_prevChocBroken && hasLava()) spreadLava();
   // Белый шоколад: фонтан распространяет каждый ход если не был разрушен в этот ход
-  if (!state.whiteChocBrokenThisMove && hasFountain()) spreadWhiteChoc();
+  if (!state.myceliumBrokenThisMove && hasMyceliumSource()) spreadMycelium();
   // Авто-перемешивание если нет допустимых ходов
   if (!findBestHint()) {
     let attempts=0;
     while (!findBestHint() && attempts<15) {
       const types=[];const pos=[];
       for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
-        const cl=state.board[r][c]; if(cl&&!cl.stone&&!cl.chocolate&&cl.type>=0){types.push(cl.type);pos.push([r,c]);}
+        const cl=state.board[r][c]; if(cl&&!cl.stone&&!cl.lava&&cl.type>=0){types.push(cl.type);pos.push([r,c]);}
       }
       if (!types.length) break;
       shuffleArray(types);
@@ -388,19 +389,19 @@ async function processMatches(hintR, hintC) {
   resetHintTimer();
 }
 
-function hasChocolate() {
-  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (state.board[r]?.[c]?.chocolate) return true;
+function hasLava() {
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (state.board[r]?.[c]?.lava) return true;
   return false;
 }
-function countChocolateRemaining() {
+function countLavaRemaining() {
   let n=0;
-  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (state.board[r]?.[c]?.chocolate) n++;
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (state.board[r]?.[c]?.lava) n++;
   return n;
 }
 
-function spreadChocolate() {
+function spreadLava() {
   const chocCells = [];
-  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (state.board[r]?.[c]?.chocolate) chocCells.push([r,c]);
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (state.board[r]?.[c]?.lava) chocCells.push([r,c]);
   if (!chocCells.length) return;
   const [cr,cc] = chocCells[Math.floor(Math.random()*chocCells.length)];
   const dirs = shuffleArray([[-1,0],[1,0],[0,-1],[0,1]]);
@@ -409,28 +410,28 @@ function spreadChocolate() {
     if (nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
     if (state.holes.has(`${nr},${nc}`)) continue;
     const cell=state.board[nr][nc];
-    if (cell && !cell.stone && !cell.chocolate && !state.iceGrid[nr]?.[nc] && cell.type>=0) {
-      state.board[nr][nc] = { type:-1, special:SPECIAL.NONE, ice:false, stone:false, chocolate:true, marmalade:false, anim:{} };
+    if (cell && !cell.stone && !cell.lava && !state.iceGrid[nr]?.[nc] && cell.type>=0) {
+      state.board[nr][nc] = { type:-1, special:SPECIAL.NONE, ice:false, stone:false, lava:true, web:false, anim:{} };
       spawnParticles(nr, nc, '#92400e', 5);
       // Рост тьмы увеличивает «потолок» прогресса на 1, иначе прогресс регрессирует
-      state.chocolateInitial = (state.chocolateInitial || 0) + 1;
+      state.lavaInitial = (state.lavaInitial || 0) + 1;
       break;
     }
   }
 }
 
-function hasFountain() {
-  if (!state.fountainGrid) return false;
-  for (const r in state.fountainGrid) for (const c in state.fountainGrid[r]) if (state.fountainGrid[r][c]) return true;
+function hasMyceliumSource() {
+  if (!state.myceliumSourceGrid) return false;
+  for (const r in state.myceliumSourceGrid) for (const c in state.myceliumSourceGrid[r]) if (state.myceliumSourceGrid[r][c]) return true;
   return false;
 }
 
-function spreadWhiteChoc() {
+function spreadMycelium() {
   // Spread: fountain cells generate new white choc on adjacent free cells
-  if (!state.fountainGrid) return;
+  if (!state.myceliumSourceGrid) return;
   const fountains = [];
-  for (const r in state.fountainGrid) for (const c in state.fountainGrid[r]) {
-    if (state.fountainGrid[r][c]) fountains.push([+r, +c]);
+  for (const r in state.myceliumSourceGrid) for (const c in state.myceliumSourceGrid[r]) {
+    if (state.myceliumSourceGrid[r][c]) fountains.push([+r, +c]);
   }
   shuffleArray(fountains);
   for (const [fr, fc] of fountains) {
@@ -440,8 +441,8 @@ function spreadWhiteChoc() {
       if (nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
       if (state.holes.has(`${nr},${nc}`)) continue;
       const cell=state.board[nr][nc];
-      if (cell && !cell.stone && !cell.chocolate && !(cell.whiteChoc>0) && !state.iceGrid[nr]?.[nc] && cell.type>=0) {
-        cell.whiteChoc = 1; cell.type = -1; cell.special = SPECIAL.NONE;
+      if (cell && !cell.stone && !cell.lava && !(cell.mycelium>0) && !state.iceGrid[nr]?.[nc] && cell.type>=0) {
+        cell.mycelium = 1; cell.type = -1; cell.special = SPECIAL.NONE;
         spawnParticles(nr, nc, '#f5e6ca', 4);
         break;
       }
@@ -450,21 +451,22 @@ function spreadWhiteChoc() {
 }
 
 // Уничтожает клетку тьмы и помечает флаг для подавления распространения в этот ход
-function destroyChocolate(r, c) {
+function destroyLava(r, c) {
   state.board[r][c] = null;
-  state.chocolateBrokenThisMove = true;
+  state.lavaBrokenThisMove = true;
+  SFX.lavaBreak && SFX.lavaBreak();
   spawnParticles(r, c, '#92400e', 6);
-  clearJellyAt(r, c);
-  clearCarpetAt(r, c, false);
+  clearDirtAt(r, c);
+  clearBricksAt(r, c, false);
   updateGoalProgress();
 }
 
 // Проверяет клетки соседей на тьму и ломает её (вызывается при уничтожении любой соседней клетки)
-function breakAdjacentChocolate(r, c) {
+function breakAdjacentLava(r, c) {
   for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
     const nr=r+dr, nc=c+dc;
     if (nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
-    if (state.board[nr]?.[nc]?.chocolate) destroyChocolate(nr, nc);
+    if (state.board[nr]?.[nc]?.lava) destroyLava(nr, nc);
   }
 }
 
@@ -477,7 +479,7 @@ function _applyGravityAccel(holes, accelMap) {
     return !v || (v[0] === 0 && v[1] === 0);
   }
   function isBlocker(cell) {
-    return cell.stone || cell.chocolate || cell.licorice > 0 || cell.honey > 0;
+    return cell.stone || cell.lava || cell.sand > 0 || cell.amber > 0 || cell.geode > 0 || cell.giantId !== undefined || cell.relic || cell.memGem !== undefined;
   }
 
   // Count dominant direction for iteration order
@@ -539,44 +541,44 @@ function applyGravity() {
   const holes = state.holes;
   const lvl = getLevel(state.currentLevel);
   const accelMap = lvl?.accelMap;
-  const sodaLevel = state.sodaLevel || 0;
-  const sodaStart = ROWS - sodaLevel;
+  const floodLevel = state.floodLevel || 0;
+  const floodStart = ROWS - floodLevel;
 
   if (accelMap) {
     _applyGravityAccel(holes, accelMap);
   } else {
   for (let c=0;c<COLS;c++) {
-    // ── Нормальная зона (строки 0..sodaStart-1): гемы падают вниз ──
-    let wr=sodaStart-1;
-    for (let r=sodaStart-1;r>=0;r--) {
+    // ── Нормальная зона (строки 0..floodStart-1): гемы падают вниз ──
+    let wr=floodStart-1;
+    for (let r=floodStart-1;r>=0;r--) {
       if (holes.has(`${r},${c}`)) { wr=r-1; continue; }
       const cell = state.board[r][c];
       if (cell !== null) {
-        if (cell.stone || cell.chocolate || (cell.whiteChoc > 0) || cell.licorice > 0 || cell.honey > 0) { wr = r - 1; continue; }
+        if (cell.stone || cell.lava || (cell.mycelium > 0) || cell.sand > 0 || cell.amber > 0 || cell.geode > 0 || cell.giantId !== undefined || cell.relic || cell.memGem !== undefined) { wr = r - 1; continue; }
         const fallDist=wr-r;
-        if (cell.ingredient && wr === ROWS-1 && fallDist === 0 && r === ROWS-1) {
-          state.ingredientsDelivered++; state.board[r][c]=null; wr--; continue;
+        if (cell.bucket && wr === ROWS-1 && fallDist === 0 && r === ROWS-1) {
+          state.bucketsDelivered++; state.board[r][c]=null; wr--; continue;
         }
         state.board[wr][c]=cell;
         if (fallDist>0) {
           state.board[r][c]=null;
           if (!state.board[wr][c].anim) state.board[wr][c].anim={};
           state.board[wr][c].anim.oy=(state.board[wr][c].anim.oy||0)-fallDist*cellSize;
-          if (cell.ingredient && wr === ROWS-1) { state.ingredientsDelivered++; state.board[wr][c]=null; wr++; }
+          if (cell.bucket && wr === ROWS-1) { state.bucketsDelivered++; state.board[wr][c]=null; wr++; }
         }
         wr--;
       }
     }
     for (let r=wr;r>=0;r--) { if (!holes.has(`${r},${c}`)) state.board[r][c]=null; }
 
-    // ── Сода-зона (строки sodaStart..ROWS-1): гемы всплывают вверх ──
-    if (sodaLevel > 0) {
-      let wr2=sodaStart;
-      for (let r=sodaStart;r<ROWS;r++) {
+    // ── Сода-зона (строки floodStart..ROWS-1): гемы всплывают вверх ──
+    if (floodLevel > 0) {
+      let wr2=floodStart;
+      for (let r=floodStart;r<ROWS;r++) {
         if (holes.has(`${r},${c}`)) { wr2=r+1; continue; }
         const cell = state.board[r][c];
         if (cell !== null) {
-          if (cell.stone || cell.chocolate || cell.bottle) { wr2=r+1; continue; }
+          if (cell.stone || cell.lava || cell.flask) { wr2=r+1; continue; }
           const riseDist=r-wr2;
           state.board[wr2][c]=cell;
           if (riseDist>0) {
@@ -602,7 +604,7 @@ function applyGravity() {
         const _pg = state.portalGrid[r]?.[c];
         if (!_pg) continue;
         const _gc = state.board[r][c];
-        if (!_gc || _gc.stone || _gc.chocolate || (_gc.licorice > 0) || (_gc.honey > 0)) continue;
+        if (!_gc || _gc.stone || _gc.lava || (_gc.sand > 0) || (_gc.amber > 0) || (_gc.geode > 0) || _gc.giantId !== undefined || _gc.relic || _gc.memGem !== undefined) continue;
         const {exitR, exitC} = _pg;
         if (holes.has(`${exitR},${exitC}`)) continue;
         if (state.board[exitR][exitC] !== null) continue;
@@ -618,12 +620,12 @@ function applyGravity() {
     }
     // Re-settle teleported gems in their destination columns
     for (const _tc of _teleCols) {
-      let _wr = sodaStart - 1;
-      for (let _tr = sodaStart - 1; _tr >= 0; _tr--) {
+      let _wr = floodStart - 1;
+      for (let _tr = floodStart - 1; _tr >= 0; _tr--) {
         if (holes.has(`${_tr},${_tc}`)) { _wr = _tr - 1; continue; }
         const _cell = state.board[_tr][_tc];
         if (_cell !== null) {
-          if (_cell.stone || _cell.chocolate || _cell.licorice > 0 || _cell.honey > 0) { _wr = _tr - 1; continue; }
+          if (_cell.stone || _cell.lava || _cell.sand > 0 || _cell.amber > 0 || _cell.geode > 0 || _cell.giantId !== undefined || _cell.relic || _cell.memGem !== undefined) { _wr = _tr - 1; continue; }
           const _fd = _wr - _tr;
           state.board[_wr][_tc] = _cell;
           if (_fd > 0) {
@@ -639,13 +641,13 @@ function applyGravity() {
   }
 }
 
-function _spawnGem(r, c, honeyNeeded, enterOy, enterOx) {
+function _spawnGem(r, c, amberNeeded, enterOy, enterOx) {
   let _ft = randGem();
   for (let _fa=0; _fa<_activeGemTypes && wouldMatch(state.board,r,c,_ft); _fa++) _ft=(_ft+1)%_activeGemTypes;
   const g = createGem(_ft);
   g.anim = {oy: enterOy, alpha: 1, _new: 1};
   if (enterOx) g.anim.ox = enterOx;
-  if (honeyNeeded > 0) { g.honey=2; g.special=SPECIAL.NONE; }
+  if (amberNeeded > 0) { g.amber=2; g.relic=true; g.type=-1; g.special=SPECIAL.NONE; }
   else if (state.rainbowRound?.active && Math.random()<0.30) { g.special=SPECIAL.RAINBOW; g.type=-1; }
   else if (_currentDynDiff < 1.0 && Math.random() < 0.08) {
     if (_currentSpecialWeights) {
@@ -668,16 +670,21 @@ function fillFromTop() {
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) { if (state.iceGrid[r][c]) iceOnBoard++; }
     iceNeeded=Math.max(0, lvl.target-state.iceBroken-iceOnBoard);
   }
-  let honeyNeeded=0;
-  if (lvl?.type==='bears') {
-    const bt=lvl.bearsTarget||lvl.honeyCount||1;
-    let honeyOnBoard=0;
-    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) { if (state.board[r]?.[c]?.honey>0) honeyOnBoard++; }
-    honeyNeeded=Math.max(0, bt-(state.bearsFreed||0)-honeyOnBoard);
+  let amberNeeded=0;
+  if (lvl?.type==='relics') {
+    const bt=lvl.relicsTarget||lvl.amberCount||1;
+    // Считаем ОБЪЕКТЫ-реликвии на доске: одиночные кроты, скрытые, мемори-гемы, живые гиганты
+    let relicsOnBoard=0;
+    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
+      const _rc=state.board[r]?.[c];
+      if (_rc && (_rc.relic || _rc.hiddenRelic || _rc.memGem!==undefined)) relicsOnBoard++;
+    }
+    for (const g of (state.giants||[])) { if (g && !g.freed) relicsOnBoard++; }
+    amberNeeded=Math.max(0, bt-(state.relicsFreed||0)-relicsOnBoard);
   }
   const newGemPositions=[];
-  const sodaLevel = state.sodaLevel || 0;
-  const sodaStart = ROWS - sodaLevel;
+  const floodLevel = state.floodLevel || 0;
+  const floodStart = ROWS - floodLevel;
 
   // ── Cannon-based spawn (accelMap levels) ─────────────────────────────────────
   // CCSS: BoardPopulator fills all empty cells reachable from the cannon in gravity direction
@@ -686,7 +693,7 @@ function fillFromTop() {
     const accelMap = lvl.accelMap;
     for (const [cr, cc] of lvl.cannons) {
       if (holes.has(`${cr},${cc}`)) continue;
-      if (cr >= sodaStart) continue;
+      if (cr >= floodStart) continue;
       const v = accelMap?.[cr]?.[cc] || [0, 2];
       const dr = v[1] / 2; // row step (gravity direction from cannon)
       const dc = v[0] / 2; // col step
@@ -694,13 +701,13 @@ function fillFromTop() {
       let step = 0, r = cr, c = cc;
       while (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
         if (holes.has(`${r},${c}`)) break;
-        if (r >= sodaStart) break;
+        if (r >= floodStart) break;
         const vCell = accelMap?.[r]?.[c];
         if (!vCell || (vCell[0] === 0 && vCell[1] === 0)) break;
         if (state.board[r][c] !== null) break;
         step++;
-        const g = _spawnGem(r, c, honeyNeeded, -dr * step * cellSize, -dc * step * cellSize);
-        if (honeyNeeded > 0 && g.honey) honeyNeeded--;
+        const g = _spawnGem(r, c, amberNeeded, -dr * step * cellSize, -dc * step * cellSize);
+        if (amberNeeded > 0 && g.amber) amberNeeded--;
         state.board[r][c] = g;
         newGemPositions.push({r, c});
         r += dr; c += dc;
@@ -717,23 +724,23 @@ function fillFromTop() {
   // секциях правильно "входят" сверху своей секции, а не с самого верха доски.
   for (let c=0;c<COLS;c++) {
     let sectionEmpty=0;
-    for (let r=0;r<sodaStart;r++) {
+    for (let r=0;r<floodStart;r++) {
       if (holes.has(`${r},${c}`)) { sectionEmpty=0; continue; }
       const existing=state.board[r][c];
-      if (existing && (existing.stone || existing.chocolate || (existing.whiteChoc > 0))) { sectionEmpty=0; continue; }
+      if (existing && (existing.stone || existing.lava || (existing.mycelium > 0))) { sectionEmpty=0; continue; }
       if (existing!==null) { sectionEmpty=0; continue; }
       sectionEmpty++;
-      const g = _spawnGem(r, c, honeyNeeded, -sectionEmpty*cellSize, 0);
-      if (honeyNeeded > 0 && g.honey) honeyNeeded--;
+      const g = _spawnGem(r, c, amberNeeded, -sectionEmpty*cellSize, 0);
+      if (amberNeeded > 0 && g.amber) amberNeeded--;
       state.board[r][c]=g;
       newGemPositions.push({r,c});
     }
-    if (sodaLevel > 0) {
+    if (floodLevel > 0) {
       let emptyCountS=0;
-      for (let r=ROWS-1;r>=sodaStart;r--) {
+      for (let r=ROWS-1;r>=floodStart;r--) {
         if (holes.has(`${r},${c}`)) { emptyCountS=0; continue; }
         const existing=state.board[r][c];
-        if (existing && (existing.stone || existing.chocolate || existing.bottle)) { emptyCountS=0; continue; }
+        if (existing && (existing.stone || existing.lava || existing.flask)) { emptyCountS=0; continue; }
         if (existing===null) {
           emptyCountS++;
           const g=createGem(); g.anim={oy:emptyCountS*cellSize,alpha:1};

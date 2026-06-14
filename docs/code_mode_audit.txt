@@ -1,0 +1,89 @@
+Levels per mode: {"GiantBears": 3865, "Honey": 3715, "FloatingNutsMode": 3309, "Chocolate": 1513, "BubbleGum": 1556, "PaintBattleMode": 3790, "SodaToTheBrim": 1459, "Path": 903}
+
+code | total_occ | mode distribution (levels_with_code/occurrences)
+  52 |   12457 | PaintBattleMode:677/4664, GiantBears:470/2557, Honey:329/1661, Chocolate:257/1151, FloatingNutsMode:161/967, Path:227/894, SodaToTheBrim:61/399, BubbleGum:32/164
+  53 |   17083 | PaintBattleMode:893/6006, GiantBears:692/3860, Honey:460/2168, Chocolate:376/1765, Path:296/1476, FloatingNutsMode:222/1123, SodaToTheBrim:88/500, BubbleGum:41/185
+  54 |   20369 | PaintBattleMode:1025/6879, GiantBears:826/5289, Honey:537/2668, Path:340/1909, Chocolate:403/1788, FloatingNutsMode:234/1169, SodaToTheBrim:84/416, BubbleGum:48/251
+  55 |   18987 | PaintBattleMode:992/6675, GiantBears:804/5436, Honey:410/1907, Path:350/1872, Chocolate:308/1341, FloatingNutsMode:218/1258, SodaToTheBrim:71/347, BubbleGum:35/151
+  56 |    7947 | PaintBattleMode:621/3073, GiantBears:495/2387, Path:239/893, Honey:194/624, FloatingNutsMode:113/473, Chocolate:122/327, SodaToTheBrim:27/122, BubbleGum:13/48
+ 101 |   58339 | FloatingNutsMode:2465/22532, Honey:1166/9620, PaintBattleMode:1130/8910, GiantBears:1079/7838, SodaToTheBrim:515/3236, BubbleGum:438/3234, Chocolate:346/2274, Path:127/695
+ 103 |   52889 | FloatingNutsMode:3118/29614, SodaToTheBrim:1421/15629, PaintBattleMode:337/2056, Honey:313/1981, GiantBears:367/1966, BubbleGum:116/673, Chocolate:113/645, Path:64/325
+ 104 |  255848 | Honey:3647/55477, PaintBattleMode:3724/54221, GiantBears:3759/46857, FloatingNutsMode:3130/31753, Chocolate:1490/21185, BubbleGum:1528/19078, SodaToTheBrim:1433/15733, Path:892/11544
+ 105 |   12728 | FloatingNutsMode:1205/4470, GiantBears:386/1790, Honey:324/1731, PaintBattleMode:349/1713, SodaToTheBrim:391/1473, Chocolate:128/695, BubbleGum:135/656, Path:48/200
+ 106 |   14034 | FloatingNutsMode:1291/4634, Honey:415/2347, PaintBattleMode:404/2014, GiantBears:399/1746, SodaToTheBrim:380/1460, Chocolate:169/1014, BubbleGum:135/681, Path:33/138
+ 164 |   15591 | Honey:2244/15591
+ 165 |   97224 | Honey:3713/97224
+ 200 |    4083 | GiantBears:257/4083
+ 201 |  251880 | GiantBears:3860/251817, Honey:1/63
+ 211 |   32460 | GiantBears:3634/32460
+ 212 |    6415 | GiantBears:2624/6415
+ 213 |     992 | GiantBears:742/992
+ 214 |   18597 | GiantBears:3127/18597
+ 215 |    3540 | GiantBears:1663/3540
+ 216 |     434 | GiantBears:318/434
+ 270 |   42874 | BubbleGum:1509/42874
+ 271 |   12074 | BubbleGum:1157/12074
+ 300 |   13245 | PaintBattleMode:3790/13245
+ 320 |   45999 | FloatingNutsMode:2970/40501, SodaToTheBrim:1156/5498
+ 340 |   33756 | FloatingNutsMode:2875/23328, SodaToTheBrim:1366/10428
+ 360 |   16306 | FloatingNutsMode:3309/16306
+ 361 |   33793 | FloatingNutsMode:3309/33793
+ 410 |    9726 | PaintBattleMode:367/2170, FloatingNutsMode:388/1909, Honey:317/1712, GiantBears:276/1605, SodaToTheBrim:195/965, Chocolate:155/726, BubbleGum:95/530, Path:22/109
+ 411 |    7605 | PaintBattleMode:353/1889, GiantBears:297/1729, FloatingNutsMode:295/1416, Honey:194/1104, SodaToTheBrim:175/854, BubbleGum:91/492, Path:16/97, Chocolate:8/24
+ 412 |    3349 | PaintBattleMode:164/930, GiantBears:172/860, FloatingNutsMode:150/654, SodaToTheBrim:77/383, BubbleGum:53/278, Honey:35/202, Path:5/26, Chocolate:7/16
+ 413 |    6848 | PaintBattleMode:263/1508, GiantBears:258/1462, Honey:230/1286, FloatingNutsMode:276/1148, SodaToTheBrim:127/504, Chocolate:95/430, BubbleGum:74/408, Path:18/102
+ 414 |    5399 | FloatingNutsMode:252/1135, Honey:193/1046, GiantBears:178/1006, PaintBattleMode:147/804, SodaToTheBrim:111/548, Chocolate:108/484, BubbleGum:67/340, Path:9/36
+ 415 |    3364 | Honey:163/964, GiantBears:135/896, Chocolate:89/436, FloatingNutsMode:89/392, SodaToTheBrim:65/300, BubbleGum:33/197, PaintBattleMode:28/139, Path:6/40
+ 416 |    2072 | PaintBattleMode:73/458, FloatingNutsMode:77/366, GiantBears:53/355, SodaToTheBrim:60/300, Honey:47/245, BubbleGum:28/175, Chocolate:38/173
+ 417 |    1195 | Honey:36/335, GiantBears:43/311, PaintBattleMode:29/225, BubbleGum:18/133, FloatingNutsMode:13/119, Chocolate:3/32, SodaToTheBrim:4/22, Path:3/18
+ 420 |   24882 | PaintBattleMode:1587/8510, Honey:930/4355, GiantBears:894/3620, FloatingNutsMode:876/3612, BubbleGum:421/1717, SodaToTheBrim:407/1543, Chocolate:286/997, Path:115/528
+ 500 |   37186 | Honey:3203/22868, PaintBattleMode:726/4122, GiantBears:661/3830, FloatingNutsMode:524/2496, BubbleGum:329/1844, SodaToTheBrim:244/1173, Path:198/836, Chocolate:4/17
+ 501 |   38092 | Honey:3389/24165, GiantBears:681/4037, PaintBattleMode:714/3901, FloatingNutsMode:494/2126, BubbleGum:333/1821, SodaToTheBrim:224/1100, Path:200/920, Chocolate:5/22
+ 502 |   38077 | Honey:3297/25683, GiantBears:622/3738, PaintBattleMode:651/3659, FloatingNutsMode:429/1899, BubbleGum:278/1385, SodaToTheBrim:189/855, Path:197/855, Chocolate:2/3
+ 503 |   17536 | Honey:2249/12517, PaintBattleMode:363/1517, GiantBears:353/1436, FloatingNutsMode:215/779, SodaToTheBrim:92/502, Path:137/401, BubbleGum:115/384
+ 504 |   13719 | Honey:730/3531, PaintBattleMode:502/3361, FloatingNutsMode:464/2568, GiantBears:372/1849, BubbleGum:209/1042, SodaToTheBrim:158/828, Path:131/504, Chocolate:6/36
+ 505 |   70693 | PaintBattleMode:877/17659, GiantBears:827/15720, FloatingNutsMode:694/11146, Honey:1525/10316, BubbleGum:406/7111, SodaToTheBrim:321/4960, Path:227/3717, Chocolate:7/64
+ 550 |   29702 | FloatingNutsMode:1363/8825, GiantBears:1107/6442, PaintBattleMode:953/6361, SodaToTheBrim:485/2555, BubbleGum:412/2356, Chocolate:238/1463, Path:230/914, Honey:121/786
+ 551 |   36710 | FloatingNutsMode:1661/11495, GiantBears:1445/8293, PaintBattleMode:1130/7030, SodaToTheBrim:640/3547, BubbleGum:536/3212, Chocolate:278/1278, Path:284/1161, Honey:137/694
+ 552 |   35534 | GiantBears:1640/9670, FloatingNutsMode:1533/8207, PaintBattleMode:1261/7594, SodaToTheBrim:674/3522, BubbleGum:565/3374, Path:305/1442, Chocolate:271/1123, Honey:136/602
+ 553 |   36905 | GiantBears:1661/11020, FloatingNutsMode:1456/8258, PaintBattleMode:1256/8151, BubbleGum:549/3574, SodaToTheBrim:581/2927, Path:333/1681, Chocolate:184/726, Honey:125/568
+ 554 |   24302 | GiantBears:1363/8084, PaintBattleMode:968/5426, FloatingNutsMode:1036/5189, BubbleGum:368/2028, SodaToTheBrim:358/1516, Path:304/1299, Honey:98/404, Chocolate:98/356
+ 555 |    8655 | GiantBears:687/3087, FloatingNutsMode:457/1891, PaintBattleMode:462/1774, SodaToTheBrim:163/812, Path:180/534, BubbleGum:121/417, Honey:35/85, Chocolate:25/55
+ 570 |    3472 | PaintBattleMode:159/964, GiantBears:141/880, Honey:112/712, FloatingNutsMode:67/456, SodaToTheBrim:30/184, Chocolate:30/152, BubbleGum:25/124
+ 577 |    9712 | PaintBattleMode:489/2852, Honey:411/2332, FloatingNutsMode:296/1692, GiantBears:240/1320, Chocolate:82/452, Path:85/416, BubbleGum:62/324, SodaToTheBrim:64/324
+ 580 |    5420 | PaintBattleMode:411/1460, FloatingNutsMode:389/1372, Honey:216/872, GiantBears:270/853, SodaToTheBrim:109/254, BubbleGum:89/220, Chocolate:63/203, Path:70/186
+ 581 |   11147 | PaintBattleMode:680/2773, FloatingNutsMode:595/2442, GiantBears:573/2072, Honey:413/1769, SodaToTheBrim:228/812, BubbleGum:188/556, Path:102/400, Chocolate:95/323
+ 582 |   15627 | PaintBattleMode:937/3925, GiantBears:877/3514, FloatingNutsMode:733/2757, Honey:533/2377, SodaToTheBrim:273/966, BubbleGum:312/927, Path:149/645, Chocolate:127/516
+ 583 |    5161 | PaintBattleMode:364/1370, GiantBears:339/1152, FloatingNutsMode:275/903, Honey:217/856, BubbleGum:107/298, SodaToTheBrim:91/256, Path:70/214, Chocolate:30/112
+ 584 |    3644 | PaintBattleMode:344/1173, FloatingNutsMode:328/1000, GiantBears:185/540, Honey:124/396, SodaToTheBrim:95/269, BubbleGum:74/141, Path:34/72, Chocolate:29/53
+ 585 |    8608 | PaintBattleMode:673/2581, FloatingNutsMode:565/2058, GiantBears:480/1473, Honey:265/895, SodaToTheBrim:180/645, BubbleGum:194/523, Chocolate:75/244, Path:69/189
+ 586 |   11240 | PaintBattleMode:872/3142, GiantBears:728/2496, FloatingNutsMode:619/2123, Honey:401/1386, SodaToTheBrim:242/780, BubbleGum:258/654, Path:102/401, Chocolate:84/258
+ 587 |    3153 | PaintBattleMode:329/869, GiantBears:283/754, FloatingNutsMode:223/603, Honey:141/324, SodaToTheBrim:75/215, BubbleGum:84/205, Path:46/108, Chocolate:30/75
+ 588 |   41970 | PaintBattleMode:1168/10979, FloatingNutsMode:1034/9126, GiantBears:1010/8369, Honey:663/5068, BubbleGum:380/3619, SodaToTheBrim:373/2778, Path:160/1096, Chocolate:143/935
+ 589 |   34691 | PaintBattleMode:1192/10506, FloatingNutsMode:962/7529, GiantBears:922/6439, Honey:525/3550, BubbleGum:380/3275, SodaToTheBrim:341/2145, Path:125/659, Chocolate:112/588
+ 602 |   31337 | Chocolate:1499/31337
+ 603 |   30576 | Chocolate:1498/30576
+ 604 |   24675 | Chocolate:1473/24675
+ 605 |    4414 | Chocolate:697/4414
+ 606 |   20089 | Chocolate:1431/20089
+ 650 |  122514 | PaintBattleMode:1546/26312, GiantBears:1580/26234, Honey:1618/20350, FloatingNutsMode:979/15131, BubbleGum:649/13455, Chocolate:814/8726, SodaToTheBrim:558/7057, Path:291/5249
+ 660 |    3446 | GiantBears:950/3446
+ 661 |    1859 | GiantBears:610/1859
+ 662 |     135 | GiantBears:72/135
+ 663 |     119 | GiantBears:67/119
+ 664 |      35 | GiantBears:28/35
+ 665 |      27 | GiantBears:18/27
+ 666 |   25351 | PaintBattleMode:1258/6931, GiantBears:910/5406, Honey:845/4983, FloatingNutsMode:496/2759, SodaToTheBrim:244/1412, Chocolate:261/1397, BubbleGum:255/1386, Path:190/1077
+ 667 |    9076 | PaintBattleMode:502/2422, GiantBears:403/2053, Honey:396/1979, FloatingNutsMode:194/997, BubbleGum:100/503, Chocolate:122/502, SodaToTheBrim:100/466, Path:38/154
+ 668 |   36379 | PaintBattleMode:938/9281, FloatingNutsMode:1155/8793, GiantBears:825/6236, BubbleGum:535/4091, Honey:535/3783, SodaToTheBrim:332/2408, Chocolate:169/1139, Path:101/648
+ 669 |   48696 | FloatingNutsMode:1471/11704, GiantBears:1123/10861, PaintBattleMode:1136/10458, BubbleGum:647/5963, Honey:729/4898, SodaToTheBrim:371/2637, Path:132/1101, Chocolate:190/1074
+ 670 |   32240 | FloatingNutsMode:1245/8219, GiantBears:905/7460, PaintBattleMode:911/7137, Honey:583/3485, BubbleGum:506/3285, SodaToTheBrim:246/1360, Path:113/797, Chocolate:107/497
+ 671 |   14870 | FloatingNutsMode:709/4383, GiantBears:497/3450, PaintBattleMode:474/3023, Honey:295/1598, BubbleGum:225/1134, SodaToTheBrim:111/683, Path:68/335, Chocolate:47/264
+ 672 |    4182 | FloatingNutsMode:305/1218, PaintBattleMode:228/956, GiantBears:221/951, Honey:119/407, BubbleGum:97/402, SodaToTheBrim:34/133, Path:22/64, Chocolate:15/51
+ 850 |    2358 | Path:232/2358
+ 851 |   13894 | Path:794/13894
+ 852 |     903 | Path:903/903
+ 853 |     903 | Path:903/903
+ 854 |    1151 | Path:486/1151
+ 855 |    2010 | Path:594/2010
+ 856 |    5520 | Path:783/5520

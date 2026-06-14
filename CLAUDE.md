@@ -86,18 +86,65 @@ Canvas 2D + Web Audio API. Никаких фреймворков, никаких
 ### Состояние
 ```js
 state = {
-  board[][],          // ROWS×COLS, каждая ячейка: { type, special, stone, chocolate,
-                      //   marmalade, ingredient, locked, mystery, bottle, ice, anim }
+  board[][],          // ROWS×COLS, каждая ячейка: { type, special, stone, lava,
+                      //   web, bucket, locked, mystery, flask, ice, anim,
+                      //   amber, sand, mycelium, quartz, chain,
+                      //   geode (1-5), relic, hiddenRelic, memGem (0-5), giantId }
+  giants[],           // многоклеточные кроты: {id, r, c, w, h, cells, freed, done}
   score, moves, level,
   soundOn, musicOn,
   collectedGems[],    // счётчик собранных гемов по типу
-  iceGrid[][],        // лёд
-  jellyGrid[][],      // желе (1 или 2 слоя)
+  iceGrid[][],        // лёд (1-6 слоёв)
+  frostGrid[][],      // слоёная порода (1-6, только прямой матч)
+  dirtGrid[][],       // грязная земля (1–2 слоя)
+  bricksGrid[][],     // кирпичная кладка
+  myceliumSourceGrid[][], // источники грибницы
   holes: Set,         // недоступные клетки
   screen,             // 'menu'|'game'|'win'|'lose'|'levels'|'quests'|...
   ...
 }
 ```
+
+### Урон по слоёным покрытиям — ТОЛЬКО через центральные хелперы (gameplay.js)
+```js
+_hitAmber(cl, r, c)   // янтарь/рунный блок: −1 слой; на 0 → _onAmberCleared (крот/гигант/мемори-гем)
+_hitFrost(r, c)       // порода: −1 слой; на 0 → скрытый крот, если был
+_hitGeode(cl, r, c)   // геода: −1 слой; на 0 → превращается в гем
+```
+Не декрементить amber/frostGrid/geode напрямую — сломается освобождение кротов.
+```
+
+### Именование Ore Rush (нет следов CCSS в коде)
+
+| Ore Rush поле/тип | CCSS аналог | Описание |
+|---|---|---|
+| `cell.lava` / `type:'lava'` | chocolate | расширяющийся блокер, растёт каждый ход |
+| `cell.web` | marmalade | паутина: гем виден, но не матчится |
+| `cell.sand` | licorice swirl | падающий блокер, блокирует бонусы (1–3 слоя) |
+| `cell.amber` | honey lid | янтарь вокруг реликвий (1–4 слоя) |
+| `cell.mycelium` / `type:'mycelium'` | white chocolate | грибница, расползается из источника |
+| `cell.flask` / `type:'flood'` | bottle / SodaToTheBrim | фляга; режим затопления |
+| `cell.bucket` / `type:'buckets'` | ingredient / FloatingNuts | ведро сокровищ, доставить вниз |
+| `dirtGrid[][]` / `type:'dirt'` | jelly / BubbleGum | грязная земля на клетках (1–2 слоя) |
+| `bricksGrid[][]` / `type:'bricks'` | carpet / PaintBattle | кирпичная кладка, нужно покрыть поле |
+| `type:'relics'` | bears / GiantBears+Honey | кроты: освободить N штук |
+| `cell.relic` | honey bear (416/417) | одиночный крот в янтаре (amber_1..4.png) |
+| `cell.memGem` | hidden object 211-216 | мемори-гем под рунным блоком (memory_gem_*.png) |
+| `cell.giantId` / `state.giants` | giant bear 660-665 | многоклеточный крот 1×2…6×3 (memory_bear_*.png) |
+| `cell.hiddenRelic` | hidden bear (Honey task) | крот под слоёной породой (frostGrid) |
+| `lvl.relicSkin:1` | memory bricks | покрытие рисуется рунным блоком, не янтарём |
+| `cell.geode` | cupcake 52-56 | геода 1-5 слоёв, на 0 → гем (geode_*.png) |
+| `state.relicsFreed` | bearsFreed | счётчик освобождённых кротов |
+| `ROCKET = 6` | Fish (2×2 match) | ракета — летит к приоритетной цели |
+| `BOMB = 7` | wrappedCandy | бомба — двойной взрыв 3×3 |
+| `RAINBOW = 4` | colorBomb | радужная — уничтожает все одного цвета |
+| `STRIPE_H/V` | stripedCandy | полосатая — взрывает строку/столбец |
+
+> Если пользователь говорит «рыба» → имеет в виду ROCKET.
+> Если говорит «медведь» → имеет в виду реликвию (relics).
+> Если говорит «враппед» → имеет в виду BOMB.
+
+---
 
 ### Ключевые константы
 ```js
@@ -189,6 +236,10 @@ SFX.win/lose/reward/winJingle/loseJingle()  // osc+noise2 — финальные
 **Причина:** каждый `showAutoHint` запускал новый `requestAnimationFrame` цикл, не отменяя старый.
 **Исправление:** `_gestureHintRaf` — глобальный handle, `cancelAnimationFrame` перед новым запуском.
 
+### Экран заданий пустой
+**Причина:** `renderQuestsFull()` обращался к `document.getElementById('qst-lives')` которого не было в HTML → null exception → функция падала до рендера заданий.
+**Исправление:** добавлен `<span id="qst-lives">` в HTML.
+
 ### COLORING сбрасывала бонусы при перекраске
 **Причина:** `triggerSpecial(COLORING)` делал `cl.special=SPECIAL.NONE` при смене цвета.
 **Исправление:** убрана строка `cl.special=SPECIAL.NONE` — перекраска меняет только цвет.
@@ -206,6 +257,10 @@ STRIPE → собрать все строки/столбцы в один Set, `P
 **Причина:** COLORING feedback-loop + async processMatches продолжали работать на новом поле.
 **Исправление:** `_matchEpoch` инкрементируется в `playLevel`. Все async-функции захватывают
 `_myEpoch` и проверяют его после каждого `await`. Лимит итераций снижен до 25.
+
+### Несколько бомб взрывались по одному (медленно)
+**Причина:** в `processMatches` `specialsInMatch` обрабатывался циклом `for...await` — каждая бомба ждала полного завершения (фаза1 + гравитация + дым + фаза2) перед следующей.
+**Исправление:** `_bombPhase1(r,c)` — выделена отдельная функция для первого взрыва бомбы (без гравитации). В `processMatches`: все бомбы из матча делают фазу1 одновременно (`Promise.all`), затем одна гравитация, затем фаза2 одновременно. `triggerSpecial(BOMB)` (для одиночных бомб вне `specialsInMatch`) по-прежнему использует `_bombPhase1` + гравитация + фаза2.
 
 ### Бомба взрывалась на исходной позиции (не падала)
 **Причина:** бомба null'илась ДО захвата `_bombData` → трекинг по ссылке не работал.

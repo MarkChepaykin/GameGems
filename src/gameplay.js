@@ -5,9 +5,10 @@ async function trySwap(r1,c1,r2,c2) {
   if (state.busy||state.paused) return;
   if (r2<0||r2>=ROWS||c2<0||c2>=COLS) return;
   const cl1=state.board[r1][c1], cl2=state.board[r2][c2];
-  if (!cl1||!cl2||cl1.stone||cl2.stone||cl1.chocolate||cl2.chocolate||cl1.marmalade||cl2.marmalade||cl1.locked||cl2.locked||cl1.mystery||cl2.mystery) return;
+  if (!cl1||!cl2||cl1.stone||cl2.stone||cl1.lava||cl2.lava||cl1.web||cl2.web||cl1.locked||cl2.locked||cl1.mystery||cl2.mystery) return;
+  if (cl1.amber>0||cl2.amber>0||cl1.geode>0||cl2.geode>0||(cl1.type<0&&!cl1.bucket)||(cl2.type<0&&!cl2.bucket)) return;
   haptic('tap');
-  if (cl1.ingredient || cl2.ingredient) {
+  if (cl1.bucket || cl2.bucket) {
     // Разрешить только если партнёр образует матч на новой позиции
     doSwap(r1,c1,r2,c2);
     const _ingMatch = findMatches().size > 0;
@@ -31,10 +32,10 @@ async function trySwap(r1,c1,r2,c2) {
     const _sp1combo=cl1.special, _sp2combo=cl2.special;
     const _t1combo=cl1.type, _t2combo=cl2.type;
     for (const [r,c,cl] of [[r1,c1,cl1],[r2,c2,cl2]]) {
-      clearJellyAt(r,c); clearCarpetAt(r,c,false);
+      clearDirtAt(r,c); clearBricksAt(r,c,false);
       if (cl.type>=0) state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
       if (state.iceGrid[r]?.[c]) { state.iceGrid[r][c]--; if(!state.iceGrid[r][c]){state.iceBroken++; updateQuestProgress('ice',1);} }
-      if (state.frostGrid[r]?.[c]) { state.frostGrid[r][c]--; spawnParticles(r,c,'#bae6fd',3); }
+      _hitFrost(r,c);
     }
     await triggerCombinedSpecial(r1,c1,_sp1combo,r2,c2,_sp2combo);
     applyGravity(); fillFromTop(); await animateDrop();
@@ -55,16 +56,19 @@ async function trySwap(r1,c1,r2,c2) {
       await animateRainbowBurst(-1, r1, c1); // -1 = все гемы
       let pts=0;
       for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
-        const cl=state.board[r][c]; if(!cl||cl.stone||cl.ingredient) continue;
+        const cl=state.board[r][c]; if(!cl||cl.stone||cl.bucket) continue;
         if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]--;if(!state.iceGrid[r][c]){state.iceBroken++;updateQuestProgress('ice',1);}}
-        if(state.frostGrid[r]?.[c]){state.frostGrid[r][c]--;spawnParticles(r,c,'#bae6fd',3);}
-        clearJellyAt(r,c); clearCarpetAt(r,c,false);
-        if(cl.chocolate){destroyChocolate(r,c);}
+        _hitFrost(r,c);
+        clearDirtAt(r,c); clearBricksAt(r,c,false);
+        if(cl.lava){destroyLava(r,c);}
+        else if(cl.amber>0){_hitAmber(cl,r,c);}
+        else if(cl.geode>0){_hitGeode(cl,r,c);}
+        else if(cl.type<0){/* реликвия/мемори-гем в процессе вскрытия — не нулим */}
         else {
           if(cl.type>=0){state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1; pts+=60;}
           spawnParticles(r,c,getSkinColor(Math.max(0,cl.type)),6);
           state.board[r][c]=null;
-          breakAdjacentChocolate(r,c);
+          breakAdjacentLava(r,c);
         }
       }
       if(pts>0){state.score+=pts;spawnFloatingScore(r1,c1,pts,'#ff00ff');}
@@ -86,14 +90,14 @@ async function trySwap(r1,c1,r2,c2) {
       const targets=[];
       for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
         const cl=state.board[r][c];
-        if(cl&&cl.type===tt&&!cl.stone&&!cl.chocolate&&!cl.ingredient) { cl.special=bonusSp; targets.push([r,c,bonusSp]); }
+        if(cl&&cl.type===tt&&!cl.stone&&!cl.lava&&!cl.bucket&&!(cl.amber>0)&&!(cl.geode>0)) { cl.special=bonusSp; targets.push([r,c,bonusSp]); }
       }
       for (const [r,c,cl] of [[r1,c1,state.board[r1][c1]],[r2,c2,state.board[r2][c2]]]) {
         if(!cl) continue;
-        clearJellyAt(r,c); clearCarpetAt(r,c,false);
+        clearDirtAt(r,c); clearBricksAt(r,c,false);
         if(cl.type>=0) state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
         if(state.iceGrid[r]?.[c]){state.iceGrid[r][c]--;if(!state.iceGrid[r][c]){state.iceBroken++;updateQuestProgress('ice',1);}}
-        if(state.frostGrid[r]?.[c]){state.frostGrid[r][c]--;spawnParticles(r,c,'#bae6fd',3);}
+        _hitFrost(r,c);
       }
       state.board[r1][c1]=null; state.board[r2][c2]=null;
       drawBoard();
@@ -101,7 +105,7 @@ async function trySwap(r1,c1,r2,c2) {
       let pts=0;
       for (const [tr,tc,sp] of targets) {
         const tcl=state.board[tr]?.[tc];
-        if(tcl&&!tcl.ingredient) { await triggerSpecial(tr,tc,sp); state.board[tr][tc]=null; pts+=30; }
+        if(tcl&&!tcl.bucket) { await triggerSpecial(tr,tc,sp); state.board[tr][tc]=null; pts+=30; }
       }
       if(pts>0){state.score+=pts;spawnFloatingScore(r1,c1,pts,'#a855f7');}
       spendMove(); updateGoalProgress();
@@ -117,15 +121,15 @@ async function trySwap(r1,c1,r2,c2) {
     let rainbowPts=0;
     for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
       const cl=state.board[r][c]; if (!cl) continue;
-      if (cl.ingredient || cl.stone || cl.chocolate) continue; // радуга не ломает камни/тьму/ингредиенты
+      if (cl.bucket || cl.stone || cl.lava || cl.amber>0 || cl.geode>0 || (cl.type<0 && cl.special!==SPECIAL.RAINBOW)) continue; // радуга не ломает камни/тьму/покрытия
       if (cl.type===tt || cl.special===SPECIAL.RAINBOW) {
         if (state.iceGrid[r]?.[c]) { state.iceGrid[r][c]--; if(!state.iceGrid[r][c]){state.iceBroken++; updateQuestProgress('ice',1);} }
-        if (state.frostGrid[r]?.[c]) { state.frostGrid[r][c]--; spawnParticles(r,c,'#bae6fd',3); }
-        clearJellyAt(r,c); clearCarpetAt(r,c,false);
+        _hitFrost(r,c);
+        clearDirtAt(r,c); clearBricksAt(r,c,false);
         if (cl.type>=0) state.collectedGems[cl.type]=(state.collectedGems[cl.type]||0)+1;
         state.board[r][c]=null;
         spawnParticles(r,c,getSkinColor(tt>=0?tt:0),6);
-        breakAdjacentChocolate(r,c);
+        breakAdjacentLava(r,c);
         rainbowPts+=50;
       }
     }
@@ -140,8 +144,8 @@ async function trySwap(r1,c1,r2,c2) {
   const _swapSnap = {
     board: state.board.map(row => row.map(cell => cell ? {...cell, anim: {}} : null)),
     iceGrid: state.iceGrid.map(row => [...row]),
-    jellyGrid: state.jellyGrid.map(row => [...row]),
-    carpetGrid: state.carpetGrid.map(row => [...row]),
+    dirtGrid: state.dirtGrid.map(row => [...row]),
+    bricksGrid: state.bricksGrid.map(row => [...row]),
     score: state.score, moves: state.moves,
     iceBroken: state.iceBroken, stonesBroken: state.stonesBroken,
     collectedGems: {...state.collectedGems}, r1, c1, r2, c2,
@@ -202,8 +206,8 @@ async function applyUndo() {
   // Restore state from snapshot
   state.board      = snap.board;
   state.iceGrid    = snap.iceGrid;
-  state.jellyGrid  = snap.jellyGrid;
-  state.carpetGrid = snap.carpetGrid;
+  state.dirtGrid  = snap.dirtGrid;
+  state.bricksGrid = snap.bricksGrid;
   state.score      = snap.score;
   state.moves      = snap.moves;
   state.iceBroken  = snap.iceBroken;
@@ -246,52 +250,58 @@ function spendMove() {
       updateRainbowRoundHUD();
     }
   }
-  // Licorice auto-spawn
-  if (state.licoriceSpawnRate > 0 && state.moves > 0) {
+  // Sand auto-spawn
+  if (state.sandSpawnRate > 0 && state.moves > 0) {
     const lvl = getLevel(state.currentLevel);
     const spent = (lvl?.moves || 20) - state.moves;
-    if (spent > 0 && spent % state.licoriceSpawnRate === 0) spawnLicorice();
+    if (spent > 0 && spent % state.sandSpawnRate === 0) spawnSand();
   }
-  // BubbleGum jelly spread
-  if (getLevel(state.currentLevel)?.type === 'jelly') applyJellySpread();
+  // BubbleGum dirt spread
+  if (getLevel(state.currentLevel)?.type === 'dirt') applyJellySpread();
 }
 
 function applyJellySpread() {
   const lvl = getLevel(state.currentLevel);
-  const chance = (lvl?.jellyGrowChance ?? 50) / 100;
+  const chance = (lvl?.dirtGrowChance ?? 50) / 100;
   const holes = state.holes;
   const spreadCells = [];
   for (let r=0; r<ROWS; r++) for (let c=0; c<COLS; c++) {
-    if (!state.jellyGrid[r]?.[c]) continue;
+    if (!state.dirtGrid[r]?.[c]) continue;
     for (const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
       const nr=r+dr, nc=c+dc;
       if (nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
       if (holes.has(`${nr},${nc}`)) continue;
-      if (state.jellyGrid[nr]?.[nc]) continue;
+      if (state.dirtGrid[nr]?.[nc]) continue;
       const cell=state.board[nr]?.[nc];
-      if (!cell||cell.stone||cell.chocolate||cell.marmalade||cell.locked) continue;
+      if (!cell||cell.stone||cell.lava||cell.web||cell.locked) continue;
       if (Math.random()<chance) spreadCells.push([nr,nc]);
     }
   }
   const seen=new Set();
   for (const [r,c] of spreadCells) {
     const k=`${r},${c}`; if(seen.has(k)) continue; seen.add(k);
-    state.jellyGrid[r][c]=2;
+    state.dirtGrid[r][c]=2;
     spawnParticles(r,c,'#ff80c8',3);
   }
 }
 
-// Мёд/Медведи
+// Янтарь/Кроты
 function freeBear(r, c) {
-  state.bearsFreed = (state.bearsFreed || 0) + 1;
+  state.relicsFreed = (state.relicsFreed || 0) + 1;
+  SFX.bearFreed && SFX.bearFreed();
   spawnParticles(r, c, '#fde68a', 8);
   rings.push({ x:boardOffX+c*cellSize+cellSize/2, y:boardOffY+r*cellSize+cellSize/2, color:'rgba(251,191,36,0.85)', r:4, maxR:cellSize*1.1, life:1, lw:3 });
-  showToast('🐻 Медведь освобождён!');
-  updateQuestProgress('bears', 1);
+  const _fbCell = state.board[r]?.[c];
+  if (_fbCell) {
+    delete _fbCell.relic;
+    if (_fbCell.type < 0 && !_fbCell.bucket && !_fbCell.stone && !_fbCell.lava) { _fbCell.type = randGem(); _fbCell.anim = {}; }
+  }
+  showToast('🐾 Крот освобождён!');
+  updateQuestProgress('relics', 1);
   updateGoalProgress();
 }
-function _releaseBear(r, c) {
-  if (getLevel(state.currentLevel)?.type === 'bears') {
+function _releaseRelic(r, c) {
+  if (getLevel(state.currentLevel)?.type === 'relics') {
     const cell = state.board[r]?.[c];
     if (cell) cell._bearOpened = true;
     spawnParticles(r, c, '#fde68a', 4);
@@ -302,6 +312,89 @@ function _releaseBear(r, c) {
   } else {
     freeBear(r, c);
   }
+}
+
+// ── Центральный урон по слоёным покрытиям ──
+// Янтарь/рунный блок: −1 слой; на 0 — освобождает то, что под ним
+function _hitAmber(cl, r, c) {
+  if (!cl || !(cl.amber > 0)) return;
+  cl.amber--;
+  spawnParticles(r, c, '#fde68a', cl.amber === 0 ? 6 : 3);
+  if (cl.amber === 0) { SFX.amberBreak && SFX.amberBreak(); _onAmberCleared(r, c); }
+  else { SFX.iceCrack && SFX.iceCrack(); }
+}
+function _onAmberCleared(r, c) {
+  const cell = state.board[r]?.[c];
+  if (!cell) return;
+  if (cell.giantId !== undefined) { _checkGiantFreed(cell.giantId); return; }
+  if (cell.memGem !== undefined) { _collectMemGem(r, c); return; }
+  if (cell.relic || cell.hiddenRelic) { delete cell.hiddenRelic; _releaseRelic(r, c); }
+}
+// Иней/порода: −1 слой; под последним слоем может прятаться крот
+function _hitFrost(r, c) {
+  if (!state.frostGrid[r]?.[c]) return;
+  state.frostGrid[r][c]--;
+  SFX.frostingBreak && SFX.frostingBreak();
+  spawnParticles(r, c, '#bae6fd', state.frostGrid[r][c] ? 3 : 5);
+  if (!state.frostGrid[r][c]) {
+    const cell = state.board[r]?.[c];
+    if (cell && cell.hiddenRelic) { delete cell.hiddenRelic; _releaseRelic(r, c); }
+  }
+}
+// Геода: −1 слой; на 0 превращается в гем
+function _hitGeode(cl, r, c) {
+  if (!cl || !(cl.geode > 0)) return;
+  cl.geode--;
+  spawnParticles(r, c, '#a8a29e', cl.geode === 0 ? 6 : 3);
+  if (cl.geode === 0) { SFX.stoneBreak && SFX.stoneBreak(); cl.type = randGem(); cl.anim = {}; }
+}
+// Гигантский крот: освобождается, когда вскрыты ВСЕ его клетки
+function _checkGiantFreed(id) {
+  const g = (state.giants || [])[id];
+  if (!g || g.freed) return;
+  for (const [gr, gc] of g.cells) { if ((state.board[gr]?.[gc]?.amber || 0) > 0) return; }
+  g.freed = true;
+  state.relicsFreed = (state.relicsFreed || 0) + 1;
+  SFX.bearFreed && SFX.bearFreed();
+  const midR = g.r + (g.h - 1) / 2, midC = g.c + (g.w - 1) / 2;
+  rings.push({ x: boardOffX + (midC + 0.5) * cellSize, y: boardOffY + (midR + 0.5) * cellSize,
+    color: 'rgba(251,191,36,0.9)', r: 6, maxR: cellSize * Math.max(g.w, g.h) * 1.1, life: 1, lw: 4 });
+  for (const [gr, gc] of g.cells) spawnParticles(gr, gc, '#fde68a', 5);
+  showToast('🐾 Большой крот освобождён!');
+  updateQuestProgress('relics', 1);
+  updateGoalProgress();
+  const _ep = _matchEpoch;
+  setTimeout(() => {
+    if (_ep !== _matchEpoch) return;
+    for (const [gr, gc] of g.cells) {
+      const cl = state.board[gr]?.[gc];
+      if (cl && cl.giantId === id) { delete cl.giantId; if (cl.type < 0) cl.type = randGem(); cl.anim = {}; }
+    }
+    g.done = true;
+  }, 900);
+}
+// Мемори-гем: вскрытие рунного блока показывает и собирает самоцвет
+function _collectMemGem(r, c) {
+  const cell = state.board[r]?.[c];
+  if (!cell || cell.memGem === undefined) return;
+  cell._memOpen = true;
+  state.relicsFreed = (state.relicsFreed || 0) + 1;
+  SFX.bearFreed && SFX.bearFreed();
+  spawnParticles(r, c, getSkinColor(cell.memGem % _activeGemTypes), 8);
+  rings.push({ x:boardOffX+(c+0.5)*cellSize, y:boardOffY+(r+0.5)*cellSize, color:'rgba(96,165,250,0.85)', r:4, maxR:cellSize*1.1, life:1, lw:3 });
+  updateQuestProgress('relics', 1);
+  updateGoalProgress();
+  const _ep = _matchEpoch;
+  setTimeout(() => {
+    if (_ep !== _matchEpoch) return;
+    const cl = state.board[r]?.[c];
+    if (cl && cl.memGem !== undefined) {
+      const k = cl.memGem;
+      delete cl.memGem; delete cl._memOpen;
+      if (cl.type < 0) cl.type = k % _activeGemTypes;
+      cl.anim = {};
+    }
+  }, 600);
 }
 function _drawBearInAmber(ctx, x, y, cs) {
   const cx = x + cs/2, cy = y + cs/2;
@@ -378,8 +471,8 @@ function updateRainbowRoundHUD() {
   else c.classList.remove('rainbow-round');
 }
 
-function spawnLicorice() {
-  const max = state.licoriceMax || 0;
+function spawnSand() {
+  const max = state.sandMax || 0;
   if (!max) return;
   let count = 0;
   const free = [];
@@ -387,14 +480,14 @@ function spawnLicorice() {
     if (state.holes.has(`${r},${c}`)) continue;
     const cell = state.board[r]?.[c];
     if (!cell) continue;
-    if (cell.licorice > 0) count++;
-    else if (cell.type >= 0 && !cell.stone && !cell.chocolate && !cell.mystery && !cell.ingredient) free.push([r,c]);
+    if (cell.sand > 0) count++;
+    else if (cell.type >= 0 && !cell.stone && !cell.lava && !cell.mystery && !cell.bucket) free.push([r,c]);
   }
   if (count >= max || free.length === 0) return;
   if (Math.random() > 0.5) return;
   const [r, c] = free[Math.floor(Math.random() * free.length)];
   const cell = state.board[r]?.[c];
-  if (cell) { cell.licorice = 1; spawnParticles(r, c, '#b45309', 4); }
+  if (cell) { cell.sand = 1; spawnParticles(r, c, '#b45309', 4); }
 }
 
 // ── Анимация перемешивания (плавный scale-down → shuffle → scale-up) ────────

@@ -295,7 +295,7 @@ async function activateSidekick() {
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       if (state.holes.has(`${r},${c}`)) continue;
       const cell = state.board[r]?.[c];
-      if (cell && cell.special === SPECIAL.NONE && !cell.stone && !cell.chocolate && cell.type >= 0) {
+      if (cell && cell.special === SPECIAL.NONE && !cell.stone && !cell.lava && cell.type >= 0) {
         free.push([r, c]);
       }
     }
@@ -310,7 +310,7 @@ async function activateSidekick() {
     // +3 хода
     state.moves += 3;
     updateHUD();
-    showToast('🐻 Медведь добавил 3 хода!');
+    showToast('🦡 Барсук добавил 3 хода!');
   }
 }
 
@@ -389,7 +389,7 @@ async function fireBuffNuke(r, c) {
       if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) continue;
       if (state.holes.has(`${nr},${nc}`)) continue;
       const cell = state.board[nr][nc];
-      if (!cell || cell.stone || cell.chocolate || cell.ingredient) continue;
+      if (!cell || cell.stone || cell.lava || cell.bucket) continue;
       await new Promise(res => setTimeout(res, 80 + Math.abs(dr + dc) * 40));
       spawnParticles(nr, nc, cell.type >= 0 ? getSkinColor(cell.type) : '#fff');
       if (cell.type >= 0) pts += PHYSICS.BASE_SCORE;
@@ -428,7 +428,7 @@ async function triggerSupersonicStripe(r, c) {
     for (let cc = 0; cc < COLS; cc++) {
       if (state.holes.has(`${r},${cc}`)) continue;
       const cell = state.board[r][cc];
-      if (!cell || cell.stone || cell.chocolate || cell.ingredient) continue;
+      if (!cell || cell.stone || cell.lava || cell.bucket) continue;
       spawnParticles(r, cc, cell.type >= 0 ? getSkinColor(cell.type) : '#ffe066', 6);
       if (cell.type >= 0) pts += PHYSICS.BASE_SCORE;
       state.board[r][cc] = null;
@@ -437,7 +437,7 @@ async function triggerSupersonicStripe(r, c) {
     for (let rr = 0; rr < ROWS; rr++) {
       if (state.holes.has(`${rr},${c}`)) continue;
       const cell = state.board[rr][c];
-      if (!cell || cell.stone || cell.chocolate || cell.ingredient) continue;
+      if (!cell || cell.stone || cell.lava || cell.bucket) continue;
       spawnParticles(rr, c, cell.type >= 0 ? getSkinColor(cell.type) : '#ffe066', 6);
       if (cell.type >= 0) pts += PHYSICS.BASE_SCORE;
       state.board[rr][c] = null;
@@ -592,7 +592,7 @@ function applyDrillBooster() {
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
     if (state.holes.has(`${r},${c}`)) continue;
     const cl=state.board[r]?.[c];
-    if (cl&&!cl.stone&&!cl.chocolate&&cl.type>=0&&cl.special===SPECIAL.NONE) free.push([r,c]);
+    if (cl&&!cl.stone&&!cl.lava&&cl.type>=0&&cl.special===SPECIAL.NONE) free.push([r,c]);
   }
   if (!free.length) { showToast('Нет свободных клеток!'); return; }
   const [r,c]=free[Math.floor(Math.random()*free.length)];
@@ -604,7 +604,7 @@ function applyDrillBooster() {
 
 function applyDrillClickBooster(r, c) {
   const cl = state.board[r]?.[c];
-  if (!cl || cl.stone || cl.chocolate || cl.type < 0 || cl.special !== SPECIAL.NONE) {
+  if (!cl || cl.stone || cl.lava || cl.type < 0 || cl.special !== SPECIAL.NONE) {
     showToast('Нельзя поставить сюда!'); return;
   }
   state.activeIngameBooster = null;
@@ -617,7 +617,7 @@ function applyDrillClickBooster(r, c) {
 
 async function applySwapBooster(r1, c1, r2, c2) {
   const a = state.board[r1]?.[c1], b = state.board[r2]?.[c2];
-  if (!a || !b || a.stone || b.stone || a.ingredient || b.ingredient) {
+  if (!a || !b || a.stone || b.stone || a.bucket || b.bucket) {
     showToast('Нельзя поменять эти фишки!'); updateHUD(); return;
   }
   state.activeIngameBooster = null;
@@ -638,10 +638,11 @@ async function doShuffleBooster() {
   const types=[], pos=[];
   for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) {
     const cl=state.board[r][c];
-    if (cl&&!cl.stone&&!cl.chocolate&&cl.type>=0) { types.push(cl.type); pos.push([r,c]); }
+    if (cl&&!cl.stone&&!cl.lava&&cl.type>=0) { types.push(cl.type); pos.push([r,c]); }
   }
   shuffleArray(types);
   pos.forEach(([r,c],i)=>state.board[r][c].type=types[i]);
+  SFX.shuffleSfx && SFX.shuffleSfx();
   drawBoard();
   showToast('Поле перемешано!');
   await processMatches();
@@ -654,8 +655,8 @@ async function applyHammerBooster(r, c) {
   state.busy = true;
   state.activeIngameBooster = null;
   state.ingameBoosters.hammer = Math.max(0, (state.ingameBoosters.hammer||0) - 1);
-  if (cell.ingredient) {
-    state.busy = false; updateHUD(); showToast('Ингредиент нельзя разрушить!'); return;
+  if (cell.bucket) {
+    state.busy = false; updateHUD(); showToast('Ведро нельзя разрушить!'); return;
   } else if (cell.special !== SPECIAL.NONE) {
     // Hammer on bonus gem — trigger its special effect
     const _hsp = cell.special, _htp = cell.type;
@@ -666,17 +667,17 @@ async function applyHammerBooster(r, c) {
     applyGravity(); fillFromTop(); await animateDrop();
     await processMatches();
     return;
-  } else if (cell.chocolate) {
-    destroyChocolate(r, c); breakAdjacentChocolate(r, c);
-    clearCarpetAt(r, c, false);
+  } else if (cell.lava) {
+    destroyLava(r, c); breakAdjacentLava(r, c);
+    clearBricksAt(r, c, false);
   } else if (cell.stone) {
     cell.stone = false; cell.type = randGem(); cell.special = SPECIAL.NONE;
-    state.stonesBroken++; updateQuestProgress('stones', 1); breakAdjacentChocolate(r, c);
+    state.stonesBroken++; updateQuestProgress('stones', 1); breakAdjacentLava(r, c);
   } else if (state.iceGrid[r]?.[c]) {
     state.iceGrid[r][c] = 0; state.iceBroken++; updateQuestProgress('ice', 1);
   } else {
     if (cell.type>=0) state.collectedGems[cell.type]=(state.collectedGems[cell.type]||0)+1;
-    clearJellyAt(r,c); clearCarpetAt(r,c,false); breakAdjacentChocolate(r,c);
+    clearDirtAt(r,c); clearBricksAt(r,c,false); breakAdjacentLava(r,c);
     state.board[r][c] = null;
   }
   spawnParticles(r, c, '#f59e0b', 10);
@@ -724,33 +725,33 @@ function updateGoalProgress() {
     case 'stone':
       prog=Math.min(state.stonesBroken/lvl.target,1);
       html=`🪨 Камни: ${Math.min(state.stonesBroken,lvl.target)} / ${lvl.target}`; break;
-    case 'jelly': {
-      const rem=countJellyRemaining();
-      prog=state.jellyTotal>0?Math.max(0,1-rem/state.jellyTotal):1;
-      html=`🟦 Гель: ${state.jellyTotal-rem} / ${state.jellyTotal}`; break;
+    case 'dirt': {
+      const rem=countDirtRemaining();
+      prog=state.dirtTotal>0?Math.max(0,1-rem/state.dirtTotal):1;
+      html=`🟫 Земля: ${state.dirtTotal-rem} / ${state.dirtTotal}`; break;
     }
-    case 'ingredients':
-      prog=Math.min(state.ingredientsDelivered/lvl.target,1);
-      html=`🍒 Доставь: ${Math.min(state.ingredientsDelivered,lvl.target)} / ${lvl.target}`; break;
-    case 'chocolate': {
-      const remChoc=countChocolateRemaining();
-      const ini=state.chocolateInitial||1;
-      prog=Math.max(0,1-remChoc/ini);
-      html=`✕ Тьма: ${ini-remChoc} / ${ini}`; break;
+    case 'buckets':
+      prog=Math.min(state.bucketsDelivered/lvl.target,1);
+      html=`🪣 Вёдра: ${Math.min(state.bucketsDelivered,lvl.target)} / ${lvl.target}`; break;
+    case 'lava': {
+      const remLava=countLavaRemaining();
+      const ini=state.lavaInitial||1;
+      prog=Math.max(0,1-remLava/ini);
+      html=`🌋 Лава: ${ini-remLava} / ${ini}`; break;
     }
-    case 'soda':
-      prog=Math.min(state.bottlesBroken/lvl.target,1);
-      html=`🫧 Колбы: ${Math.min(state.bottlesBroken,lvl.target)} / ${lvl.target}`; break;
-    case 'carpet': {
-      const remC=countCarpetRemaining();
-      const tot=state.carpetTotal||1;
+    case 'flood':
+      prog=Math.min(state.flasksBroken/lvl.target,1);
+      html=`🧴 Фляги: ${Math.min(state.flasksBroken,lvl.target)} / ${lvl.target}`; break;
+    case 'bricks': {
+      const remC=countBricksRemaining();
+      const tot=state.bricksTotal||1;
       prog=Math.max(0,1-remC/tot);
-      html=`🎨 Ковёр: ${tot-remC} / ${tot}`; break;
+      html=`🧱 Кладка: ${tot-remC} / ${tot}`; break;
     }
-    case 'bears': {
-      const bt=lvl.bearsTarget||lvl.honeyCount||1;
-      prog=Math.min((state.bearsFreed||0)/bt,1);
-      html=`🐻 Медведи: ${Math.min(state.bearsFreed||0,bt)} / ${bt}`; break;
+    case 'relics': {
+      const bt=lvl.relicsTarget||lvl.amberCount||1;
+      prog=Math.min((state.relicsFreed||0)/bt,1);
+      html=`🐾 Кроты: ${Math.min(state.relicsFreed||0,bt)} / ${bt}`; break;
     }
     case 'path': {
       const pn = lvl.pathCells?.length || 1;
@@ -821,12 +822,12 @@ function checkWin() {
     case 'collect': { let t=0; const _cg=lvl.gems||[]; if (_cg.length>0) { _cg.forEach(g=>t+=(state.collectedGems[g]||0)); } else { Object.values(state.collectedGems||{}).forEach(v=>t+=v); } mainWin = t>=lvl.target; break; }
     case 'ice':     mainWin = state.iceBroken>=lvl.target; break;
     case 'stone':   mainWin = state.stonesBroken>=lvl.target; break;
-    case 'jelly':        mainWin = countJellyRemaining()===0; break;
-    case 'ingredients':  mainWin = state.ingredientsDelivered>=lvl.target; break;
-    case 'chocolate':    mainWin = countChocolateRemaining()===0; break;
-    case 'soda':         mainWin = state.bottlesBroken>=lvl.target; break;
-    case 'carpet':       mainWin = countCarpetRemaining()===0; break;
-    case 'bears':        mainWin = (state.bearsFreed||0) >= (lvl.bearsTarget||lvl.honeyCount||1); break;
+    case 'dirt':        mainWin = countDirtRemaining()===0; break;
+    case 'buckets':  mainWin = state.bucketsDelivered>=lvl.target; break;
+    case 'lava':    mainWin = countLavaRemaining()===0; break;
+    case 'flood':         mainWin = state.flasksBroken>=lvl.target; break;
+    case 'bricks':       mainWin = countBricksRemaining()===0; break;
+    case 'relics':        mainWin = (state.relicsFreed||0) >= (lvl.relicsTarget||lvl.amberCount||1); break;
     case 'path':         mainWin = (state.pathProgress||0) >= (lvl.pathCells?.length||1); break;
   }
   // secondary objective must also be met
@@ -860,12 +861,12 @@ function calcStars() {
     case 'collect': { let t=0; const _cg2=lvl.gems||[]; if (_cg2.length>0) { _cg2.forEach(g=>t+=(state.collectedGems[g]||0)); } else { Object.values(state.collectedGems||{}).forEach(v=>t+=v); } prog=Math.min(t/lvl.target,1); break; }
     case 'ice': prog=Math.min(state.iceBroken/lvl.target,1); break;
     case 'stone': prog=Math.min(state.stonesBroken/lvl.target,1); break;
-    case 'jelly': prog=state.jellyTotal>0?Math.max(0,1-countJellyRemaining()/state.jellyTotal):1; break;
-    case 'ingredients': prog=Math.min(state.ingredientsDelivered/lvl.target,1); break;
-    case 'chocolate': { const rc=countChocolateRemaining(); const ini=state.chocolateInitial||1; prog=Math.max(0,1-rc/ini); break; }
-    case 'soda': prog=Math.min(state.bottlesBroken/lvl.target,1); break;
-    case 'carpet': { const tot=state.carpetTotal||1; prog=Math.max(0,1-countCarpetRemaining()/tot); break; }
-    case 'bears': prog=Math.min((state.bearsFreed||0)/(lvl.bearsTarget||lvl.honeyCount||1),1); break;
+    case 'dirt': prog=state.dirtTotal>0?Math.max(0,1-countDirtRemaining()/state.dirtTotal):1; break;
+    case 'buckets': prog=Math.min(state.bucketsDelivered/lvl.target,1); break;
+    case 'lava': { const rc=countLavaRemaining(); const ini=state.lavaInitial||1; prog=Math.max(0,1-rc/ini); break; }
+    case 'flood': prog=Math.min(state.flasksBroken/lvl.target,1); break;
+    case 'bricks': { const tot=state.bricksTotal||1; prog=Math.max(0,1-countBricksRemaining()/tot); break; }
+    case 'relics': prog=Math.min((state.relicsFreed||0)/(lvl.relicsTarget||lvl.amberCount||1),1); break;
     case 'path':  prog=Math.min((state.pathProgress||0)/(lvl.pathCells?.length||1),1); break;
     default: prog=1;
   }

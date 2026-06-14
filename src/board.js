@@ -2,10 +2,10 @@
 //  ИНИЦИАЛИЗАЦИЯ ПОЛЯ
 // ══════════════════════════════════════════
 function createGem(type) {
-  return { type: type ?? randGem(), special: SPECIAL.NONE, stone: false, chocolate: false, marmalade: false, ingredient: false, locked: false, mystery: false, bottle: false, licorice: 0, honey: 0, anim: {} };
+  return { type: type ?? randGem(), special: SPECIAL.NONE, stone: false, lava: false, web: false, bucket: false, locked: false, mystery: false, flask: false, sand: 0, amber: 0, anim: {} };
 }
-function createIngredient() {
-  return { type: -2, special: SPECIAL.NONE, ice:false, stone:false, chocolate:false, marmalade:false, ingredient:true, anim:{} };
+function createBucket() {
+  return { type: -2, special: SPECIAL.NONE, ice:false, stone:false, lava:false, web:false, bucket:true, anim:{} };
 }
 let _activeGemTypes = GEM_TYPES;
 let _matchEpoch = 0; // инкрементируется при старте нового уровня — прерывает зависшие async-цепочки
@@ -35,7 +35,7 @@ function initBoard(lvl) {
   if (lvl.type==='stone' && (lvl.stoneCount||0)===0) console.warn(`Level ${lvl.level}: type=stone but stoneCount=0`);
   if (lvl.type==='ice' && (lvl.iceCount||0)===0) console.warn(`Level ${lvl.level}: type=ice but iceCount=0`);
   if (lvl.type==='collect' && (!lvl.gems||lvl.gems.length===0)) console.warn(`Level ${lvl.level}: type=collect but gems=[]`);
-  if (lvl.type==='ingredients' && (lvl.ingredientCount||0)===0) console.warn(`Level ${lvl.level}: type=ingredients but ingredientCount=0`);
+  if (lvl.type==='buckets' && (lvl.bucketCount||0)===0) console.warn(`Level ${lvl.level}: type=buckets but bucketCount=0`);
   // Устанавливаем количество типов фишек для уровня
   _activeGemTypes = lvl.gemTypes || GEM_TYPES;
   // load per-level gem/special weights
@@ -54,9 +54,9 @@ function initBoard(lvl) {
   }
 
   // Инициализируем сетки желе, ковра, льда и frosting (cell-bound, не движутся с гемами)
-  state.jellyGrid  = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
-  state.carpetGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
-  state.carpetTotal = 0;
+  state.dirtGrid  = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
+  state.bricksGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
+  state.bricksTotal = 0;
   state.iceGrid    = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
   state.frostGrid  = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
   state.portalGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(null));
@@ -86,71 +86,77 @@ function initBoard(lvl) {
     }
   }
   // Ингредиенты (спавнятся в верхних рядах)
-  if ((lvl.ingredientCount || 0) > 0) {
+  if ((lvl.bucketCount || 0) > 0) {
     const topPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r]) => r < 2));
-    topPool.slice(0, lvl.ingredientCount).forEach(([r,c]) => { board[r][c] = createIngredient(); });
+    topPool.slice(0, lvl.bucketCount).forEach(([r,c]) => { board[r][c] = createBucket(); });
   }
-  // Желе — используем точные позиции из jellyGrid (с числом слоёв), иначе рандом
-  if (Array.isArray(lvl.jellyGrid) && lvl.jellyGrid.length > 0) {
-    for (const pos of lvl.jellyGrid) {
+  // Желе — используем точные позиции из dirtGrid (с числом слоёв), иначе рандом
+  if (Array.isArray(lvl.dirtGrid) && lvl.dirtGrid.length > 0) {
+    for (const pos of lvl.dirtGrid) {
       const [jr, jc, layers] = [pos[0], pos[1], pos[2] || 2];
-      if (jr < ROWS && jc < COLS && !holeSet.has(`${jr},${jc}`)) state.jellyGrid[jr][jc] = layers;
+      if (jr < ROWS && jc < COLS && !holeSet.has(`${jr},${jc}`)) state.dirtGrid[jr][jc] = layers;
     }
-  } else if (lvl.jellyCount > 0) {
-    shuffleArray(getAllNonHolePositions(holeSet)).slice(0, lvl.jellyCount).forEach(([r,c]) => {
-      state.jellyGrid[r][c] = 2;
+  } else if (lvl.dirtCount > 0) {
+    shuffleArray(getAllNonHolePositions(holeSet)).slice(0, lvl.dirtCount).forEach(([r,c]) => {
+      state.dirtGrid[r][c] = 2;
     });
   }
   // Ковёр — все незакрытые клетки покрыты ковром; цель = покрасить все
-  if (lvl.type === 'carpet') {
+  if (lvl.type === 'bricks') {
     const allCells = getAllNonHolePositions(holeSet);
-    allCells.forEach(([r,c]) => { state.carpetGrid[r][c] = true; });
-    state.carpetTotal = allCells.length;
-  }
-  // Шоколад — точные позиции из chocGrid, иначе края
-  if (Array.isArray(lvl.chocGrid) && lvl.chocGrid.length > 0) {
-    for (const [cr, cc] of lvl.chocGrid) {
-      if (cr < ROWS && cc < COLS && board[cr][cc] && !holeSet.has(`${cr},${cc}`)) {
-        board[cr][cc].chocolate = true; board[cr][cc].type = -1; board[cr][cc].special = SPECIAL.NONE;
+    allCells.forEach(([r,c]) => { state.bricksGrid[r][c] = true; });
+    state.bricksTotal = allCells.length;
+    // Предокрашенные клетки из CCSS (carpet seeds)
+    if (Array.isArray(lvl.paintedGrid)) {
+      for (const [pr, pc] of lvl.paintedGrid) {
+        if (state.bricksGrid[pr]?.[pc]) { state.bricksGrid[pr][pc] = false; state.bricksTotal--; }
       }
     }
-  } else if ((lvl.chocolateCount || 0) > 0) {
+  }
+  // Шоколад — точные позиции из lavaGrid, иначе края
+  if (Array.isArray(lvl.lavaGrid) && lvl.lavaGrid.length > 0) {
+    for (const [cr, cc] of lvl.lavaGrid) {
+      if (cr < ROWS && cc < COLS && board[cr][cc] && !holeSet.has(`${cr},${cc}`)) {
+        board[cr][cc].lava = true; board[cr][cc].type = -1; board[cr][cc].special = SPECIAL.NONE;
+      }
+    }
+  } else if ((lvl.lavaCount || 0) > 0) {
     const edgePool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => r===0||r===ROWS-1||c===0||c===COLS-1));
-    edgePool.slice(0, lvl.chocolateCount).forEach(([r,c]) => {
-      if (board[r][c]) { board[r][c].chocolate = true; board[r][c].type = -1; board[r][c].special = SPECIAL.NONE; }
+    edgePool.slice(0, lvl.lavaCount).forEach(([r,c]) => {
+      if (board[r][c]) { board[r][c].lava = true; board[r][c].type = -1; board[r][c].special = SPECIAL.NONE; }
     });
   }
-  // Белый шоколад (wchocGrid) + фонтаны (fountainGrid)
-  state.fountainGrid = {};
-  if (Array.isArray(lvl.wchocGrid)) {
-    for (const wc of lvl.wchocGrid) {
+  // Белый шоколад (wlavaGrid) + фонтаны (myceliumSourceGrid)
+  state.myceliumSourceGrid = {};
+  if (Array.isArray(lvl.wlavaGrid)) {
+    for (const wc of lvl.wlavaGrid) {
       const [wr, wcc, wlayers] = wc;
       if (wr < ROWS && wcc < COLS && board[wr][wcc] && !holeSet.has(`${wr},${wcc}`)) {
-        board[wr][wcc].whiteChoc = wlayers || 1;
+        board[wr][wcc].mycelium = wlayers || 1;
         board[wr][wcc].type = -1; board[wr][wcc].special = SPECIAL.NONE;
       }
     }
   }
-  if (Array.isArray(lvl.fountainGrid)) {
-    for (const [fr, fc] of lvl.fountainGrid) {
-      if (!state.fountainGrid[fr]) state.fountainGrid[fr] = {};
-      state.fountainGrid[fr][fc] = true;
+  if (Array.isArray(lvl.myceliumSourceGrid)) {
+    for (const [fr, fc] of lvl.myceliumSourceGrid) {
+      if (!state.myceliumSourceGrid[fr]) state.myceliumSourceGrid[fr] = {};
+      state.myceliumSourceGrid[fr][fc] = true;
     }
   }
-  // Мармелад — точные позиции из marmaGrid, иначе рандом
-  if (Array.isArray(lvl.marmaGrid) && lvl.marmaGrid.length > 0) {
-    for (const [mr, mc] of lvl.marmaGrid) {
-      if (mr < ROWS && mc < COLS && board[mr][mc]?.type >= 0) board[mr][mc].marmalade = true;
+  // Мармелад — точные позиции из webGrid, иначе рандом
+  if (Array.isArray(lvl.webGrid) && lvl.webGrid.length > 0) {
+    for (const [mr, mc] of lvl.webGrid) {
+      if (mr < ROWS && mc < COLS && board[mr][mc]?.type >= 0) board[mr][mc].web = true;
     }
-  } else if ((lvl.marmaladeCount || 0) > 0) {
+  } else if ((lvl.webCount || 0) > 0) {
     const freePool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => board[r][c]?.type >= 0));
-    freePool.slice(0, lvl.marmaladeCount).forEach(([r,c]) => { board[r][c].marmalade = true; });
+    freePool.slice(0, lvl.webCount).forEach(([r,c]) => { board[r][c].web = true; });
   }
   // Замки (жвачка/лакрица) — гем виден, но нельзя свапнуть; снимается матчем рядом
   if ((lvl.lockCount || 0) > 0) {
     const lockPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
       const cell = board[r][c];
-      return cell?.type >= 0 && !cell.stone && !cell.chocolate && !cell.marmalade;
+      return cell?.type >= 0 && !cell.stone && !cell.lava && !cell.web;
     }));
     lockPool.slice(0, lvl.lockCount).forEach(([r,c]) => { board[r][c].locked = true; });
   }
@@ -158,36 +164,106 @@ function initBoard(lvl) {
   if ((lvl.mysteryCount || 0) > 0) {
     const mystPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
       const cell = board[r][c];
-      return cell?.type >= 0 && !cell.stone && !cell.chocolate && !cell.marmalade && !cell.locked;
+      return cell?.type >= 0 && !cell.stone && !cell.lava && !cell.web && !cell.locked;
     }));
     mystPool.slice(0, lvl.mysteryCount).forEach(([r,c]) => { board[r][c].mystery = true; board[r][c].special = SPECIAL.NONE; });
   }
-  // Лакрица — N слоёв, снимается матчем рядом, BOMB/STRIPE снимает все
-  if ((lvl.licoriceCount || 0) > 0) {
-    const licPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
-      const cell = board[r][c];
-      return cell?.type >= 0 && !cell.stone && !cell.chocolate && !cell.marmalade && !cell.locked && !cell.mystery;
-    }));
-    const licLayers = lvl.licoriceCount <= 3 ? 2 : 3;
-    licPool.slice(0, lvl.licoriceCount).forEach(([r,c]) => { board[r][c].licorice = licLayers; board[r][c].special = SPECIAL.NONE; });
-  }
-  state.licoriceSpawnRate = lvl.licoriceSpawnRate || 0;
-  state.licoriceMax       = lvl.licoriceMax || 0;
-  // Мёд — точные позиции из honeyGrid, иначе рандом
-  if (Array.isArray(lvl.honeyGrid) && lvl.honeyGrid.length > 0) {
-    for (const pos of lvl.honeyGrid) {
-      const hr = pos[0], hc = pos[1], hlayers = pos[2] || 2;
-      if (hr < ROWS && hc < COLS && board[hr][hc] && !holeSet.has(`${hr},${hc}`)) {
-        board[hr][hc].honey = hlayers; board[hr][hc].special = SPECIAL.NONE;
+  // Песок — точные позиции из sandGrid, иначе рандом по sandCount
+  if (Array.isArray(lvl.sandGrid) && lvl.sandGrid.length > 0) {
+    for (const pos of lvl.sandGrid) {
+      const [sr, sc, sl] = [pos[0], pos[1], pos[2] || 1];
+      const cell = board[sr]?.[sc];
+      if (cell && !holeSet.has(`${sr},${sc}`) && cell.type >= 0 && !cell.stone && !cell.lava) {
+        cell.sand = Math.max(1, Math.min(3, sl)); cell.special = SPECIAL.NONE;
       }
     }
-  } else if ((lvl.honeyCount || 0) > 0) {
+  } else if ((lvl.sandCount || 0) > 0) {
+    const licPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
+      const cell = board[r][c];
+      return cell?.type >= 0 && !cell.stone && !cell.lava && !cell.web && !cell.locked && !cell.mystery;
+    }));
+    const licLayers = lvl.sandCount <= 3 ? 2 : 3;
+    licPool.slice(0, lvl.sandCount).forEach(([r,c]) => { board[r][c].sand = licLayers; board[r][c].special = SPECIAL.NONE; });
+  }
+  state.sandSpawnRate = lvl.sandSpawnRate || 0;
+  state.sandMax       = lvl.sandMax || 0;
+  // Янтарь / рунные блоки — точные позиции из amberGrid, иначе рандом
+  if (Array.isArray(lvl.amberGrid) && lvl.amberGrid.length > 0) {
+    for (const pos of lvl.amberGrid) {
+      const hr = pos[0], hc = pos[1], hlayers = pos[2] || 2;
+      if (hr < ROWS && hc < COLS && board[hr][hc] && !holeSet.has(`${hr},${hc}`)) {
+        board[hr][hc].amber = hlayers; board[hr][hc].special = SPECIAL.NONE;
+      }
+    }
+  } else if ((lvl.amberCount || 0) > 0 && !Array.isArray(lvl.relicGiants) && !Array.isArray(lvl.memGems)) {
     const hPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
       const cell = board[r][c];
-      return cell?.type >= 0 && !cell.stone && !cell.chocolate && !cell.marmalade && !cell.locked && !cell.mystery && !cell.licorice;
+      return cell?.type >= 0 && !cell.stone && !cell.lava && !cell.web && !cell.locked && !cell.mystery && !cell.sand;
     }));
-    const honeyLayers = lvl.honeyCount <= 3 ? 2 : 3;
-    hPool.slice(0, lvl.honeyCount).forEach(([r,c]) => { board[r][c].honey = honeyLayers; board[r][c].special = SPECIAL.NONE; });
+    const amberLayers = lvl.amberCount <= 3 ? 2 : 3;
+    hPool.slice(0, lvl.amberCount).forEach(([r,c]) => { board[r][c].amber = amberLayers; board[r][c].special = SPECIAL.NONE; });
+  }
+  // Одиночные кроты в янтаре (relicGrid) — объект под покрытием
+  state.giants = [];
+  if (Array.isArray(lvl.relicGrid)) {
+    for (const pos of lvl.relicGrid) {
+      const rr = pos[0], rc = pos[1];
+      const cell = board[rr]?.[rc];
+      if (!cell || holeSet.has(`${rr},${rc}`)) continue;
+      cell.relic = true; cell.type = -1; cell.special = SPECIAL.NONE;
+      if (!(cell.amber > 0)) cell.amber = 1;
+    }
+  }
+  // Мемори-гемы (memGems) — самоцветы, скрытые под рунными блоками
+  if (Array.isArray(lvl.memGems)) {
+    for (const pos of lvl.memGems) {
+      const mr = pos[0], mc = pos[1], kind = pos[2] || 0;
+      const cell = board[mr]?.[mc];
+      if (!cell || holeSet.has(`${mr},${mc}`)) continue;
+      if (cell.relic) continue;
+      cell.memGem = kind; cell.type = -1; cell.special = SPECIAL.NONE;
+      if (!(cell.amber > 0)) cell.amber = 1;
+    }
+  }
+  // Гигантские кроты (relicGiants: [r, c, w, h]) — многоклеточные объекты как в оригинале
+  if (Array.isArray(lvl.relicGiants)) {
+    const _gOccupied = new Set();
+    const _gFits = (r0, c0, w, h) => {
+      if (r0 < 0 || c0 < 0 || r0 + h > ROWS || c0 + w > COLS) return false;
+      for (let dr = 0; dr < h; dr++) for (let dc = 0; dc < w; dc++) {
+        const rr = r0 + dr, cc = c0 + dc;
+        if (holeSet.has(`${rr},${cc}`)) return false;
+        if (_gOccupied.has(`${rr},${cc}`)) return false;
+        const cl = board[rr]?.[cc];
+        if (!cl || cl.relic || cl.memGem !== undefined || cl.stone || cl.lava || cl.bucket) return false;
+      }
+      return true;
+    };
+    for (const pos of lvl.relicGiants) {
+      let [gr, gc, gw, gh] = pos;
+      // подбор позиции: исходная → сдвиги вокруг → уменьшение до 1×2/2×1
+      let placed = null;
+      const _tryAll = (w, h) => {
+        for (const [sr, sc] of [[0,0],[0,-1],[-1,0],[0,1],[1,0],[-1,-1],[1,1],[0,-2],[-2,0]]) {
+          if (_gFits(gr + sr, gc + sc, w, h)) return [gr + sr, gc + sc, w, h];
+        }
+        return null;
+      };
+      placed = _tryAll(gw, gh) || (gh >= gw ? _tryAll(1, 2) : _tryAll(2, 1));
+      if (!placed) continue;
+      const [pr, pc, pw, ph] = placed;
+      const id = state.giants.length;
+      const cells = [];
+      for (let dr = 0; dr < ph; dr++) for (let dc = 0; dc < pw; dc++) {
+        const rr = pr + dr, cc = pc + dc;
+        _gOccupied.add(`${rr},${cc}`);
+        cells.push([rr, cc]);
+        const cl = board[rr][cc];
+        cl.giantId = id; cl.type = -1; cl.special = SPECIAL.NONE;
+        if (!(cl.amber > 0)) cl.amber = 1;
+      }
+      state.giants.push({ id, r: pr, c: pc, w: pw, h: ph, cells, freed: false, done: false });
+    }
   }
   // Цепи — точные позиции из chainGrid
   if (Array.isArray(lvl.chainGrid) && lvl.chainGrid.length > 0) {
@@ -197,49 +273,82 @@ function initBoard(lvl) {
       }
     }
   }
-  // Лёд — точные позиции из iceGrid, иначе рандом
+  // Лёд — точные позиции из iceGrid (1-6 слоёв), иначе рандом
   if (Array.isArray(lvl.iceGrid) && lvl.iceGrid.length > 0) {
-    for (const [ir, ic] of lvl.iceGrid) {
-      if (ir < ROWS && ic < COLS && !holeSet.has(`${ir},${ic}`)) state.iceGrid[ir][ic] = 1;
+    for (const pos of lvl.iceGrid) {
+      const [ir, ic, il] = [pos[0], pos[1], pos[2] || 1];
+      if (ir < ROWS && ic < COLS && !holeSet.has(`${ir},${ic}`)) state.iceGrid[ir][ic] = Math.max(1, Math.min(6, il));
     }
   } else if ((lvl.iceCount || 0) > 0) {
-    shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => board[r][c]?.type >= 0 && !board[r][c].marmalade)).slice(0, lvl.iceCount).forEach(([r,c]) => {
+    shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => board[r][c]?.type >= 0 && !board[r][c].web)).slice(0, lvl.iceCount).forEach(([r,c]) => {
       state.iceGrid[r][c] = 1;
     });
   }
-  // Frosting Ice (codes 550-555 → 1-6 layers, direct match only)
+  // Иней / слоёная порода (1-6 слоёв, только прямой матч)
   if (Array.isArray(lvl.frostGrid) && lvl.frostGrid.length > 0) {
     for (const [fr, fc, flayers] of lvl.frostGrid) {
       if (fr < ROWS && fc < COLS && !holeSet.has(`${fr},${fc}`)) state.frostGrid[fr][fc] = Math.max(1, Math.min(6, flayers||1));
     }
   }
+  // Скрытые кроты (hiddenRelics) — под инеем, как в оригинале (BearFrosting)
+  if ((lvl.hiddenRelics || 0) > 0) {
+    const frostPool = [];
+    const amberPool = [];
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      if (holeSet.has(`${r},${c}`)) continue;
+      const cl = board[r]?.[c];
+      if (!cl || cl.relic || cl.memGem !== undefined || cl.giantId !== undefined) continue;
+      if (state.frostGrid[r][c] > 0) frostPool.push([r, c]);
+      else if (cl.amber > 0) amberPool.push([r, c]);
+    }
+    const pool = shuffleArray(frostPool).concat(shuffleArray(amberPool));
+    pool.slice(0, lvl.hiddenRelics).forEach(([r, c]) => { board[r][c].hiddenRelic = true; });
+  }
+  // Геоды (geodeGrid: [r, c, слои 1-5]) — слоёный камень, превращается в гем
+  if (Array.isArray(lvl.geodeGrid)) {
+    for (const pos of lvl.geodeGrid) {
+      const [qr, qc, ql] = [pos[0], pos[1], pos[2] || 1];
+      const cell = board[qr]?.[qc];
+      if (!cell || holeSet.has(`${qr},${qc}`)) continue;
+      if (cell.relic || cell.memGem !== undefined || cell.giantId !== undefined) continue;
+      cell.geode = Math.max(1, Math.min(5, ql)); cell.type = -1; cell.special = SPECIAL.NONE;
+    }
+  }
+  // Замки из руды (lockGrid) — точные позиции
+  if (Array.isArray(lvl.lockGrid)) {
+    for (const [lr, lc] of lvl.lockGrid) {
+      const cell = board[lr]?.[lc];
+      if (cell && !holeSet.has(`${lr},${lc}`) && cell.type >= 0 && !cell.stone && !cell.lava && !cell.web) cell.locked = true;
+    }
+  }
   // Камни — предпочитаем внутреннюю зону, но если там дыры — берём любые свободные клетки
-  const innerPool = getAllNonHolePositions(holeSet).filter(([r,c]) => r>1&&r<ROWS-2&&c>1&&c<COLS-2 && !board[r][c]?.chocolate);
-  const outerPool = getAllNonHolePositions(holeSet).filter(([r,c]) => !(r>1&&r<ROWS-2&&c>1&&c<COLS-2) && !board[r][c]?.chocolate);
+  const innerPool = getAllNonHolePositions(holeSet).filter(([r,c]) => r>1&&r<ROWS-2&&c>1&&c<COLS-2 && !board[r][c]?.lava);
+  const outerPool = getAllNonHolePositions(holeSet).filter(([r,c]) => !(r>1&&r<ROWS-2&&c>1&&c<COLS-2) && !board[r][c]?.lava);
   const stonePool = shuffleArray([...innerPool, ...outerPool]);
   stonePool.slice(0, lvl.stoneCount).forEach(([r,c]) => {
     if (board[r][c]) { board[r][c].stone = true; board[r][c].type = -1; }
   });
-  // Бутылки (soda) — нижние строки, с фолбэком на нижнюю половину
-  if (lvl.type === 'soda' && (lvl.bottleCount || 0) > 0) {
-    state.sodaLevel = Math.min(2, Math.floor(lvl.bottleCount / 2) + 1); // старт: 2+ строки соды
-    const sodaStart = ROWS - state.sodaLevel;
+  // Бутылки (flood) — нижние строки, с фолбэком на нижнюю половину
+  if (lvl.type === 'flood' && (lvl.flaskCount || 0) > 0) {
+    // старт: из CCSS (sodaRows), иначе эвристика 2+ строки
+    state.floodLevel = Math.max(1, Math.min(4, lvl.sodaRows || Math.min(2, Math.floor(lvl.flaskCount / 2) + 1)));
+    const floodStart = ROWS - state.floodLevel;
     // Бутылка должна иметь хотя бы одного достижимого соседа
     const _btlReach = ([r,c]) => [[-1,0],[1,0],[0,-1],[0,1]].some(([dr,dc]) => {
       const nr=r+dr, nc=c+dc;
       return nr>=0 && nr<ROWS && nc>=0 && nc<COLS && !holeSet.has(`${nr},${nc}`);
     });
-    let bottlePool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
-      return r >= sodaStart && board[r][c]?.type >= 0 && !board[r][c].stone && _btlReach([r,c]);
+    let flaskPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
+      return r >= floodStart && board[r][c]?.type >= 0 && !board[r][c].stone && _btlReach([r,c]);
     }));
     // Если в сода-зоне не хватает мест — расширяем на нижнюю половину
-    if (bottlePool.length < lvl.bottleCount) {
-      bottlePool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
+    if (flaskPool.length < lvl.flaskCount) {
+      flaskPool = shuffleArray(getAllNonHolePositions(holeSet).filter(([r,c]) => {
         return r >= Math.floor(ROWS / 2) && board[r][c]?.type >= 0 && !board[r][c].stone && _btlReach([r,c]);
       }));
     }
-    bottlePool.slice(0, lvl.bottleCount).forEach(([r,c]) => {
-      board[r][c].bottle = true; board[r][c].special = SPECIAL.NONE;
+    flaskPool.slice(0, lvl.flaskCount).forEach(([r,c]) => {
+      board[r][c].flask = true; board[r][c].special = SPECIAL.NONE;
     });
   }
   // Порталы — overlay на клетке, соединяет пары позиций
@@ -284,32 +393,32 @@ function getAllNonHolePositions(holeSet) {
   return p;
 }
 
-function countJellyRemaining() {
+function countDirtRemaining() {
   let n = 0;
-  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) n += state.jellyGrid[r]?.[c] || 0;
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) n += state.dirtGrid[r]?.[c] || 0;
   return n;
 }
 
-function clearJellyAt(r, c) {
-  if (!state.jellyGrid[r]?.[c]) return;
-  state.jellyGrid[r][c]--;
-  SFX.jellyPop();
+function clearDirtAt(r, c) {
+  if (!state.dirtGrid[r]?.[c]) return;
+  state.dirtGrid[r][c]--;
+  SFX.dirtPop();
 }
-function countCarpetRemaining() {
+function countBricksRemaining() {
   let n=0;
-  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (state.carpetGrid[r]?.[c]) n++;
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (state.bricksGrid[r]?.[c]) n++;
   return n;
 }
-// spread=true: also paint adjacent carpet cells (for regular matches)
-function clearCarpetAt(r, c, spread=false) {
-  if (!state.carpetGrid[r]?.[c]) return;
-  state.carpetGrid[r][c] = false;
+// spread=true: also paint adjacent bricks cells (for regular matches)
+function clearBricksAt(r, c, spread=false) {
+  if (!state.bricksGrid[r]?.[c]) return;
+  state.bricksGrid[r][c] = false;
   spawnParticles(r, c, '#c88a30', 3);
   if (spread) {
     for (const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
       const nr=r+dr, nc=c+dc;
-      if (nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&state.carpetGrid[nr]?.[nc]) {
-        state.carpetGrid[nr][nc]=false;
+      if (nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&state.bricksGrid[nr]?.[nc]) {
+        state.bricksGrid[nr][nc]=false;
         spawnParticles(nr,nc,'#c88a30',2);
       }
     }
@@ -354,7 +463,7 @@ function clearInitialMatches(board) {
     matched.forEach(key => {
       const [r, c] = key.split(',').map(Number);
       const cell = board[r][c];
-      if (!cell || cell.stone || cell.chocolate || cell.type < 0) return;
+      if (!cell || cell.stone || cell.lava || cell.type < 0) return;
       let type, attempts = 0;
       do { type = randGem(); attempts++; } while (wouldMatchFull(board, r, c, type) && attempts < 20);
       cell.type = type;

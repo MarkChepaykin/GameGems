@@ -34,7 +34,7 @@ function stopOnFire() {
 
 const CANDY_WORDS = {
   ru: ['','','Класс!','Чудесно!','Отлично!','Великолепно!','Невероятно!','Легенда!'],
-  en: ['','','Sweet!','Delicious!','Amazing!','Incredible!','Divine!','Legendary!']
+  en: ['','','Nice!','Great!','Amazing!','Brilliant!','Spectacular!','Legendary!']
 };
 const CANDY_COLORS = ['','','#ffe066','#f59e0b','#ef4444','#a855f7','#38bdf8','#4ade80'];
 let candyCommentTO = null;

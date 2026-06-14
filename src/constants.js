@@ -12,7 +12,7 @@ const PHYSICS = {
   UNDO_MS:       100,    // undo_swap_time 0.1s
   DROP_MS:       430,    // t=√(2×ROWS×tile_height/accel); ROWS=10, tile=74px, accel=wrapped_explosion_acceleration=8000px/s² → 430ms
   DESTROY_MS:    200,    // item_default_destruction_process_ticks 12/60
-  COLORBOMB_MS:  500,    // colorbomb_destruction_process_ticks 30/60
+  RAINBOW_MS:  500,    // colorbomb_destruction_process_ticks 30/60
   ROCKET_MS:      1000,    // rocket_duration_to_target 1.0s
   SHUFFLE_MS:   1667,    // shuffle_duration_ticks 100/60
   WIN_SEQ_MS:   3000,    // win_sequence_length_seconds 3.0s
@@ -26,7 +26,7 @@ const _PHYSICS_BASE = Object.assign({}, PHYSICS);
 let _devAnimSpeed = 1.0;
 function setDevAnimSpeed(v) {
   _devAnimSpeed = Math.max(0.1, Math.min(5, +v));
-  ['SWAP_MS','UNDO_MS','DROP_MS','DESTROY_MS','COLORBOMB_MS','ROCKET_MS','SHUFFLE_MS'].forEach(
+  ['SWAP_MS','UNDO_MS','DROP_MS','DESTROY_MS','RAINBOW_MS','ROCKET_MS','SHUFFLE_MS'].forEach(
     k => { PHYSICS[k] = Math.round(_PHYSICS_BASE[k] / _devAnimSpeed); }
   );
 }
@@ -119,8 +119,8 @@ function patchLevelBalance() {
       else lvl.gemTypes = Math.min(lvl.gemTypes, 5);
     }
 
-    if (lvl.type === 'ingredients') {
-      const cnt = lvl.ingredientCount || lvl.target || 4;
+    if (lvl.type === 'buckets') {
+      const cnt = lvl.bucketCount || lvl.target || 4;
       const computed = Math.round(cnt * 7) + obs + typ;
       lvl.moves = Math.max(lvl.moves, computed);
     }
@@ -138,8 +138,8 @@ function patchLevelBalance() {
       lvl.moves = Math.max(lvl.moves, computed);
     }
 
-    if (lvl.type === 'jelly') {
-      const cnt = lvl.jellyCount || 10;
+    if (lvl.type === 'dirt') {
+      const cnt = lvl.dirtCount || 10;
       const computed = Math.round(cnt * 0.85) + obs + typ + Math.round(holes*0.2);
       lvl.moves = Math.max(lvl.moves, computed);
     }
@@ -150,28 +150,28 @@ function patchLevelBalance() {
       lvl.moves = Math.max(lvl.moves, computed);
     }
 
-    if (lvl.type === 'chocolate') {
-      const cnt = lvl.chocolateCount || 5;
+    if (lvl.type === 'lava') {
+      const cnt = lvl.lavaCount || 5;
       const computed = Math.round(cnt * 1.8) + obs + typ + Math.round(holes*0.2);
       lvl.moves = Math.max(lvl.moves, computed);
     }
 
-    if (lvl.type === 'carpet') {
+    if (lvl.type === 'bricks') {
       const total = COLS * ROWS - holes;
       const computed = Math.round(total * 0.15) + obs + typ;
       lvl.moves = Math.max(lvl.moves, computed);
     }
 
-    if (lvl.type === 'soda') {
-      const cnt = lvl.bottleCount || lvl.target || 3;
+    if (lvl.type === 'flood') {
+      const cnt = lvl.flaskCount || lvl.target || 3;
       const computed = Math.round(cnt * 4.5) + obs + typ + Math.round(holes*0.2);
       lvl.moves = Math.max(lvl.moves, computed);
     }
 
-    if (lvl.type === 'bears') {
-      const cnt = lvl.bearsTarget || 3;
-      const honeyCnt = lvl.honeyCount || 0;
-      const computed = Math.round(cnt * 5) + Math.round(honeyCnt * 1.5) + obs + typ;
+    if (lvl.type === 'relics') {
+      const cnt = lvl.relicsTarget || 3;
+      const amberCnt = lvl.amberCount || 0;
+      const computed = Math.round(cnt * 5) + Math.round(amberCnt * 1.5) + obs + typ;
       lvl.moves = Math.max(lvl.moves, computed);
     }
 

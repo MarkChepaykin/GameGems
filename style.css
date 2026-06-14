@@ -1171,3 +1171,43 @@ canvas { display: block; touch-action: none; }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
+/* ══ ASSETS SHOWCASE SCREEN ══ */
+#screen-assets { overflow-y: auto; justify-content: flex-start; }
+.ag-section { margin-bottom: 12px; }
+.ag-cat-title {
+  font-size: 12px; font-weight: 800; color: #ddd6fe;
+  padding: 5px 8px; margin-bottom: 5px;
+  background: rgba(30, 14, 80, 0.92); border-radius: 6px;
+  letter-spacing: 0.3px; border-left: 3px solid #7c3aed;
+  backdrop-filter: blur(4px);
+}
+.ag-cards {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 0 2px;
+}
+.ag-card {
+  display: flex; flex-direction: column; align-items: center;
+  background: rgba(10, 6, 24, 0.92); border-radius: 10px;
+  padding: 6px 4px 5px; width: 72px; cursor: default;
+  border: 1px solid rgba(255,255,255,0.18);
+  transition: background .15s;
+  backdrop-filter: blur(4px);
+}
+.ag-card:hover { background: rgba(30, 18, 60, 0.96); }
+.ag-preview { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; }
+.ag-preview img { image-rendering: pixelated; }
+.ag-status { font-size: 13px; margin: 3px 0 1px; line-height: 1; }
+.ag-label { font-size: 9px; color: #e2e8f0; text-align: center; line-height: 1.35; word-break: break-word; font-weight: 600; }
+/* Picker */
+#assets-picker { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; max-height: 290px; }
+.mp-group-label { font-size: 10px; color: #64748b; padding: 3px 4px 1px; font-weight: 700; letter-spacing: 0.4px; }
+.mp-btn {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(10, 6, 24, 0.88); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px; padding: 3px 6px; cursor: pointer; text-align: left;
+  transition: background .1s; backdrop-filter: blur(3px);
+}
+.mp-btn:hover { background: rgba(30, 18, 60, 0.94); }
+.mp-btn.mp-selected { background: rgba(109,40,217,0.70); border-color: #7c3aed; }
+.mp-label { font-size: 10px; color: #e2e8f0; white-space: nowrap; font-weight: 600; }
+.mp-group-label { font-size: 10px; color: #a78bfa; padding: 3px 4px 1px; font-weight: 700; letter-spacing: 0.4px; }
+.mp-btn canvas { border-radius: 4px; flex-shrink: 0; }

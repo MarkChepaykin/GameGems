@@ -49,23 +49,23 @@ const state = {
   extraMovesUsed: false,
   activeBoosters: [],  // выбранные перед уровнем бустеры (монеты)
   activePreBoosters: [], // выбранные кристалл-бустеры перед уровнем
-  jellyGrid: [],       // [r][c] = 0|1|2 — слои желе на клетке
-  jellyTotal: 0,       // суммарное число слоёв желе на старте уровня
-  carpetGrid: [],      // [r][c] = true — ковёр на клетке (ещё не покрашен)
-  carpetTotal: 0,      // общее число клеток ковра на старте
+  dirtGrid: [],       // [r][c] = 0|1|2 — слои желе на клетке
+  dirtTotal: 0,       // суммарное число слоёв желе на старте уровня
+  bricksGrid: [],      // [r][c] = true — ковёр на клетке (ещё не покрашен)
+  bricksTotal: 0,      // общее число клеток ковра на старте
   iceGrid: [],         // [r][c] = 0|1 — лёд на клетке (не перемещается с гемом)
   holes: new Set(),    // Set<"r,c"> — позиции дыр (не заполняются)
   ingameBoosters: { hammer:0, shuffle:0, drill:0, drillclick:0, swap:0 }, // in-game запасы
   activeIngameBooster: null, // 'hammer'|'drillclick'|'swap'|null
   _swapFirst: null, // первая ячейка swap-бустера
-  ingredientsDelivered: 0,  // доставлено ингредиентов на дно
-  chocolateInitial: 0,      // шоколадок на старте уровня (для type:'chocolate')
-  sodaLevel: 0,             // сколько строк снизу залито содой
-  licoriceSpawnRate: 0,
-  licoriceMax: 0,
+  bucketsDelivered: 0,  // доставлено ингредиентов на дно
+  lavaInitial: 0,      // шоколадок на старте уровня (для type:'lava')
+  floodLevel: 0,             // сколько строк снизу залито содой
+  sandSpawnRate: 0,
+  sandMax: 0,
   rainbowRound: { active: false, movesLeft: 0 },
-  bearsFreed: 0,
-  bottlesBroken: 0,         // сколько бутылок лопнуло
+  relicsFreed: 0,
+  flasksBroken: 0,         // сколько бутылок лопнуло
   lastSwap: null,           // {r1,c1,r2,c2,board,score,moves} — для undo
   undoUsedThisLevel: false, // первый undo бесплатный
   buffPieces: 0,            // Buff Buddies собранные кусочки (сбрасываются за уровень)

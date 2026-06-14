@@ -14,13 +14,13 @@ function getDifficultyTier(lvl) {
     case 'score':       d += (lvl.target||0) / 600; break;
     case 'collect':     d += (lvl.target||0) * 0.3; break;
     case 'ice':         d += (lvl.iceCount||lvl.target||0) * 1.2; break;
-    case 'jelly':       d += (lvl.jellyCount||0) * 0.8; break;
+    case 'dirt':       d += (lvl.dirtCount||0) * 0.8; break;
     case 'stone':       d += (lvl.stoneCount||lvl.target||0) * 1.2; break;
-    case 'ingredients': d += (lvl.ingredientCount||lvl.target||0) * 3; break;
-    case 'chocolate':   d += (lvl.chocolateCount||0) * 1.5; break;
+    case 'buckets': d += (lvl.bucketCount||lvl.target||0) * 3; break;
+    case 'lava':   d += (lvl.lavaCount||0) * 1.5; break;
   }
-  d += (lvl.iceCount||0)*0.5 + (lvl.stoneCount||0)*0.6 + (lvl.marmaladeCount||0)*0.8;
-  d += (lvl.lockCount||0)*0.7 + (lvl.mysteryCount||0)*0.5 + (lvl.bottleCount||0)*0.6 + (lvl.jellyCount||0)*0.15 + (lvl.chocolateCount||0)*0.7;
+  d += (lvl.iceCount||0)*0.5 + (lvl.stoneCount||0)*0.6 + (lvl.webCount||0)*0.8;
+  d += (lvl.lockCount||0)*0.7 + (lvl.mysteryCount||0)*0.5 + (lvl.flaskCount||0)*0.6 + (lvl.dirtCount||0)*0.15 + (lvl.lavaCount||0)*0.7;
   d += (lvl.holes||[]).length*0.3 + Math.max(0,25-(lvl.moves||20))*1.5 + ((lvl.gemTypes||4)-3)*1.5;
   if (d >= 75) return 3; // ultra-hard 💀💀💀
   if (d >= 45) return 2; // super-hard 💀💀
@@ -145,10 +145,10 @@ function generateLevel(levelNumber) {
   const typePool = ['score','score','score','score'];
   if (difficulty >= 20) typePool.push('collect','collect');
   if (difficulty >= 30) typePool.push('ice','ice','ice');
-  if (difficulty >= 45) typePool.push('jelly','carpet');
-  if (difficulty >= 60) typePool.push('ingredients');
-  if (difficulty >= 75) typePool.push('chocolate');
-  if (difficulty >= 50) typePool.push('soda');
+  if (difficulty >= 45) typePool.push('dirt','bricks');
+  if (difficulty >= 60) typePool.push('buckets');
+  if (difficulty >= 75) typePool.push('lava');
+  if (difficulty >= 50) typePool.push('flood');
   const type = typePool[Math.floor(rng() * typePool.length)];
 
   // Препятствия
@@ -157,18 +157,18 @@ function generateLevel(levelNumber) {
                         : (difficulty>30 && rng()>0.6) ? Math.round(1 + rng()*baseObs) : 0;
   const stoneCount     = (type==='stone')        ? Math.max(3, Math.round(3 + difficulty*0.12))
                         : (difficulty>40 && rng()>0.6) ? Math.round(1 + rng()*baseObs) : 0;
-  const jellyCount     = (type==='jelly')        ? Math.round(8 + difficulty*0.2) : 0;
-  const chocolateCount = (type==='chocolate')    ? Math.round(4 + difficulty*0.08) : 0;
-  const marmaladeCount = (difficulty>50 && rng()>0.7) ? Math.round(1 + rng()*3) : 0;
+  const dirtCount     = (type==='dirt')        ? Math.round(8 + difficulty*0.2) : 0;
+  const lavaCount = (type==='lava')    ? Math.round(4 + difficulty*0.08) : 0;
+  const webCount = (difficulty>50 && rng()>0.7) ? Math.round(1 + rng()*3) : 0;
   const lockCount      = (difficulty>40 && rng()>0.65) ? Math.round(1 + rng()*3) : 0;
   const mysteryCount   = (difficulty>55 && rng()>0.70) ? Math.round(1 + rng()*2) : 0;
-  const ingredientCount= (type==='ingredients') ? Math.round(2 + difficulty*0.04) : 0;
-  const bottleCount    = (type==='soda')        ? Math.round(2 + difficulty*0.04) : 0;
+  const bucketCount= (type==='buckets') ? Math.round(2 + difficulty*0.04) : 0;
+  const flaskCount    = (type==='flood')        ? Math.round(2 + difficulty*0.04) : 0;
   const portalCount    = (difficulty > 70 && rng() > 0.6) ? (rng() > 0.5 ? 2 : 1) : 0;
-  const licoriceCount  = (difficulty > 50 && rng() > 0.65) ? Math.round(1 + rng()*3) : 0;
-  const licoriceSpawnRate = licoriceCount > 0 ? (rng()>0.5 ? 4 : 6) : 0;
-  const licoriceMax    = licoriceCount > 0 ? Math.min(licoriceCount + 2, 6) : 0;
-  const honeyCount     = (difficulty > 45 && rng() > 0.65) ? Math.round(1 + rng()*3) : 0;
+  const sandCount  = (difficulty > 50 && rng() > 0.65) ? Math.round(1 + rng()*3) : 0;
+  const sandSpawnRate = sandCount > 0 ? (rng()>0.5 ? 4 : 6) : 0;
+  const sandMax    = sandCount > 0 ? Math.min(sandCount + 2, 6) : 0;
+  const amberCount     = (difficulty > 45 && rng() > 0.65) ? Math.round(1 + rng()*3) : 0;
 
   const obs = Math.round(iceCount*0.7 + stoneCount*0.5);
   const typ = Math.round(Math.max(0, gemTypes-3)*1.5);
@@ -190,11 +190,11 @@ function generateLevel(levelNumber) {
       target = iceCount;
       moves  = Math.max(15, Math.round(target*1.5 + obs + typ));
       break;
-    case 'jelly':
+    case 'dirt':
       target = 0;
-      moves  = Math.max(15, Math.round(jellyCount*1.2 + obs + typ));
+      moves  = Math.max(15, Math.round(dirtCount*1.2 + obs + typ));
       break;
-    case 'carpet':
+    case 'bricks':
       target = 0;
       moves  = Math.max(20, Math.round((COLS*ROWS - holesArr.length)*0.25 + obs + typ));
       break;
@@ -202,17 +202,17 @@ function generateLevel(levelNumber) {
       target = stoneCount;
       moves  = Math.max(15, Math.round(target*2 + obs + typ));
       break;
-    case 'ingredients':
-      target = ingredientCount;
-      moves  = Math.max(15, Math.round(ingredientCount*7 + obs + typ));
+    case 'buckets':
+      target = bucketCount;
+      moves  = Math.max(15, Math.round(bucketCount*7 + obs + typ));
       break;
-    case 'chocolate':
+    case 'lava':
       target = 0;
-      moves  = Math.max(15, Math.round(chocolateCount*2 + obs + typ));
+      moves  = Math.max(15, Math.round(lavaCount*2 + obs + typ));
       break;
-    case 'soda':
-      target = bottleCount;
-      moves  = Math.max(15, Math.round(bottleCount*5 + obs + typ));
+    case 'flood':
+      target = flaskCount;
+      moves  = Math.max(15, Math.round(flaskCount*5 + obs + typ));
       break;
     default: target = 5000; moves = 20;
   }
@@ -232,9 +232,9 @@ function generateLevel(levelNumber) {
   }
 
   const lvlObj = { level:levelNumber, type, target, moves, gems, gemTypes,
-    iceCount, stoneCount, jellyCount, holes:holesArr,
-    chocolateCount, marmaladeCount, lockCount, mysteryCount, ingredientCount, bottleCount,
-    licoriceCount, licoriceSpawnRate, licoriceMax, honeyCount,
+    iceCount, stoneCount, dirtCount, holes:holesArr,
+    lavaCount, webCount, lockCount, mysteryCount, bucketCount, flaskCount,
+    sandCount, sandSpawnRate, sandMax, amberCount,
     portals: _portalPairs.length > 0 ? _portalPairs : undefined, revision: 0 };
 
   // Быстрая симуляция баланса (40 проб). Корректируем ходы или цель если нужно.
@@ -292,12 +292,13 @@ const LEVEL_DESC = {
   collect:     lvl => `Собери ${lvl.target} ${lvl.gems.map(g => GEMS[g]?.name).join('/')}`,
   ice:         lvl => `Разбей ${lvl.target} льдинок`,
   stone:       lvl => `Убери ${lvl.target} камней`,
-  jelly:       lvl => `Расчисти все гелевые ячейки`,
-  ingredients: lvl => `Опусти ${lvl.target} вёдер с камнями`,
-  chocolate:   lvl => `Рассей всю тьму`,
-  soda:        lvl => `Разбей ${lvl.target} кристальных колб`,
-  carpet:      lvl => `Покрась всё поле 🎨`,
+  dirt:       lvl => `Расчисти все гелевые ячейки`,
+  buckets: lvl => `Опусти ${lvl.target} вёдер с камнями`,
+  lava:   lvl => `Рассей всю тьму`,
+  flood:        lvl => `Разбей ${lvl.target} кристальных колб`,
+  bricks:      lvl => `Покрась всё поле 🎨`,
   path:        lvl => `Проведи волшебника по пути из ${lvl.pathCells?.length||0} клеток 🧙`,
+  relics:      lvl => `Освободи кротов: ${lvl.relicsTarget||lvl.amberCount||1} 🐾`,
 };
 
 // Ежедневные награды (цикл 7 дней)
@@ -322,7 +323,7 @@ const BOOSTERS = [
 const SIDEKICKS = {
   turtle: { id:'turtle', icon:'🐢', name:'Черепаха', desc:'Ломает 3 случайных льда',           maxCharge:20 },
   bird:   { id:'bird',   icon:'🐦', name:'Птичка',   desc:'Создаёт горизонтальную молнию',      maxCharge:15 },
-  bear:   { id:'bear',   icon:'🐻', name:'Медведь',  desc:'+3 хода',                            maxCharge:25 },
+  bear:   { id:'bear',   icon:'🦡', name:'Барсук',   desc:'+3 хода',                            maxCharge:25 },
 };
 
 // Кристалл-бустеры перед уровнем (только L10+)

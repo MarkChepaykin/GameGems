@@ -1,0 +1,75 @@
+GiantBears levels scanned: 3865
+
+=== 211-216 cluster shapes (w x h, cells, is_full_rect) -> count ===
+--- code 211 ---
+  w1xh1 cells=1 rect=True : 18673
+  w1xh2 cells=2 rect=True : 1742
+  w2xh1 cells=2 rect=True : 1617
+  w3xh1 cells=3 rect=True : 715
+  w2xh2 cells=3 rect=False : 206
+  w4xh1 cells=4 rect=True : 193
+  w5xh1 cells=5 rect=True : 112
+  w9xh1 cells=9 rect=True : 72
+  w3xh2 cells=4 rect=False : 71
+  w2xh2 cells=4 rect=True : 64
+  w2xh3 cells=4 rect=False : 52
+  w3xh2 cells=6 rect=True : 41
+--- code 212 ---
+  w1xh1 cells=1 rect=True : 5001
+  w2xh1 cells=2 rect=True : 512
+  w1xh2 cells=2 rect=True : 164
+  w4xh1 cells=4 rect=True : 8
+  w8xh1 cells=8 rect=True : 3
+  w1xh3 cells=3 rect=True : 1
+  w3xh1 cells=3 rect=True : 1
+--- code 213 ---
+  w1xh1 cells=1 rect=True : 898
+  w2xh1 cells=2 rect=True : 28
+  w1xh2 cells=2 rect=True : 13
+  w1xh4 cells=4 rect=True : 2
+  w2xh2 cells=4 rect=True : 1
+--- code 214 ---
+  w1xh1 cells=1 rect=True : 12438
+  w2xh1 cells=2 rect=True : 1546
+  w1xh2 cells=2 rect=True : 589
+  w1xh3 cells=3 rect=True : 160
+  w2xh2 cells=3 rect=False : 68
+  w2xh2 cells=4 rect=True : 43
+  w3xh2 cells=4 rect=False : 42
+  w1xh4 cells=4 rect=True : 38
+  w1xh5 cells=5 rect=True : 20
+  w2xh3 cells=6 rect=True : 13
+  w2xh3 cells=4 rect=False : 11
+  w3xh3 cells=6 rect=False : 11
+--- code 215 ---
+  w1xh1 cells=1 rect=True : 2693
+  w1xh2 cells=2 rect=True : 234
+  w2xh1 cells=2 rect=True : 182
+  w4xh1 cells=4 rect=True : 2
+  w3xh1 cells=3 rect=True : 1
+  w2xh2 cells=4 rect=True : 1
+--- code 216 ---
+  w1xh1 cells=1 rect=True : 356
+  w2xh1 cells=2 rect=True : 26
+  w1xh2 cells=2 rect=True : 9
+  w4xh1 cells=4 rect=True : 2
+
+=== 660-665 anchor context (below, right) -> count ===
+--- code 660 ---
+  below=brick right=brick : 2651
+  below=brick right=other : 445
+  below=brick right=none : 350
+--- code 661 ---
+  below=brick right=brick : 1438
+  below=other right=brick : 288
+  below=none right=brick : 133
+--- code 662 ---
+  below=brick right=brick : 134
+  below=other right=brick : 1
+--- code 663 ---
+  below=brick right=brick : 119
+--- code 664 ---
+  below=brick right=brick : 34
+  below=none right=none : 1
+--- code 665 ---
+  below=brick right=brick : 27

@@ -36,62 +36,62 @@ function _simInitBoard(lvl) {
       if (holeSet.has(`${r},${c}`)) { board[r][c] = null; continue; }
       let type;
       do { type = Math.floor(Math.random() * gemTypes); } while (_simWouldMatch(board, r, c, type));
-      board[r][c] = { type, special: 0, stone: false, chocolate: false, marmalade: false, ingredient: false };
+      board[r][c] = { type, special: 0, stone: false, lava: false, web: false, bucket: false };
     }
   }
   const iceGrid   = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
-  const jellyGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
+  const dirtGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
   const nonHoles  = [];
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!holeSet.has(`${r},${c}`)) nonHoles.push([r,c]);
   const rnd = a => a.sort(() => Math.random() - 0.5);
   let iceC = 0;
   for (const [r,c] of rnd([...nonHoles])) {
     if (iceC >= (lvl.iceCount || 0)) break;
-    if (board[r][c]?.type >= 0 && !board[r][c].marmalade) { iceGrid[r][c] = 1; iceC++; }
+    if (board[r][c]?.type >= 0 && !board[r][c].web) { iceGrid[r][c] = 1; iceC++; }
   }
   let jelC = 0;
   for (const [r,c] of rnd([...nonHoles])) {
-    if (jelC >= (lvl.jellyCount || 0)) break;
-    jellyGrid[r][c] = 2; jelC++;
+    if (jelC >= (lvl.dirtCount || 0)) break;
+    dirtGrid[r][c] = 2; jelC++;
   }
   const inner = nonHoles.filter(([r,c]) => r>1&&r<ROWS-2&&c>1&&c<COLS-2);
   const outer  = nonHoles.filter(([r,c]) => !(r>1&&r<ROWS-2&&c>1&&c<COLS-2));
   let stC = 0;
   for (const [r,c] of rnd([...inner, ...outer])) {
     if (stC >= (lvl.stoneCount || 0)) break;
-    if (board[r][c] && !board[r][c].chocolate) { board[r][c].stone = true; board[r][c].type = -1; stC++; }
+    if (board[r][c] && !board[r][c].lava) { board[r][c].stone = true; board[r][c].type = -1; stC++; }
   }
   const edges = nonHoles.filter(([r,c]) => r===0||r===ROWS-1||c===0||c===COLS-1);
   let chC = 0;
   for (const [r,c] of rnd([...edges])) {
-    if (chC >= (lvl.chocolateCount || 0)) break;
-    if (board[r][c]) { board[r][c].chocolate = true; board[r][c].type = -1; chC++; }
+    if (chC >= (lvl.lavaCount || 0)) break;
+    if (board[r][c]) { board[r][c].lava = true; board[r][c].type = -1; chC++; }
   }
   const freeGems = nonHoles.filter(([r,c]) => board[r][c]?.type >= 0);
   let marC = 0;
   for (const [r,c] of rnd([...freeGems])) {
-    if (marC >= (lvl.marmaladeCount || 0)) break;
-    board[r][c].marmalade = true; marC++;
+    if (marC >= (lvl.webCount || 0)) break;
+    board[r][c].web = true; marC++;
   }
   const topRows = nonHoles.filter(([r]) => r < 2);
   let ingC = 0;
   for (const [r,c] of rnd([...topRows])) {
-    if (ingC >= (lvl.ingredientCount || 0)) break;
-    board[r][c] = { type: -2, special: 0, stone: false, chocolate: false, marmalade: false, ingredient: true };
+    if (ingC >= (lvl.bucketCount || 0)) break;
+    board[r][c] = { type: -2, special: 0, stone: false, lava: false, web: false, bucket: true };
     ingC++;
   }
-  const carpetGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
-  if (lvl.type === 'carpet') {
-    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (!holeSet.has(`${r},${c}`)) carpetGrid[r][c]=true;
+  const bricksGrid = Array.from({length: ROWS}, () => new Array(COLS).fill(false));
+  if (lvl.type === 'bricks') {
+    for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (!holeSet.has(`${r},${c}`)) bricksGrid[r][c]=true;
   }
   return {
-    board, holes: holeSet, iceGrid, jellyGrid, carpetGrid,
+    board, holes: holeSet, iceGrid, dirtGrid, bricksGrid,
     portalGrid: null, portalTubeMap: {},
     score: 0, moves: lvl.moves, comboCount: 0,
     collectedGems: {}, iceBroken: 0, stonesBroken: 0,
-    ingredientsDelivered: 0, chocolateInitial: lvl.chocolateCount || 0,
-    jellyTotal: lvl.jellyCount || 0,
-    carpetTotal: lvl.type==='carpet' ? nonHoles.length : 0,
+    bucketsDelivered: 0, lavaInitial: lvl.lavaCount || 0,
+    dirtTotal: lvl.dirtCount || 0,
+    bricksTotal: lvl.type==='bricks' ? nonHoles.length : 0,
   };
 }
 
@@ -116,7 +116,7 @@ function _simFindMatches(board) {
   // 2×2 squares
   for (let r=0;r<ROWS-1;r++) for (let c=0;c<COLS-1;c++) {
     const tt=board[r][c]?.type;
-    if (tt===undefined||tt<0||board[r][c]?.stone||board[r][c]?.chocolate) continue;
+    if (tt===undefined||tt<0||board[r][c]?.stone||board[r][c]?.lava) continue;
     if (board[r][c+1]?.type===tt&&board[r+1]?.[c]?.type===tt&&board[r+1]?.[c+1]?.type===tt&&
         !board[r][c+1]?.stone&&!board[r+1]?.[c]?.stone&&!board[r+1]?.[c+1]?.stone) {
       matched.add(`${r},${c}`); matched.add(`${r},${c+1}`);
@@ -131,7 +131,7 @@ function _simCanSwap(r, c, board, holes, iceGrid) {
   if ((iceGrid[r]?.[c] || 0) > 0) return false;
   const cl = board[r]?.[c];
   if (!cl) return false;
-  if (cl.stone || cl.chocolate || cl.marmalade || cl.ingredient || cl.locked || cl.mystery || cl.bottle || (cl.licorice>0) || (cl.honey>0)) return false;
+  if (cl.stone || cl.lava || cl.web || cl.bucket || cl.locked || cl.mystery || cl.flask || (cl.sand>0) || (cl.amber>0)) return false;
   return true;
 }
 
@@ -160,15 +160,15 @@ function _simApplyGravity(simState) {
       if (holes.has(`${r},${c}`)) { wr = r - 1; continue; }
       const cell = board[r][c];
       if (cell !== null) {
-        if (cell.stone || cell.chocolate) { wr = r - 1; continue; }
-        if (cell.ingredient && wr === ROWS-1 && r === ROWS-1) {
-          simState.ingredientsDelivered++; board[r][c] = null; wr--; continue;
+        if (cell.stone || cell.lava) { wr = r - 1; continue; }
+        if (cell.bucket && wr === ROWS-1 && r === ROWS-1) {
+          simState.bucketsDelivered++; board[r][c] = null; wr--; continue;
         }
         const fallDist = wr - r;
         board[wr][c] = cell;
         if (fallDist > 0) {
           board[r][c] = null;
-          if (cell.ingredient && wr === ROWS-1) { simState.ingredientsDelivered++; board[wr][c] = null; wr++; }
+          if (cell.bucket && wr === ROWS-1) { simState.bucketsDelivered++; board[wr][c] = null; wr++; }
         }
         wr--;
       }
@@ -182,8 +182,8 @@ function _simFillFromTop(board, holes, gemTypes) {
     for (let r = 0; r < ROWS; r++) {
       if (holes.has(`${r},${c}`)) continue;
       const cell = board[r][c];
-      if (cell && (cell.stone || cell.chocolate)) continue;
-      if (cell === null) board[r][c] = { type: Math.floor(Math.random() * gemTypes), special: 0, stone: false, chocolate: false, marmalade: false, ingredient: false };
+      if (cell && (cell.stone || cell.lava)) continue;
+      if (cell === null) board[r][c] = { type: Math.floor(Math.random() * gemTypes), special: 0, stone: false, lava: false, web: false, bucket: false };
     }
   }
 }
@@ -194,10 +194,10 @@ function _simCheckWin(simState, lvl) {
     case 'collect':     { let t = 0; lvl.gems.forEach(g => t += simState.collectedGems[g] || 0); return t >= lvl.target; }
     case 'ice':         return simState.iceBroken >= lvl.target;
     case 'stone':       return simState.stonesBroken >= lvl.target;
-    case 'jelly':       { for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (simState.jellyGrid[r][c]>0) return false; return true; }
-    case 'ingredients': return simState.ingredientsDelivered >= lvl.target;
-    case 'chocolate':   { for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (simState.board[r][c]?.chocolate) return false; return true; }
-    case 'carpet':      { for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (simState.carpetGrid?.[r]?.[c]) return false; return true; }
+    case 'dirt':       { for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (simState.dirtGrid[r][c]>0) return false; return true; }
+    case 'buckets': return simState.bucketsDelivered >= lvl.target;
+    case 'lava':   { for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (simState.board[r][c]?.lava) return false; return true; }
+    case 'bricks':      { for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++) if (simState.bricksGrid?.[r]?.[c]) return false; return true; }
   }
   return false;
 }
@@ -212,10 +212,10 @@ function _simProcessMatches(simState, lvl) {
     for (const key of matched) {
       const [r, c] = key.split(',').map(Number);
       const cell = simState.board[r][c];
-      if (!cell || cell.ingredient) continue;
+      if (!cell || cell.bucket) continue;
       if (simState.iceGrid[r]?.[c]) { simState.iceGrid[r][c] = 0; simState.iceBroken++; }
-      if (simState.jellyGrid[r]?.[c] > 0) simState.jellyGrid[r][c]--;
-      if (simState.carpetGrid?.[r]?.[c]) { simState.carpetGrid[r][c]=false; for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&simState.carpetGrid[nr]?.[nc])simState.carpetGrid[nr][nc]=false;} }
+      if (simState.dirtGrid[r]?.[c] > 0) simState.dirtGrid[r][c]--;
+      if (simState.bricksGrid?.[r]?.[c]) { simState.bricksGrid[r][c]=false; for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&simState.bricksGrid[nr]?.[nc])simState.bricksGrid[nr][nc]=false;} }
       if (cell.type >= 0) simState.collectedGems[cell.type] = (simState.collectedGems[cell.type] || 0) + 1;
       simState.board[r][c] = null;
     }
@@ -227,8 +227,8 @@ function _simProcessMatches(simState, lvl) {
         const nb = simState.board[nr]?.[nc];
         if (!nb) continue;
         if (nb.stone)     { nb.stone     = false; nb.type = Math.floor(Math.random() * gemTypes); simState.stonesBroken++; }
-        if (nb.chocolate) { nb.chocolate = false; nb.type = Math.floor(Math.random() * gemTypes); }
-        if (nb.marmalade) nb.marmalade = false;
+        if (nb.lava) { nb.lava = false; nb.type = Math.floor(Math.random() * gemTypes); }
+        if (nb.web) nb.web = false;
       }
     }
     _simApplyGravity(simState);
@@ -249,11 +249,11 @@ function _simPickBestMove(sim, moves, lvl) {
     for (const key of matched) {
       const [mr, mc] = key.split(',').map(Number);
       if (sim.iceGrid[mr]?.[mc])       score += 3; // бьём по льду
-      if (sim.jellyGrid[mr]?.[mc] > 0) score += 2; // убираем желе
-      if (sim.carpetGrid?.[mr]?.[mc])  score += 2; // красим ковёр
+      if (sim.dirtGrid[mr]?.[mc] > 0) score += 2; // убираем желе
+      if (sim.bricksGrid?.[mr]?.[mc])  score += 2; // красим ковёр
       const cell = sim.board[mr]?.[mc];
       if (cell?.stone)     score += 2;
-      if (cell?.chocolate) score += 2;
+      if (cell?.lava) score += 2;
     }
     if (score > bestScore) { bestScore = score; best = mv; }
     sim.board[nr][nc] = sim.board[r][c]; sim.board[r][c] = tmp;

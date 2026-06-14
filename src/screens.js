@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════
 //  ЭКРАНЫ
 // ══════════════════════════════════════════
-const ALL_SCREENS = ['loading','menu','quests','achievements','levels','episode','pregame','game','win','lose','shop','settings','season','tournament'];
+const ALL_SCREENS = ['loading','menu','quests','achievements','levels','episode','pregame','game','win','lose','shop','settings','season','tournament','assets'];
 
 const _SCREEN_ANIM = {
   menu:    'screen-slide-down',
@@ -17,6 +17,7 @@ const _SCREEN_ANIM = {
   quests:  'screen-slide-left',
   achievements: 'screen-slide-left',
   tournament:   'screen-slide-left',
+  assets:       'screen-slide-left',
 
 };
 
@@ -876,8 +877,8 @@ function _setChapterBg(layerIdx) {
 }
 
 const TYPE_ICON = {
-  bears:'🐻', collect:'💎', soda:'🫧', ingredients:'🌿',
-  jelly:'🟦', chocolate:'🌑', carpet:'🎨',
+  relics:'🐾', collect:'💎', flood:'🫧', buckets:'🪣',
+  dirt:'🟫', lava:'🌋', bricks:'🎨', path:'🧙',
 };
 
 function goBackToLevels() {
@@ -1067,18 +1068,24 @@ function selectLevel(n) {
       const gem = GEMS[g]; if (!gem) return '';
       return `<span style="color:${gem.color};font-size:22px;">●</span> ${gem.name}`;
     }).join('  ');
-  } else if (lvl.type === 'ingredients') {
+  } else if (lvl.type === 'buckets') {
     pgDesc.innerHTML = '🪣 Опускай вёдра с камнями вниз';
-  } else if (lvl.type === 'jelly') {
+  } else if (lvl.type === 'dirt') {
     pgDesc.innerHTML = '🟦 Разбивай гемы на гелевых ячейках';
   } else if (lvl.type === 'ice') {
     pgDesc.innerHTML = '❄️ Разбивай соседние фишки';
   } else if (lvl.type === 'stone') {
     pgDesc.innerHTML = '🪨 Разбивай соседние фишки';
-  } else if (lvl.type === 'soda') {
+  } else if (lvl.type === 'flood') {
     pgDesc.innerHTML = '🫧 Делай матчи рядом с колбами';
-  } else if (lvl.type === 'carpet') {
+  } else if (lvl.type === 'bricks') {
     pgDesc.innerHTML = '🎨 Собирай матчи, чтобы покрасить всё поле';
+  } else if (lvl.type === 'relics') {
+    pgDesc.innerHTML = '🐾 Разбивай янтарь и рунные блоки — освобождай кротов';
+  } else if (lvl.type === 'lava') {
+    pgDesc.innerHTML = '🌋 Делай матчи рядом с лавой, чтобы рассеять её';
+  } else if (lvl.type === 'path') {
+    pgDesc.innerHTML = '🧙 Делай матчи рядом с путником — он пройдёт по тропе';
   } else {
     pgDesc.textContent = '';
   }

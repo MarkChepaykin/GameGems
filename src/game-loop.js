@@ -118,6 +118,37 @@ function livesTickLoop() {
 }
 
 // ══════════════════════════════════════════
+//  ОЧЕРЕДЬ СТАРТОВЫХ ПОПАПОВ (без наложения)
+// ══════════════════════════════════════════
+// Каждый попап показывается ПО ОДНОМУ: следующий открывается только
+// после закрытия предыдущего. Видимость определяем по offsetParent —
+// работает и для класса 'hidden', и для 'show'.
+const _startupPopups = [];
+let _startupBusy = false;
+function queueStartupPopup(id, openFn, prio = 50) { _startupPopups.push({ id, openFn, prio }); }
+function runStartupPopups() {
+  if (_startupBusy) return;
+  _startupPopups.sort((a, b) => a.prio - b.prio);
+  const next = _startupPopups.shift();
+  if (!next) return;
+  _startupBusy = true;
+  try { next.openFn(); } catch (e) { console.error('[popupQueue]', e); }
+  const el = document.getElementById(next.id);
+  if (!el) { _startupBusy = false; return runStartupPopups(); }
+  let sawVisible = false, ticks = 0;
+  const iv = setInterval(() => {
+    ticks++;
+    const vis = el.offsetParent !== null;
+    if (vis) sawVisible = true;
+    if ((sawVisible && !vis) || (!sawVisible && ticks > 16)) {
+      clearInterval(iv);
+      _startupBusy = false;
+      setTimeout(runStartupPopups, 400);
+    }
+  }, 250);
+}
+
+// ══════════════════════════════════════════
 //  ЗАГРУЗКА
 // ══════════════════════════════════════════
 async function loadingScreen() {
@@ -162,21 +193,22 @@ async function loadingScreen() {
 
   showScreen('menu'); // ← music starts here via showScreen hook
 
-  postLoadInit();
+  await postLoadInit().catch(e => console.error('[postLoadInit]', e)); // ставит в очередь comeback/турнир; ошибка не ломает загрузку
 
   // Give audio 600ms to initialize before background chunk streaming begins
   await sleep(600);
   _loadRemainingChunks(curChunk);
 
+  // Стартовые попапы — в очередь, показываются по одному без наложения.
+  // Дейли-награда важнее всего → prio 10.
   if (shouldShowDailyReward()) {
-    setTimeout(openDailyPopup, 500);
+    queueStartupPopup('popup-daily', openDailyPopup, 10);
   } else if (state.streakLost) {
-    setTimeout(openStreakPopup, 500);
+    showToast('🔥 Стрик сброшен — начни заново!'); // тост вместо модалки
   }
+  // Дейли-сундук убран со входа: показывается после первой победы (хук showWin).
 
-  if (shouldShowDailyChest()) {
-    setTimeout(showDailyChest, 2000);
-  }
+  setTimeout(runStartupPopups, 500);
 }
 
 function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>CCSS → Ore Rush — карта аналогов</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0c0c10; color: #cbd5e1; font-family: system-ui, 'Segoe UI', sans-serif; font-size: 13px; }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 50; background: #111118; border-bottom: 1px solid #23232e;
+    padding: 10px 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .topbar h1 { font-size: 14px; color: #e2e8f0; font-weight: 600; }
+  .topbar .spacer { flex: 1; }
+  .btn { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; border-radius: 7px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .btn:hover { background: #283548; }
+  .btn-primary { background: #6d28d9; border-color: #7c3aed; color: #fff; }
+  .btn-primary:hover { background: #7c3aed; }
+  .search { background: #0f0f16; border: 1px solid #2a2a38; border-radius: 8px; color: #cbd5e1; padding: 7px 10px; font-size: 12px; }
+  label.chk { font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  .stats { font-size: 11px; color: #64748b; }
+  .stats b { color: #94a3b8; } .stats .g { color: #4ade80; }
+
+  .hint { padding: 8px 18px; font-size: 11px; color: #64748b; background: #0e0e15; border-bottom: 1px solid #1c1c26; }
+  .hint b { color: #a78bfa; }
+
+  /* наша библиотека */
+  .lib-bar { border-bottom: 1px solid #1c1c26; background: #0d0d13; }
+  .lib-head { padding: 8px 18px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12px; }
+  .lib-head:hover { background: #12121a; }
+  .lib-head .nm { color: #a78bfa; font-weight: 600; }
+  .lib-head .ct { color: #64748b; font-size: 11px; }
+  .lib-wrap { display: none; padding: 0 14px 12px; }
+  .lib-wrap.open { display: block; }
+  .lib-grid { display: grid; grid-template-columns: repeat(auto-fill, 70px); gap: 8px; }
+  .lib-item { width: 70px; text-align: center; }
+  .lib-item .libimg { width: 56px; height: 56px; margin: 0 auto; border-radius: 6px; background: #15151f; display: flex; align-items: center; justify-content: center; }
+  .lib-item .libimg img { max-width: 50px; max-height: 50px; object-fit: contain; }
+  .lib-item .ln { font-size: 7.5px; color: #64748b; margin-top: 2px; word-break: break-all; line-height: 1.1; }
+
+  /* atlas block */
+  .atlas-block { margin: 6px 12px; border: 1px solid #1c1c26; border-radius: 10px; overflow: hidden; }
+  .atlas-head { background: #14141c; padding: 9px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .atlas-head:hover { background: #1a1a24; }
+  .atlas-head .nm { color: #e2e8f0; font-weight: 600; }
+  .atlas-head .ct { color: #64748b; font-size: 11px; }
+  .atlas-head .game { color: #4ade80; font-size: 10px; border: 1px solid #166534; border-radius: 4px; padding: 1px 5px; }
+  .atlas-head .asg { color: #fbbf24; font-size: 10px; }
+  .atlas-head .chev { margin-left: auto; color: #475569; transition: transform .15s; }
+  .atlas-body { display: none; padding: 12px 14px; grid-template-columns: repeat(auto-fill, 96px); gap: 10px; }
+  .atlas-block.open .atlas-body { display: grid; }
+  .atlas-block.open .chev { transform: rotate(90deg); }
+
+  /* card: CCSS sprite + assigned our analog */
+  .ccard { width: 96px; background: #101019; border: 1px solid #1e1e28; border-radius: 9px; padding: 6px; text-align: center; }
+  .ccard.has { border-color: #166534; }
+  .chk-cell {
+    width: 64px; height: 64px; margin: 0 auto; border-radius: 6px; position: relative;
+    display: flex; align-items: center; justify-content: center; background: #15151f;
+    background-image:
+      linear-gradient(45deg,#181822 25%,transparent 25%), linear-gradient(-45deg,#181822 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#181822 75%), linear-gradient(-45deg,transparent 75%,#181822 75%);
+    background-size: 12px 12px; background-position: 0 0,0 6px,6px -6px,-6px 0;
+  }
+  .chk-cell img { max-width: 60px; max-height: 60px; object-fit: contain; }
+  .chk-cell .miss { color: #7f1d1d; font-size: 18px; }
+  .ccss-name { font-size: 7.5px; color: #64748b; margin: 4px 0 5px; word-break: break-all; line-height: 1.15; height: 26px; overflow: hidden; }
+
+  /* assign slot */
+  .assign {
+    display: flex; align-items: center; gap: 5px; cursor: pointer;
+    background: #0d0d14; border: 1px dashed #2e2e3c; border-radius: 6px; padding: 3px 5px; min-height: 30px;
+  }
+  .assign:hover { border-color: #7c3aed; background: #15131f; }
+  .assign.set { border-style: solid; border-color: #2f6f3a; background: #0e160f; }
+  .assign .mini { width: 22px; height: 22px; flex-shrink: 0; border-radius: 4px; background: #1a1a24; display: flex; align-items: center; justify-content: center; }
+  .assign .mini img { max-width: 22px; max-height: 22px; object-fit: contain; }
+  .assign .atxt { font-size: 8px; color: #64748b; text-align: left; line-height: 1.1; word-break: break-all; overflow: hidden; max-height: 22px; }
+  .assign.set .atxt { color: #86efac; }
+  .assign .plus { color: #7c3aed; font-size: 14px; }
+  .assign.proc { border-style: solid; border-color: #1d4ed8; background: #0c1422; }
+  .assign.proc .atxt { color: #93c5fd; }
+  .assign.skip { border-style: solid; border-color: #444; background: #161616; }
+  .assign.skip .atxt { color: #9aa0a6; }
+  .ccard.proc { border-color: #1d4ed8; opacity: .92; }
+  .ccard.skip { border-color: #3a3a3a; opacity: .5; }
+
+  .mech { font-size: 8px; color: #c4b5fd; background: #1c1530; border: 1px solid #3b2a5e; border-radius: 4px; padding: 1px 4px; margin: 0 auto 5px; display: inline-block; max-width: 88px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mech.vfx  { color: #64748b; background: #15151c; border-color: #2a2a38; }
+  .mech.seas { color: #fca5a5; background: #1f1414; border-color: #5b2626; }
+
+  .srow { display: flex; gap: 3px; margin-top: 4px; }
+  .sbtn { flex: 1; font-size: 8.5px; padding: 3px 0; border-radius: 5px; cursor: pointer; border: 1px solid #2a2a38; background: #0d0d14; color: #64748b; }
+  .sbtn:hover { border-color: #7c3aed; color: #cbd5e1; }
+  .sbtn.act-proc { background: #0c1422; border-color: #1d4ed8; color: #93c5fd; }
+  .sbtn.act-skip { background: #161616; border-color: #555; color: #cbd5e1; }
+
+  .pick-quick { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .pq { flex: 1; min-width: 150px; padding: 10px; border-radius: 9px; cursor: pointer; border: 1px solid #2a2a38; background: #0f0f16; font-size: 12px; text-align: center; }
+  .pq:hover { border-color: #7c3aed; }
+  .pq.proc { color: #93c5fd; border-color: #1d4ed8; }
+  .pq.skip { color: #cbd5e1; border-color: #555; }
+  .pq small { display: block; color: #475569; font-size: 9px; margin-top: 2px; }
+
+  .ref-desc { font-size: 11px; color: #94a3b8; padding: 4px 18px 0; }
+  .ref-desc .mtag { color: #c4b5fd; }
+
+  /* modal */
+  .modal-bg { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.74); align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #14141c; border: 1px solid #2a2a38; border-radius: 14px; width: min(700px, 95vw); max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  .modal-head { padding: 14px 18px; border-bottom: 1px solid #23232e; display: flex; align-items: center; gap: 12px; }
+  .modal-head h2 { font-size: 14px; color: #e2e8f0; font-weight: 600; }
+  .modal-head .ref { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #fbbf24; }
+  .modal-head .ref img { width: 34px; height: 34px; object-fit: contain; background: #15151f; border-radius: 5px; }
+  .modal-head .x { margin-left: auto; cursor: pointer; color: #64748b; font-size: 20px; }
+  .tabs { display: flex; gap: 6px; padding: 10px 18px 0; }
+  .tab { padding: 6px 14px; font-size: 12px; border-radius: 8px 8px 0 0; cursor: pointer; color: #64748b; background: #0f0f16; }
+  .tab.active { color: #e2e8f0; background: #1c1c26; }
+  .modal-body { padding: 12px 18px 18px; overflow-y: auto; }
+  .picker-grid { display: grid; grid-template-columns: repeat(auto-fill, 64px); gap: 8px; }
+  .pick { width: 64px; cursor: pointer; text-align: center; border-radius: 8px; padding: 3px; border: 1.5px solid transparent; }
+  .pick:hover { border-color: #7c3aed; background: #1c1c26; }
+  .pick .mini2 { width: 54px; height: 54px; margin: 0 auto; border-radius: 6px; background: #15151f; display: flex; align-items: center; justify-content: center; }
+  .pick .mini2 img { max-width: 50px; max-height: 50px; object-fit: contain; }
+  .pick .pname { font-size: 7.5px; color: #64748b; margin-top: 2px; word-break: break-all; line-height: 1.1; }
+  .pick.clear .mini2 { color: #f87171; font-size: 22px; }
+  .upload-zone { border: 2px dashed #3a3a4a; border-radius: 10px; padding: 30px; text-align: center; color: #64748b; cursor: pointer; }
+  .upload-zone:hover { border-color: #7c3aed; color: #a78bfa; }
+  .export-ta { width: 100%; height: 340px; background: #0f0f16; border: 1px solid #2a2a38; border-radius: 8px; color: #a5f3a0; font-family: monospace; font-size: 11px; padding: 10px; resize: vertical; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🎨 CCSS → Ore Rush</h1>
+  <input class="search" id="search" placeholder="🔎 поиск по имени CCSS-спрайта…" oninput="renderCatalog()" style="min-width:240px;">
+  <label class="chk"><input type="checkbox" id="game-only" checked onchange="renderCatalog()"> только игровые атласы</label>
+  <label class="chk"><input type="checkbox" id="hide-vfx" checked onchange="renderCatalog()"> скрыть VFX/сезонное</label>
+  <label class="chk"><input type="checkbox" id="unassigned" onchange="renderCatalog()"> только без статуса</label>
+  <span class="spacer"></span>
+  <span class="stats" id="stats"></span>
+  <button class="btn" onclick="toggleAll(true)">▼ всё</button>
+  <button class="btn" onclick="toggleAll(false)">▶ свернуть</button>
+  <button class="btn" onclick="openImport()">⬆ Импорт</button>
+  <button class="btn" onclick="resetAll()">↺ Сброс</button>
+  <button class="btn btn-primary" onclick="openExport()">⬇ Экспорт</button>
+</div>
+
+<div class="hint"><b>Спрайты CCSS</b> по атласам. У каждого видна <b>механика</b> (фиолетовый чип) и подсказка при наведении. Для каждого выбери один из 3 статусов: <b>наш аналог</b> (кликни слот) · <b>⚙ проц</b> (рисуем кодом, спрайт не нужен) · <b>🚫 скип</b> (в игре не используем). Фильтр «скрыть VFX/сезонное» убирает лишнее. Расставил → «Экспорт».</div>
+
+<!-- наша библиотека (постоянно видна) -->
+<div class="lib-bar">
+  <div class="lib-head" onclick="document.getElementById('libwrap').classList.toggle('open')">
+    <span class="nm">📚 Наша библиотека (Ore Rush)</span>
+    <span class="ct" id="lib-count"></span>
+    <span style="margin-left:auto;color:#475569;font-size:11px;">показать / скрыть ▾</span>
+  </div>
+  <div id="libwrap" class="lib-wrap open"><div class="lib-grid" id="lib-grid"></div></div>
+</div>
+
+<div id="catalog" style="padding-bottom:60px;"></div>
+
+<!-- assign modal -->
+<div class="modal-bg" id="picker">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="ref" id="pick-ref"></span>
+      <h2 style="font-weight:400;color:#475569;font-size:12px;">← статус / аналог</h2>
+      <span class="x" onclick="closePicker()">✕</span>
+    </div>
+    <div class="ref-desc" id="pick-desc"></div>
+    <div class="tabs">
+      <div class="tab active" id="tab-lib" onclick="setTab('lib')">Наша библиотека</div>
+      <div class="tab" id="tab-up" onclick="setTab('up')">Загрузить с устройства</div>
+    </div>
+    <div class="modal-body">
+      <div id="pane-lib">
+        <div class="pick-quick">
+          <div class="pq proc" onclick="setStatusFromPicker('proc')">⚙ Процедурная генерация<small>рисуем кодом — спрайт не нужен</small></div>
+          <div class="pq skip" onclick="setStatusFromPicker('skip')">🚫 Не используем в игре<small>механики у нас нет / не нужна</small></div>
+          <div class="pq" onclick="doAssign(null)">✖ Очистить статус<small>вернуть в «без статуса»</small></div>
+        </div>
+        <input class="search" id="pick-search" style="width:100%;margin-bottom:10px;" placeholder="поиск по нашим спрайтам…" oninput="renderPicker()">
+        <div class="picker-grid" id="pick-grid"></div>
+      </div>
+      <div id="pane-up" style="display:none;">
+        <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+          📁 Нажми и выбери картинку с устройства<br><span style="font-size:11px;">(PNG/JPG — станет нашим аналогом для этого CCSS-спрайта)</span>
+        </div>
+        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="onFileChosen(event)">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- export modal -->
+<div class="modal-bg" id="exporter">
+  <div class="modal">
+    <div class="modal-head"><h2>Экспорт карты аналогов</h2>
+      <span class="x" onclick="document.getElementById('exporter').classList.remove('open')">✕</span></div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:#64748b;margin-bottom:8px;">Пары «CCSS-спрайт → наш аналог». Скопируй и пришли мне.</p>
+      <button class="btn btn-primary" style="margin-bottom:10px;" onclick="copyExport()">📋 Копировать</button>
+      <textarea class="export-ta" id="export-ta" readonly></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- import modal -->
+<div class="modal-bg" id="importer">
+  <div class="modal">
+    <div class="modal-head"><h2>Импорт расстановки</h2>
+      <span class="x" onclick="document.getElementById('importer').classList.remove('open')">✕</span></div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:#64748b;margin-bottom:8px;">Вставь JSON (формат экспорта). Назначения объединятся с текущими.</p>
+      <button class="btn btn-primary" style="margin-bottom:10px;" onclick="doImport()">✓ Применить</button>
+      <textarea class="export-ta" id="import-ta" placeholder='{ "red_c": {"our":"gem_red"}, ... }'></textarea>
+    </div>
+  </div>
+</div>
+
+<script>
+const CC = 'sprites/ccss/';
+const OR = 'sprites/squares/';
+
+const GAME_ATLASES = ['candy_c','candy_2_c','hires_striped','gamegrid','atlas_character_bears',
+  'rainbow_streak','rainbow_round','on_fire','mystery_machine_elements','islands_biome_base',
+  'particle_atlas','exclamations','stars','buffbuddies'];
+
+// наша библиотека спрайтов
+const OUR_SPRITES = [
+  'gem_yellow','gem_cyan','gem_green','gem_red','gem_purple','gem_orange','gem_blue','gem_bucket',
+  'stripe_h_yellow','stripe_h_cyan','stripe_h_green','stripe_h_red','stripe_h_purple','stripe_h_orange','stripe_h_blue',
+  'stripe_v_yellow','stripe_v_cyan','stripe_v_green','stripe_v_red','stripe_v_purple','stripe_v_orange','stripe_v_blue',
+  'tnt_yellow','tnt_cyan','tnt_green','tnt_red','tnt_purple','tnt_orange','tnt_blue',
+  'rocket_yellow','rocket_cyan','rocket_green','rocket_red','rocket_purple','rocket_orange','rocket_blue',
+  'barrel_yellow','barrel_cyan','barrel_green','barrel_red','barrel_purple','barrel_orange','barrel_blue',
+  'rainbow','lava','stone','stone_cracked','stone_broken','gravel','rubble','stone_1hole','stone_2holes',
+  'ice','dirt','jelly_red','jelly_orange','chain_1','chain_2','chain_3','vine_branch','vine_cross','vine_cross2',
+  'honey','bear','bear_sleeping','cage_locked','bottle','cobblestone','mystery','portal',
+];
+
+// ── словарь механик: имя CCSS-спрайта → {mech, ru} ──
+const COLOR_RU = { light_green:'салатовый', red:'красный', yellow:'жёлтый', green:'зелёный',
+  cyan:'голубой', blue:'синий', purple:'фиолетовый', orange:'оранжевый', pink:'розовый', black:'чёрный' };
+function colorOf(n){ for (const k in COLOR_RU) if (n.includes(k)) return COLOR_RU[k]; return ''; }
+
+// [regex, mech, ru]. Порядок важен — от частного к общему.
+const RULES = [
+  // спецфишки
+  [/_striped_h/,        'Спецфишки', 'Полосатая (горизонт.) — Match-4, чистит ряд'],
+  [/_striped_v/,        'Спецфишки', 'Полосатая (вертик.) — Match-4, чистит столбец'],
+  [/fish_.*wrapped/,    'Спецфишки', 'Рыбка+обёртка (комбо-кадр)'],
+  [/fish_.*striped/,    'Спецфишки', 'Рыбка+полоска (комбо-кадр)'],
+  [/^fish_/,            'Спецфишки', 'Рыбка — Match 2×2, плывёт к цели (у нас ROCKET)'],
+  [/_wrapped/,          'Спецфишки', 'Обёрнутая (бомба) — Match T/L, взрыв 3×3 ×2 (у нас BOMB)'],
+  [/colorbomb_mega/,    'Спецфишки', 'Мега-радуга — комбо двух радуг'],
+  [/colorbomb/,         'Спецфишки', 'Радуга (ColorBomb) — Match-5, убирает весь цвет'],
+  [/coloring_candy/,    'Спецфишки', 'Красящая — перекрашивает фишки в свой цвет'],
+  [/^CB[A-Z]/,          'VFX',       'Радуга — кадр анимации взрыва (не нужен)'],
+  // сезонные скины
+  [/october|valentine|_egg|anniversary|december|fireworks|10anniversary|heart|santa|halloween|easter/, 'Сезонное', 'Праздничный скин фишки — для базы НЕ нужен'],
+  [/reskin/,            'Гемы',      'Альтернативный скин фишки'],
+  // гемы
+  [/^(red|yellow|green|cyan|blue|purple|orange)_c$/, 'Гемы', 'Базовая фишка'],
+  // блокеры
+  [/white_chocolate|chocolate_white/, 'Бел.шоколад/Грибница', 'Растущий блокер. У нас — грибница (процедурно)'],
+  [/chocolate/,         'Шоколад/Лава', 'Растущий блокер — каждый ход расширяется. У нас — лава'],
+  [/icecube_(\d)/,      'Лёд',       'Лёд, слой $1 из 6 — заморозка фишки'],
+  [/honey_bear/,        'Медведи/Реликвии', 'Медведь в мёде — освободить (цель режима GiantBears/Honey)'],
+  [/honey_empty/,       'Медведи/Реликвии', 'Пустая ячейка мёда после освобождения'],
+  [/honey_special/,     'Мёд',       'Особый слой мёда'],
+  [/honey_solid_(\d)/,  'Мёд',       'Мёд, слой $1 — заливка на дне клетки'],
+  [/honey_splat|honey/, 'VFX',       'Мёд — брызги/эффект'],
+  [/chain_twin/,        'Цепи (двойные)', 'Двойная цепь — связывает 2 фишки'],
+  [/chain_lock|liqlock/,'Замок',     'Замок — блокирует свайп фишки'],
+  [/chain_layer(\d)/,   'Цепи',      'Цепь, слой $1 — обмотка фишки (лакрица)'],
+  [/chain_inbetween/,   'Цепи',      'Цепь — соединительный кадр'],
+  [/liquorice_swirl/,   'Лакрица',   'Лакрица-спираль — падающий блокер (у нас — песок)'],
+  [/bubblegum_(klet|crush)/, 'VFX',  'Жвачка — вспомогательный кадр'],
+  [/bubblegum_(\d)/,    'Жвачка/Желе', 'Жвачка, слой $1 — на клетке (у нас грязь/желе)'],
+  [/cupcake.*layer(\d)/,'Кекс',      'Кекс — слой $1 из 5 (многослойный блокер)'],
+  [/pancake_layer(\d)/, 'Блин',      'Блин — слой $1 из 5 (блокер-спаунер)'],
+  [/pancake_piece/,     'VFX',       'Блин — осколок'],
+  [/jellycake|jelly_cake/, 'JellyCake 2×2', 'Желейный торт 2×2'],
+  [/bottle_/,           'Сода',      'Бутылка соды (SodaToTheBrim) — поднять уровень жидкости'],
+  [/soda_(goal|fish_goal)|corroda|lemonade/, 'Сода', 'Цель/жидкость режима соды'],
+  [/mystery_container/, 'Mystery',   'Тайный контейнер — скрывает фишку'],
+  [/mysterymode_.*candy/, 'Mystery', 'Фишка, спрятанная в тайнике'],
+  [/mystery/,           'Mystery',   'Тайна'],
+  [/8th_candy/,         'PaintBattle', '8-й цвет (чёрный) — режим PaintBattle'],
+  [/candy_cannon/,      'Пушка',     'Пушка-спаунер — выстреливает фишки на поле'],
+  [/giant_bear/,        'Memory/Giant', 'Гигантский медведь — крупный объект (несколько клеток)'],
+  [/giant_fish/,        'Memory/Giant', 'Гигантская рыба — крупный объект'],
+  [/fish_jam|jam_\d|jam_.*smear/, 'Jam', 'Джем — растекается / цель режима'],
+  [/path_activator/,    'Path',      'Активатор пути (Path mode)'],
+  [/bear_collected/,    'Медведи/Реликвии', 'Медведь освобождён (анимация)'],
+  [/bear_in_bubble|^bear/, 'Медведи/Реликвии', 'Медведь — объект-цель'],
+  // вспомогательное / VFX
+  [/electricity|glow|selected_candy|collector_hook|candystring|fishbag|_break|_inbetween|_smear|glance|blob|spinner|frame_|^candy_cannon_(frame|spinner)/, 'VFX', 'Эффект/вспомогательный кадр — спрайт не нужен'],
+];
+
+function describe(name){
+  for (const [re, mech, ru] of RULES) {
+    const m = name.match(re);
+    if (m) {
+      let txt = ru.replace('$1', m[1] || '');
+      const col = colorOf(name);
+      if (mech === 'Гемы' || mech === 'Спецфишки') if (col) txt += ' · ' + col;
+      return { mech, ru: txt };
+    }
+  }
+  return { mech: '', ru: '' };
+}
+function mechClass(mech){ return mech === 'VFX' ? 'vfx' : mech === 'Сезонное' ? 'seas' : ''; }
+
+const SAVE_KEY = 'oreRush_ccssMap_v2';
+// assign[ccssName] = {t:'lib',name} | {t:'up',data,fn} | {t:'proc'} | {t:'skip'}
+let assign = {};
+try { assign = JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'); } catch(e){ assign = {}; }
+
+let CCSS_BY_ATLAS = {};   // atlas -> [{name, path}]
+let CCSS_INDEX = [];
+
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(assign)); } catch(e){ alert('Не удалось сохранить (память браузера переполнена загруженными файлами)'); } }
+
+function assignedURL(a) { return a.t === 'up' ? a.data : OR + a.name + '.png'; }
+function assignedLabel(a) { return a.t === 'up' ? '📁 ' + a.fn : a.name; }
+
+function thumb(url, miss, cls) {
+  return `<div class="${cls}"><img src="${url}" onerror="this.outerHTML='<span class=&quot;miss&quot;>${miss||'·'}</span>'"></div>`;
+}
+
+function renderCatalog() {
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const gameOnly = document.getElementById('game-only').checked;
+  const unassignedOnly = document.getElementById('unassigned').checked;
+  const hideVfx = document.getElementById('hide-vfx').checked;
+
+  let atlases = Object.keys(CCSS_BY_ATLAS).sort((a,b) => {
+    const ga = GAME_ATLASES.indexOf(a), gb = GAME_ATLASES.indexOf(b);
+    if (ga>=0 && gb>=0) return ga-gb;
+    if (ga>=0) return -1; if (gb>=0) return 1;
+    return a.localeCompare(b);
+  });
+  if (gameOnly) atlases = atlases.filter(a => GAME_ATLASES.includes(a));
+
+  let html = '', totalShown = 0;
+  for (const atlas of atlases) {
+    let items = CCSS_BY_ATLAS[atlas];
+    if (q) items = items.filter(it => it.name.toLowerCase().includes(q));
+    if (hideVfx) items = items.filter(it => { const m = describe(it.name).mech; return m !== 'VFX' && m !== 'Сезонное'; });
+    if (unassignedOnly) items = items.filter(it => !assign[it.name]);
+    if (!items.length) continue;
+    const isGame = GAME_ATLASES.includes(atlas);
+    const open = (q || isGame) ? ' open' : '';
+    const asgCount = items.filter(it => assign[it.name]).length;
+    totalShown += items.length;
+    html += `<div class="atlas-block${open}"><div class="atlas-head" onclick="this.parentElement.classList.toggle('open')">
+      <span class="nm">${atlas}</span><span class="ct">${items.length} шт</span>${isGame?'<span class="game">игровой</span>':''}
+      ${asgCount?`<span class="asg">✓ ${asgCount}</span>`:''}<span class="chev">▶</span></div><div class="atlas-body">`;
+    for (const it of items) {
+      const a = assign[it.name];
+      const st = a ? a.t : '';
+      const d = describe(it.name);
+      const chip = d.mech ? `<div class="mech ${mechClass(d.mech)}" title="${d.ru}">${d.mech}</div>` : '';
+      let slot;
+      if (st === 'lib' || st === 'up')
+        slot = `<div class="assign set" onclick="event.stopPropagation();openPicker('${esc(it.name)}','${it.path}')"><div class="mini"><img src="${assignedURL(a)}"></div><div class="atxt">${assignedLabel(a)}</div></div>`;
+      else if (st === 'proc')
+        slot = `<div class="assign proc" onclick="event.stopPropagation();openPicker('${esc(it.name)}','${it.path}')"><span>⚙</span><div class="atxt">процедурно</div></div>`;
+      else if (st === 'skip')
+        slot = `<div class="assign skip" onclick="event.stopPropagation();openPicker('${esc(it.name)}','${it.path}')"><span>🚫</span><div class="atxt">не используем</div></div>`;
+      else
+        slot = `<div class="assign" onclick="event.stopPropagation();openPicker('${esc(it.name)}','${it.path}')"><span class="plus">＋</span><div class="atxt">наш аналог</div></div>`;
+      const srow = `<div class="srow">
+        <button class="sbtn ${st==='proc'?'act-proc':''}" onclick="event.stopPropagation();setStatus('${esc(it.name)}','proc')" title="процедурная генерация — спрайт не нужен">⚙ проц</button>
+        <button class="sbtn ${st==='skip'?'act-skip':''}" onclick="event.stopPropagation();setStatus('${esc(it.name)}','skip')" title="не используем в игре">🚫 скип</button>
+      </div>`;
+      const cardCls = (st==='lib'||st==='up') ? ' has' : st==='proc' ? ' proc' : st==='skip' ? ' skip' : '';
+      html += `<div class="ccard${cardCls}" title="${d.ru || it.name}">${thumb(CC+it.path,'✖','chk-cell')}<div class="ccss-name">${it.name}</div>${chip}${slot}${srow}</div>`;
+    }
+    html += `</div></div>`;
+  }
+  document.getElementById('catalog').innerHTML = html || '<p style="color:#475569;padding:30px;">Ничего не найдено</p>';
+
+  let nLib=0, nProc=0, nSkip=0;
+  for (const k in assign) { const t=assign[k].t; if (t==='lib'||t==='up') nLib++; else if (t==='proc') nProc++; else if (t==='skip') nSkip++; }
+  document.getElementById('stats').innerHTML =
+    `показано <b>${totalShown}</b> · <span class="g">${nLib} аналог</span> · <span style="color:#93c5fd">${nProc} проц</span> · <span style="color:#9aa0a6">${nSkip} скип</span>`;
+}
+function esc(s){ return s.replace(/'/g,"\\'"); }
+function toggleAll(open){ document.querySelectorAll('.atlas-block').forEach(b=>b.classList.toggle('open',open)); }
+
+function renderLibrary(){
+  document.getElementById('lib-count').textContent = OUR_SPRITES.length + ' спрайтов';
+  let html = '';
+  for (const n of OUR_SPRITES)
+    html += `<div class="lib-item"><div class="libimg"><img src="${OR+n}.png" onerror="this.style.opacity=.15"></div><div class="ln">${n}</div></div>`;
+  document.getElementById('lib-grid').innerHTML = html;
+}
+renderLibrary();
+
+// ── picker ──
+let pickName=null, pickPath=null, pickTab='lib';
+function openPicker(name, path) {
+  pickName=name; pickPath=path; pickTab='lib';
+  document.getElementById('pick-ref').innerHTML = `<img src="${CC+path}"> ${name}`;
+  const d = describe(name);
+  document.getElementById('pick-desc').innerHTML = d.mech ? `<span class="mtag">${d.mech}</span> — ${d.ru}` : '';
+  document.getElementById('pick-search').value='';
+  setTab('lib'); document.getElementById('picker').classList.add('open');
+}
+function closePicker(){ document.getElementById('picker').classList.remove('open'); }
+function setTab(t){
+  pickTab=t;
+  document.getElementById('tab-lib').classList.toggle('active',t==='lib');
+  document.getElementById('tab-up').classList.toggle('active',t==='up');
+  document.getElementById('pane-lib').style.display = t==='lib'?'':'none';
+  document.getElementById('pane-up').style.display  = t==='up'?'':'none';
+  if (t==='lib') renderPicker();
+}
+function renderPicker(){
+  const q = document.getElementById('pick-search').value.trim().toLowerCase();
+  let html = `<div class="pick clear" onclick="doAssign(null)"><div class="mini2">✖</div><div class="pname">очистить</div></div>`;
+  for (const n of OUR_SPRITES.filter(n=>!q||n.includes(q)))
+    html += `<div class="pick" onclick="doAssign({t:'lib',name:'${n}'})"><div class="mini2"><img src="${OR+n}.png" onerror="this.style.opacity=.2"></div><div class="pname">${n}</div></div>`;
+  document.getElementById('pick-grid').innerHTML = html;
+}
+function onFileChosen(e){
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => doAssign({ t:'up', data: reader.result, fn: f.name });
+  reader.readAsDataURL(f);
+}
+function doAssign(val){
+  if (val === null) delete assign[pickName];
+  else assign[pickName] = val;
+  save(); closePicker(); renderCatalog();
+}
+// статус из карточки (тоггл)
+function setStatus(name, t){
+  if (assign[name] && assign[name].t === t) delete assign[name];
+  else assign[name] = { t };
+  save(); renderCatalog();
+}
+// статус из пикера (по открытому слоту)
+function setStatusFromPicker(t){ assign[pickName] = { t }; save(); closePicker(); renderCatalog(); }
+
+// ── export ──
+function openExport(){
+  const out = {};
+  for (const name in assign) {
+    const a = assign[name];
+    if (a.t === 'up')        out[name] = { our: a.fn, uploaded: true };
+    else if (a.t === 'proc') out[name] = { procedural: true };
+    else if (a.t === 'skip') out[name] = { unused: true };
+    else                     out[name] = { our: a.name };
+  }
+  document.getElementById('export-ta').value = JSON.stringify(out, null, 2);
+  document.getElementById('exporter').classList.add('open');
+}
+function copyExport(){ const ta=document.getElementById('export-ta'); ta.select(); document.execCommand('copy'); navigator.clipboard?.writeText(ta.value); }
+
+// ── import ──
+function openImport(){ document.getElementById('import-ta').value=''; document.getElementById('importer').classList.add('open'); }
+function doImport(){
+  let data;
+  try { data = JSON.parse(document.getElementById('import-ta').value); }
+  catch(e){ alert('Невалидный JSON'); return; }
+  let n = 0;
+  for (const name in data) {
+    const v = data[name];
+    if (v.procedural) assign[name] = { t:'proc' };
+    else if (v.unused) assign[name] = { t:'skip' };
+    else if (v.our)   assign[name] = { t:'lib', name: v.our };
+    else continue;
+    n++;
+  }
+  save(); document.getElementById('importer').classList.remove('open'); renderCatalog();
+  alert('Импортировано: ' + n);
+}
+function resetAll(){ if(!confirm('Сбросить ВСЕ статусы и аналоги?'))return; assign={}; save(); renderCatalog(); }
+
+// ── load index ──
+fetch(CC + '_index.json' + '?v=' + Date.now()).then(r=>r.json()).then(idx => {
+  CCSS_INDEX = idx;
+  for (const s of idx) {
+    if (!(s.atlas in CCSS_BY_ATLAS)) CCSS_BY_ATLAS[s.atlas] = [];
+    CCSS_BY_ATLAS[s.atlas].push({ name:s.name, path:s.path });
+  }
+  renderCatalog();
+}).catch(err => {
+  document.getElementById('catalog').innerHTML = '<p style="color:#f87171;padding:30px;">Не удалось загрузить список CCSS (_index.json). Открой через локальный сервер, не file://</p>';
+});
+</script>
+</body>
+</html>

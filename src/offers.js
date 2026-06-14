@@ -86,10 +86,12 @@ function checkReengagement() {
   saveGame();
   if (last > 0 && (now - last) > 24 * 60 * 60 * 1000) {
     const hours = Math.floor((now - last) / 3600000);
-    document.getElementById('reeng-desc').textContent =
-      `Ты не играл ${hours} ч. Держи бонус за возвращение!`;
-    document.getElementById('reeng-modal')?.classList.add('show');
     unlockAchievement('comeback');
+    queueStartupPopup('reeng-modal', () => {
+      document.getElementById('reeng-desc').textContent =
+        `Ты не играл ${hours} ч. Держи бонус за возвращение!`;
+      document.getElementById('reeng-modal')?.classList.add('show');
+    }, 30);
   }
 }
 
